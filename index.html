@@ -1,1 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mariana — IA Acolhedora</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="app">
+    <header class="topbar">
+      <h1>Mariana</h1>
+      <p class="subtitle">IA acolhedora — estou aqui com você 💛</p>
+    </header>
 
+    <section id="chat-container">
+      <div id="chat" aria-live="polite"></div>
+
+      <form id="form" autocomplete="off">
+        <input
+          id="input"
+          type="text"
+          placeholder="Digite aqui…"
+          aria-label="Mensagem para a Mariana"
+          required
+        />
+        <button id="send-btn" type="submit">Enviar</button>
+      </form>
+
+      <div class="hint">
+        Dica: você pode pedir respirações guiadas, mantras, ou um planozinho para o dia.
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
