@@ -6,32 +6,40 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body || {};
-    if (!message || typeof message !== "string") {
-      return res.status(400).json({ error: "Missing 'message' string in body." });
+    const body = req.body || {};
+    const hasArray = Array.isArray(body.messages);
+    const hasString = typeof body.message === "string" && body.message.trim().length > 0;
+
+    // Monta o array messages aceitando os dois formatos
+    let messages;
+    if (hasArray) {
+      messages = body.messages;
+    } else if (hasString) {
+      messages = [
+        { role: "system", content: "Você é Mariana, uma IA empática, calma e acolhedora. Responda em pt-BR." },
+        { role: "user", content: body.message.trim() }
+      ];
+    } else {
+      console.error("🚫 Corpo inválido recebido em /api/chat:", body);
+      return res.status(400).json({ error: "Bad Request: envie 'message' (string) ou 'messages' (array)." });
     }
 
-    // Lê e valida a chave do OpenRouter
+    // Chave
     let key = process.env.OPENROUTER_API_KEY;
     if (typeof key === "string") key = key.trim();
     if (!key || !key.startsWith("sk-or-")) {
-      console.error("🚨 OPENROUTER_API_KEY ausente ou inválida.");
+      console.error("🚨 OPENROUTER_API_KEY ausente/ inválida.");
       return res.status(500).json({ error: "OPENROUTER_API_KEY not set on server." });
     }
-    console.log("🔑 OPENROUTER_API_KEY carregada (comprimento):", key.length);
 
     const referer =
       (req.headers["x-forwarded-host"] && `https://${req.headers["x-forwarded-host"]}`) ||
       (req.headers.host && `https://${req.headers.host}`) ||
       "https://vercel.app";
 
-    const body = {
-      // IMPORTANTE: no OpenRouter use o ID namespaced do modelo
-      model: "openai/gpt-4o-mini",
-      messages: [
-        { role: "system", content: "Você é Mariana, uma IA empática, calma e acolhedora. Responda em pt-BR." },
-        { role: "user", content: message }
-      ],
+    const payload = {
+      model: "openai/gpt-4o-mini", // use sempre o ID namespaced no OpenRouter
+      messages,
       temperature: 0.7,
       max_tokens: 400
     };
@@ -41,26 +49,28 @@ export default async function handler(req, res) {
       headers: {
         "Authorization": `Bearer ${key}`,
         "Content-Type": "application/json",
-        // recomendados pelo OpenRouter
         "HTTP-Referer": referer,
         "X-Title": "Mariana IA (AcolheJovem)"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload)
     });
 
+    const text = await r.text();
+    // tenta parsear como json, senão devolve texto cru
+    let data;
+    try { data = JSON.parse(text); } catch { data = null; }
+
     console.log("📡 OpenRouter status:", r.status);
-    const data = await r.json().catch(() => ({}));
 
     if (!r.ok) {
-      console.error("❌ Erro OpenRouter:", data);
-      // Propaga o status real para facilitar debug no front
-      return res.status(r.status).json({ error: data?.error || data || `HTTP ${r.status}` });
+      console.error("❌ Erro OpenRouter:", text);
+      return res.status(r.status).json({ error: text });
     }
 
     const reply = data?.choices?.[0]?.message?.content || "Desculpe, não consegui responder agora.";
     return res.status(200).json({ reply });
   } catch (e) {
-    console.error("💥 Erro inesperado no handler:", e);
+    console.error("💥 Erro inesperado:", e);
     return res.status(500).json({ error: "Unexpected server error." });
   }
-}
+} 
