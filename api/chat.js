@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const hasArray = Array.isArray(body.messages);
     const hasString = typeof body.message === "string" && body.message.trim().length > 0;
 
-    // Monta o array messages aceitando os dois formatos
+    // Monta messages aceitando dois formatos
     let messages;
     if (hasArray) {
       messages = body.messages;
@@ -20,15 +20,12 @@ export default async function handler(req, res) {
         { role: "user", content: body.message.trim() }
       ];
     } else {
-      console.error("🚫 Corpo inválido recebido em /api/chat:", body);
       return res.status(400).json({ error: "Bad Request: envie 'message' (string) ou 'messages' (array)." });
     }
 
-    // Chave
-    let key = process.env.OPENROUTER_API_KEY;
-    if (typeof key === "string") key = key.trim();
+    // Lê a key do Vercel
+    let key = (process.env.OPENROUTER_API_KEY || "").trim();
     if (!key || !key.startsWith("sk-or-")) {
-      console.error("🚨 OPENROUTER_API_KEY ausente/ inválida.");
       return res.status(500).json({ error: "OPENROUTER_API_KEY not set on server." });
     }
 
@@ -37,40 +34,59 @@ export default async function handler(req, res) {
       (req.headers.host && `https://${req.headers.host}`) ||
       "https://vercel.app";
 
-    const payload = {
-      model: "openai/gpt-4o-mini", // use sempre o ID namespaced no OpenRouter
-      messages,
-      temperature: 0.7,
-      max_tokens: 400
-    };
+    // Função auxiliar para chamar a OpenRouter
+    async function callOpenRouter(modelId) {
+      const payload = {
+        model: modelId,                    // 👈 tenta com este modelo
+        messages,                          // 👈 seu array de mensagens
+        temperature: 0.7,
+        max_tokens: 400
+      };
 
-    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${key}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": referer,
-        "X-Title": "Mariana IA (AcolheJovem)"
-      },
-      body: JSON.stringify(payload)
-    });
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${key}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": referer,
+          "X-Title": "Mariana IA (AcolheJovem)"
+        },
+        body: JSON.stringify(payload)
+      });
 
-    const text = await r.text();
-    // tenta parsear como json, senão devolve texto cru
-    let data;
-    try { data = JSON.parse(text); } catch { data = null; }
+      const text = await r.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch {}
 
-    console.log("📡 OpenRouter status:", r.status);
-
-    if (!r.ok) {
-      console.error("❌ Erro OpenRouter:", text);
-      return res.status(r.status).json({ error: text });
+      return { status: r.status, data, text };
     }
 
-    const reply = data?.choices?.[0]?.message?.content || "Desculpe, não consegui responder agora.";
+    // 1ª tentativa: openai/gpt-4o-mini (namespaced correto)
+    let attempt = await callOpenRouter("openai/gpt-4o-mini");
+    console.log("📡 Tentativa 1 (gpt-4o-mini) status:", attempt.status);
+
+    // Se 401/403/404, tenta modelo alternativo
+    if ([401, 403, 404].includes(attempt.status)) {
+      console.warn("⚠️ Tentativa 1 falhou. Erro:", attempt.data?.error || attempt.text);
+      console.log("🔁 Tentando modelo alternativo: nousresearch/nous-hermes-2-mixtral");
+      attempt = await callOpenRouter("nousresearch/nous-hermes-2-mixtral");
+      console.log("📡 Tentativa 2 (nous-hermes-2-mixtral) status:", attempt.status);
+    }
+
+    if (attempt.status < 200 || attempt.status >= 300) {
+      // devolve erro detalhado para aparecer no Network → Response
+      return res.status(attempt.status).json({
+        error: attempt.data?.error || attempt.text || `HTTP ${attempt.status}`
+      });
+    }
+
+    const reply =
+      attempt.data?.choices?.[0]?.message?.content ||
+      "Desculpe, não consegui responder agora.";
     return res.status(200).json({ reply });
+
   } catch (e) {
     console.error("💥 Erro inesperado:", e);
     return res.status(500).json({ error: "Unexpected server error." });
   }
-} 
+}
