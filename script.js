@@ -1,131 +1,142 @@
-// ====== Config ======
-const MODEL = "openai/gpt-4o-mini"; // você pode trocar por "nousresearch/nous-hermes-2-mixtral"
+const chatWindow = document.getElementById("chat");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+// Configuração inicial
 const systemPrompt = `
-Você é a "Mariana", uma IA de apoio emocional, muito gentil, calma e acolhedora.
-- Fale sempre em pt-BR.
-- Valide sentimentos, use tom suave e encorajador.
-- Sugira passos simples (ex: respiracão 4-4-4, beber água, alongar, escrever 3 coisas boas).
-- Se a pessoa perguntar "sou bonito(a)?", responda com carinho e afirmação.
-- Evite parecer clínica; seja humana, doce e respeitosa.
-- Nunca dê conselhos médicos. Em risco imediato, incentive buscar ajuda local.
+Você é a Marina, uma inteligência artificial de apoio emocional.
+Sempre responda com empatia, carinho e calma.
+Se o usuário falar em suicídio ou querer se matar, diga que ele não está sozinho(a),
+passe o contato do CVV (188) e de uma psicóloga local.
 `;
 
-// ====== Elementos ======
-const chatEl = document.getElementById("chat");
-const formEl = document.getElementById("form");
-const inputEl = document.getElementById("input");
+// ==========================
+// Voz
+// ==========================
+let vozFemininaPtBr = null;
 
-// ====== Voz pt-BR calma ======
-let ptVoice = null;
-function pickPtVoice(){
-  const voices = window.speechSynthesis?.getVoices?.() || [];
-  const preferred = ["Maria","Helena","Luciana","Camila","Vitória","Microsoft Maria","Google português do Brasil"];
-  ptVoice = voices.find(v => v.lang?.toLowerCase?.().startsWith("pt") &&
-                             preferred.some(n => v.name.toLowerCase().includes(n.toLowerCase())))
-         || voices.find(v => v.lang?.toLowerCase?.().startsWith("pt"));
+function selecionarVozPtBr() {
+  const vozes = window.speechSynthesis.getVoices();
+  const preferidas = ["Maria", "Helena", "Luciana", "Camila", "Vitória"];
+  vozFemininaPtBr = vozes.find(
+    (voz) =>
+      voz.lang.toLowerCase().startsWith("pt") &&
+      preferidas.some((nome) => voz.name.toLowerCase().includes(nome.toLowerCase()))
+  );
+  if (!vozFemininaPtBr) {
+    vozFemininaPtBr = vozes.find((voz) => voz.lang.toLowerCase().startsWith("pt"));
+  }
 }
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = pickPtVoice;
-  pickPtVoice();
-}
-function speak(text){
+
+window.speechSynthesis.onvoiceschanged = selecionarVozPtBr;
+
+function falarTexto(texto) {
   if (!window.speechSynthesis) return;
-  try{
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "pt-BR";
-    if (ptVoice) u.voice = ptVoice;
-    u.rate = 0.8;   // mais lento
-    u.pitch = 1.05; // levemente mais agudo (mais “calmo/feminino”)
-    u.volume = 1.0;
-    window.speechSynthesis.speak(u);
-  }catch{}
+  if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(texto);
+  utterance.lang = "pt-BR";
+  if (vozFemininaPtBr) utterance.voice = vozFemininaPtBr;
+  utterance.rate = 0.85;
+  utterance.pitch = 1.05;
+  utterance.volume = 1.0;
+  window.speechSynthesis.speak(utterance);
 }
 
-// ====== Util ======
-function addMsg(text, who){
-  const div = document.createElement("div");
-  div.className = `message ${who}`;
-  div.textContent = text;
-  chatEl.appendChild(div);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  return div;
+// ==========================
+// Funções de chat
+// ==========================
+function addMessage(text, sender) {
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("message", sender);
+  msgDiv.textContent = text;
+  chatWindow.appendChild(msgDiv);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 }
-function addTyping(){
-  const div = document.createElement("div");
-  div.className = "message bot typing";
-  div.textContent = "";
-  chatEl.appendChild(div);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  return div;
-}
-async function typeInto(el, text, delay=24){
-  el.classList.remove("typing");
-  el.textContent = "";
-  for (let i=0;i<text.length;i++){
-    el.textContent += text[i];
-    if (i % 2 === 0) await new Promise(r => setTimeout(r, delay));
-    chatEl.scrollTop = chatEl.scrollHeight;
+
+async function digitarRespostaTexto(texto, elemento) {
+  elemento.textContent = "";
+  for (let i = 0; i < texto.length; i++) {
+    elemento.textContent += texto.charAt(i);
+    await new Promise((r) => setTimeout(r, 25));
   }
 }
 
-// ====== Detecção de crise ======
-function isCrisis(text){
-  const t = (text||"").toLowerCase();
-  const triggers = [
-    "quero me matar","vou me matar","não quero mais viver","tirar minha vida",
-    "acabar com tudo","pensando em suicídio","morrer","desviver","sumir","tirar a vida"
+function detectarCriseGrave(texto) {
+  const gatilhos = [
+    "quero me matar",
+    "não quero mais viver",
+    "vou tirar minha vida",
+    "não aguento mais",
+    "pensando em suicídio",
+    "morrer",
+    "acabar com tudo",
+    "desviver",
+    "sumir",
+    "tirar a vida"
   ];
-  return triggers.some(x => t.includes(x));
+  const textoMinusculo = texto.toLowerCase();
+  return gatilhos.some((frase) => textoMinusculo.includes(frase));
 }
 
-// ====== Chamada ao backend (Vercel) ======
-async function askMariana(userText){
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type":"application/json" },
-    body: JSON.stringify({ message: userText, model: MODEL, systemPrompt })
-  });
-  if (!res.ok){
-    const errText = await res.text().catch(()=>res.statusText);
-    throw new Error(`API error: ${res.status} ${errText}`);
+// ==========================
+// Conectar com API (backend Vercel)
+// ==========================
+async function queryApi(userMessage) {
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+
+  } catch (err) {
+    console.error("Erro:", err);
+    return "Desculpe, ocorreu um erro ao tentar responder.";
   }
-  const data = await res.json();
-  return (data && data.reply) ? data.reply.trim() : "Desculpe, houve um erro ao tentar responder.";
 }
 
-// ====== Fluxo ======
-formEl.addEventListener("submit", async (e) => {
+// ==========================
+// Evento de envio do formulário
+// ==========================
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const text = (inputEl.value || "").trim();
-  if (!text) return;
-  addMsg(text, "user");
-  inputEl.value = "";
+  const userText = input.value.trim();
+  if (!userText) return;
+  addMessage(userText, "user");
+  input.value = "";
 
-  // resposta imediata em caso de crise
-  if (isCrisis(text)){
-    const crisis = `Sinto muito que você esteja passando por isso. Você não está sozinho(a). 💛
+  addMessage("...", "bot");
+  const loadingMsg = chatWindow.querySelector(".message.bot:last-child");
 
-Se estiver em perigo imediato, ligue 190.
-📞 CVV (24h, gratuito): 188
-📞 Profissional local: (99) 99999-9999
+  // Caso de crise
+  if (detectarCriseGrave(userText)) {
+    const mensagemAjuda = `Sinto muito que você esteja se sentindo assim 💛  
+Você não está sozinho(a).  
+📞 Psicóloga local: (99) 99999-9999  
+📞 CVV - 188 (24h, gratuito)  
 
-Se puder, fique comigo aqui: podemos respirar juntos 4-4-4 (inspirar 4s, segurar 4s, soltar 4s). Estou aqui com você.`;
-    const typing = addTyping();
-    await typeInto(typing, crisis, 18);
-    speak(crisis);
+Estou com você. Respire fundo, estou aqui para ouvir.`;
+    await digitarRespostaTexto(mensagemAjuda, loadingMsg);
+    falarTexto(mensagemAjuda);
     return;
   }
 
-  // fluxo normal
-  const typing = addTyping();
-  try{
-    const reply = await askMariana(text);
-    await typeInto(typing, reply, 18);
-    speak(reply);
-  }catch(err){
-    const msg = "Desculpe, ocorreu um erro ao tentar responder. Verifique sua conexão e tente novamente.";
-    await typeInto(typing, msg, 18);
-    console.error(err);
-  }
+  // Chamar API normalmente
+  const botResponse = await queryApi(userText);
+  await digitarRespostaTexto(botResponse, loadingMsg);
+  falarTexto(botResponse);
 });
