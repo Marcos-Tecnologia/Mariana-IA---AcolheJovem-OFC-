@@ -2,7 +2,6 @@ const chatWindow = document.getElementById("chat");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
 
-// Prompt do sistema que deixa a IA calma e acolhedora
 const SYSTEM_PROMPT = `
 Você é a Mariana, uma IA de apoio emocional, muito gentil e acolhedora.
 Sempre responda com empatia, validação e calma.
@@ -11,7 +10,7 @@ Não dê conselhos médicos. Responda em tom positivo e reconfortante.
 `;
 
 // -----------------------------
-// UI: mensagens e digitação
+// UI
 // -----------------------------
 function addMessage(text, sender) {
   const msgDiv = document.createElement("div");
@@ -32,7 +31,7 @@ async function digitarRespostaTexto(texto, el, delay = 25) {
 }
 
 // -----------------------------
-// Função que chama o backend
+// Chamada ao backend
 // -----------------------------
 async function queryApi(userMessage) {
   try {
@@ -53,7 +52,6 @@ async function queryApi(userMessage) {
     }
 
     const data = await response.json();
-    // aceita tanto { reply } quanto { choices[0].message.content }
     return (
       data.reply ??
       data?.choices?.[0]?.message?.content ??
@@ -66,7 +64,7 @@ async function queryApi(userMessage) {
 }
 
 // -----------------------------
-// Formulário de envio
+// Fluxo do formulário
 // -----------------------------
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -77,7 +75,6 @@ form.addEventListener("submit", async (e) => {
   input.value = "";
   const loading = addMessage("...", "bot");
 
-  // Chama a API
   const botResponse = await queryApi(userText);
   await digitarRespostaTexto(botResponse, loading, 20);
 });
