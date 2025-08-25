@@ -41,8 +41,8 @@ export default async function handler(req, res) {
 
     // Fallback de modelos confiáveis
     const models = [
+      "openai/gpt-4o-mini",
       "nousresearch/nous-hermes-2-mixtral",
-      "mistralai/mistral-7b-instruct",
       "mistralai/mixtral-8x7b-instruct"
     ];
 
