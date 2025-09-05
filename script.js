@@ -1,3 +1,23 @@
+// -----------------------------
+// Intro → Chat
+// -----------------------------
+const intro = document.getElementById("intro");
+const chatContainer = document.getElementById("chat-container");
+const startBtn = document.getElementById("start-btn");
+
+if (startBtn) {
+  startBtn.addEventListener("click", () => {
+    intro.classList.add("fade-out");
+    setTimeout(() => {
+      intro.style.display = "none";
+      chatContainer.style.display = "flex";
+    }, 1000); // espera o fade-out acabar (1s)
+  });
+}
+
+// -----------------------------
+// Chat principal
+// -----------------------------
 const chatWindow = document.getElementById("chat");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
@@ -42,12 +62,12 @@ function falarTexto(texto) {
   const utterance = new SpeechSynthesisUtterance(texto);
   utterance.lang = "pt-BR";
 
-  // Voz mais calma
-  utterance.rate = 0.8;   // fala mais devagar
-  utterance.pitch = 0.9;  // tom levemente grave
+  // Voz mais calma e devagar
+  utterance.rate = 0.8;
+  utterance.pitch = 0.9;
   utterance.volume = 1.0;
 
-  // Seleciona voz feminina em português se disponível
+  // Tenta achar voz feminina em PT-BR
   const vozes = window.speechSynthesis.getVoices();
   const vozPt = vozes.find(v => v.lang.startsWith("pt") && v.name.toLowerCase().includes("female"));
   if (vozPt) utterance.voice = vozPt;
