@@ -4,10 +4,11 @@ const input = document.getElementById("input");
 const clearBtn = document.getElementById("clear-btn");
 
 const SYSTEM_PROMPT = `
-Você é a Mariana, uma IA de apoio emocional muito gentil e acolhedora.
-Responda sempre em tom leve, curto e informal, como uma amiga próxima.
-Use frases simples, poucas linhas, e passe confiança e calma.
-Não use textos longos nem termos técnicos.
+Você é a Aurora, uma IA acolhedora, que fala como uma amiga brasileira próxima.
+Use um tom leve, simples e descontraído, do jeitinho brasileiro.
+Responda de forma curta, sem formalidades, como em uma conversa de WhatsApp.
+Pode usar emojis, gírias leves e expressões acolhedoras (tipo: "fica tranquilo", "relaxa", "tamo junto").
+Não faça textos longos, apenas frases curtas e diretas.
 `;
 
 // -----------------------------
@@ -56,11 +57,11 @@ async function queryApi(userMessage) {
     return (
       data.reply ??
       data?.choices?.[0]?.message?.content ??
-      "Ops, não consegui responder agora 😅"
+      "Eita, deu ruim aqui 😅 tenta de novo!"
     );
   } catch (err) {
     console.error("Erro:", err);
-    return "Desculpe, deu algum erro 🙁";
+    return "Vish, rolou um erro 😕";
   }
 }
 
@@ -85,5 +86,5 @@ form.addEventListener("submit", async (e) => {
 // -----------------------------
 clearBtn.addEventListener("click", () => {
   chatWindow.innerHTML = "";
-  addMessage("Conversa limpa. Pode falar comigo de novo 😄", "bot");
+  addMessage("Conversa limpinha ✨ Pode mandar outra!", "bot");
 });
