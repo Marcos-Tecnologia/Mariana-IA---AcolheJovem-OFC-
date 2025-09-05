@@ -4,11 +4,10 @@ const input = document.getElementById("input");
 const clearBtn = document.getElementById("clear-btn");
 
 const SYSTEM_PROMPT = `
-Você é a Aurora, uma IA acolhedora, que fala como uma amiga brasileira próxima.
-Use um tom leve, simples e descontraído, do jeitinho brasileiro.
-Responda de forma curta, sem formalidades, como em uma conversa de WhatsApp.
-Pode usar emojis, gírias leves e expressões acolhedoras (tipo: "fica tranquilo", "relaxa", "tamo junto").
-Não faça textos longos, apenas frases curtas e diretas.
+Você é a Aurora, uma amiga brasileira que fala simples e no jeitinho.
+Responda curto, informal, com carinho e até emojis.
+Pode usar frases como "fica tranquilo", "relaxa", "tamo junto".
+Evite textos longos. Seja calorosa, do jeitinho brasileiro. ❤️
 `;
 
 // -----------------------------
@@ -30,6 +29,30 @@ async function digitarRespostaTexto(texto, el, delay = 25) {
     if (i % 2 === 0) await new Promise((r) => setTimeout(r, delay));
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
+  falarTexto(texto);
+}
+
+// -----------------------------
+// Fala ASMR calma
+// -----------------------------
+function falarTexto(texto) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(texto);
+  utterance.lang = "pt-BR";
+
+  // Voz mais calma
+  utterance.rate = 0.8;   // fala mais devagar
+  utterance.pitch = 0.9;  // tom levemente grave
+  utterance.volume = 1.0;
+
+  // Seleciona voz feminina em português se disponível
+  const vozes = window.speechSynthesis.getVoices();
+  const vozPt = vozes.find(v => v.lang.startsWith("pt") && v.name.toLowerCase().includes("female"));
+  if (vozPt) utterance.voice = vozPt;
+
+  window.speechSynthesis.speak(utterance);
 }
 
 // -----------------------------
@@ -57,11 +80,11 @@ async function queryApi(userMessage) {
     return (
       data.reply ??
       data?.choices?.[0]?.message?.content ??
-      "Eita, deu ruim aqui 😅 tenta de novo!"
+      "Ih, buguei 😅 tenta de novo!"
     );
   } catch (err) {
     console.error("Erro:", err);
-    return "Vish, rolou um erro 😕";
+    return "Opa, deu ruim aqui 😕";
   }
 }
 
@@ -78,7 +101,7 @@ form.addEventListener("submit", async (e) => {
   const loading = addMessage("...", "bot");
 
   const botResponse = await queryApi(userText);
-  await digitarRespostaTexto(botResponse, loading, 15);
+  await digitarRespostaTexto(botResponse, loading, 20);
 });
 
 // -----------------------------
@@ -86,5 +109,5 @@ form.addEventListener("submit", async (e) => {
 // -----------------------------
 clearBtn.addEventListener("click", () => {
   chatWindow.innerHTML = "";
-  addMessage("Conversa limpinha ✨ Pode mandar outra!", "bot");
+  addMessage("Conversa limpinha ✨ Pode falar comigo de novo 😄", "bot");
 });
