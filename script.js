@@ -1,12 +1,13 @@
 const chatWindow = document.getElementById("chat");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
+const clearBtn = document.getElementById("clear-btn");
 
 const SYSTEM_PROMPT = `
-Você é a Mariana, uma IA de apoio emocional, muito gentil e acolhedora.
-Sempre responda com empatia, validação e calma.
-Sugira passos simples como: respirar fundo, se hidratar, alongar, escrever coisas boas.
-Não dê conselhos médicos. Responda em tom positivo e reconfortante.
+Você é a Mariana, uma IA de apoio emocional muito gentil e acolhedora.
+Responda sempre em tom leve, curto e informal, como uma amiga próxima.
+Use frases simples, poucas linhas, e passe confiança e calma.
+Não use textos longos nem termos técnicos.
 `;
 
 // -----------------------------
@@ -55,11 +56,11 @@ async function queryApi(userMessage) {
     return (
       data.reply ??
       data?.choices?.[0]?.message?.content ??
-      "Desculpe, não consegui responder agora."
+      "Ops, não consegui responder agora 😅"
     );
   } catch (err) {
     console.error("Erro:", err);
-    return "Desculpe, houve um erro ao tentar responder.";
+    return "Desculpe, deu algum erro 🙁";
   }
 }
 
@@ -76,5 +77,13 @@ form.addEventListener("submit", async (e) => {
   const loading = addMessage("...", "bot");
 
   const botResponse = await queryApi(userText);
-  await digitarRespostaTexto(botResponse, loading, 20);
+  await digitarRespostaTexto(botResponse, loading, 15);
+});
+
+// -----------------------------
+// Botão limpar conversa
+// -----------------------------
+clearBtn.addEventListener("click", () => {
+  chatWindow.innerHTML = "";
+  addMessage("Conversa limpa. Pode falar comigo de novo 😄", "bot");
 });
