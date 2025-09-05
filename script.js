@@ -11,6 +11,7 @@ if (startBtn) {
     setTimeout(() => {
       intro.style.display = "none";
       chatContainer.style.display = "flex";
+      chatContainer.classList.add("fade-in"); // animação no chat
     }, 1000); // espera o fade-out acabar (1s)
   });
 }
