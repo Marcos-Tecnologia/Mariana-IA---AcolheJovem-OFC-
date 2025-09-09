@@ -31,7 +31,7 @@ const lastBotMessages = [];
 // Prompt Aurora V5.2
 const SYSTEM_PROMPT = `
 Você é a Aurora, uma amiga brasileira acolhedora e calma.
-Estilo: leve, simples e carinhoso, com 0–1 emoji. Sem formalidade.
+Estilo: leve, simples e carinhoso, com 1-2 emoji. Sem formalidade.
 
 Regras:
 - Acolha sempre primeiro: ouça e valide os sentimentos do usuário.
@@ -91,4 +91,96 @@ function falarTexto(texto) {
 
   const utterance = new SpeechSynthesisUtterance(texto);
   utterance.lang = "pt-BR";
-  utterance.rate = 0.85
+  utterance.rate = 0.85;   // devagar
+  utterance.pitch = 0.95;  // tom suave
+  utterance.volume = 1.0;
+
+  const prefer = ["Maria", "Helena", "Luciana", "Camila", "Vitória", "Fernanda", "Isabela"];
+  const voices = window.speechSynthesis.getVoices();
+  let chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt") && prefer.some(n => v.name.toLowerCase().includes(n.toLowerCase())));
+  if (!chosen) chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt"));
+  if (chosen) utterance.voice = chosen;
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// -----------------------------
+// Chamada ao backend (Vercel /api/chat)
+// -----------------------------
+async function queryApi(userMessage) {
+  try {
+    const messages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...history.slice(-6),
+      { role: "user", content: userMessage }
+    ];
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => "");
+      throw new Error(`API error: ${response.status}${errText ? " - " + errText : ""}`);
+    }
+
+    const data = await response.json();
+    return (
+      data.reply ??
+      data?.choices?.[0]?.message?.content ??
+      "Ih, buguei 😅 tenta de novo!"
+    );
+  } catch (err) {
+    console.error("Erro:", err);
+    return "Opa, deu ruim aqui 😕";
+  }
+}
+
+// -----------------------------
+// Fluxo do formulário
+// -----------------------------
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  history.push({ role: "user", content: userText });
+  addMessage(userText, "user");
+  input.value = "";
+  const loading = addMessage("...", "bot");
+
+  // 🚨 Modo crise
+  if (detectarCrise(userText)) {
+    const mensagemAjuda = `💛 Eu sinto muito que você esteja passando por isso.
+Você **não está sozinho(a)**.
+
+📞 CVV: 188 (24h, gratuito, confidencial)  
+📞 Psicóloga local: (99) 99999-9999  
+
+Por favor, fale com alguém agora. Sua vida tem muito valor.`;
+    await digitarRespostaTexto(mensagemAjuda, loading, 20);
+    history.push({ role: "assistant", content: mensagemAjuda });
+    lastBotMessages.push(mensagemAjuda);
+    return;
+  }
+
+  // Modo normal
+  const botResponse = await queryApi(userText);
+  await digitarRespostaTexto(botResponse, loading, 18);
+
+  history.push({ role: "assistant", content: botResponse });
+  lastBotMessages.push(botResponse);
+  if (lastBotMessages.length > 10) lastBotMessages.shift();
+});
+
+// -----------------------------
+// Botão limpar conversa
+// -----------------------------
+clearBtn.addEventListener("click", () => {
+  chatWindow.innerHTML = "";
+  history.length = 0;
+  lastBotMessages.length = 0;
+  addMessage("Conversa limpinha ✨ Bora recomeçar do zero!", "bot");
+});
