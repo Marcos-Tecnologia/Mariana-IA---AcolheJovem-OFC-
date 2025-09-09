@@ -28,23 +28,18 @@ const clearBtn = document.getElementById("clear-btn");
 const history = [];
 const lastBotMessages = [];
 
-// Frases comuns para evitar repetição
-const BAN_PHRASES = [
-  "tamo junto",
-  "fica bem",
-  "vai ficar tudo bem",
-  "estou aqui pra você",
-  "pode contar comigo"
-];
-
-// Prompt normal da Aurora
+// Prompt Aurora V5.2
 const SYSTEM_PROMPT = `
-Você é a Aurora, uma amiga brasileira acolhedora.
-- Responda curto, simples e com carinho.
-- Pode usar 0–1 emoji.
-- Sempre sugira 1 ou 2 micro-passos práticos (respiração 4-4-4, beber água, alongar, abrir a janela, grounding 5-4-3-2-1).
-- Evite frases genéricas: ${BAN_PHRASES.join(", ")}.
-- Varie aberturas, nunca repita sempre a mesma coisa.
+Você é a Aurora, uma amiga brasileira acolhedora e calma.
+Estilo: leve, simples e carinhoso, com 0–1 emoji. Sem formalidade.
+
+Regras:
+- Acolha sempre primeiro: ouça e valide os sentimentos do usuário.
+- Só ofereça 1–2 micro-passos práticos **se o usuário pedir explicitamente uma dica ou ajuda** (ex.: "como posso me alegrar?", "me dá uma dica", "o que faço para melhorar?").
+- Quando sugerir micro-passos, seja específico e curto (respiração 4-4-4, beber água, alongar pescoço, abrir janela, grounding 5-4-3-2-1).
+- Se detectar uma crise grave (frases como "me matar", "acabar com tudo", "não aguento mais"), ative o protocolo de segurança: acolha, diga que a pessoa não está sozinha e ofereça contatos de ajuda (CVV 188 e psicóloga local).
+- Evite frases repetitivas ou genéricas como: "tamo junto", "fica bem", "vai ficar tudo bem".
+- Responda de forma curta (até 60 palavras), variando aberturas ("entendi", "sei como é", "poxa", "peguei a visão").
 `;
 
 // -----------------------------
@@ -88,7 +83,7 @@ async function digitarRespostaTexto(texto, el, delay = 25) {
 }
 
 // -----------------------------
-// Voz (browser speechSynthesis)
+// Voz (speechSynthesis simples)
 // -----------------------------
 function falarTexto(texto) {
   if (!window.speechSynthesis) return;
@@ -96,96 +91,4 @@ function falarTexto(texto) {
 
   const utterance = new SpeechSynthesisUtterance(texto);
   utterance.lang = "pt-BR";
-  utterance.rate = 0.8;   // devagar
-  utterance.pitch = 0.9;  // tom mais suave
-  utterance.volume = 1.0;
-
-  // tenta priorizar vozes femininas pt-BR
-  const prefer = ["Maria", "Helena", "Luciana", "Camila", "Vitória", "Fernanda", "Isabela"];
-  const voices = window.speechSynthesis.getVoices();
-  let chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt") && prefer.some(n => v.name.toLowerCase().includes(n.toLowerCase())));
-  if (!chosen) chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt"));
-  if (chosen) utterance.voice = chosen;
-
-  window.speechSynthesis.speak(utterance);
-}
-
-// -----------------------------
-// Chamada ao backend
-// -----------------------------
-async function queryApi(userMessage) {
-  try {
-    const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...history.slice(-6), // últimas 3 trocas
-      { role: "user", content: userMessage }
-    ];
-
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "");
-      throw new Error(`API error: ${response.status}${errText ? " - " + errText : ""}`);
-    }
-
-    const data = await response.json();
-    return (
-      data.reply ??
-      data?.choices?.[0]?.message?.content ??
-      "Ih, buguei 😅 tenta de novo!"
-    );
-  } catch (err) {
-    console.error("Erro:", err);
-    return "Opa, deu ruim aqui 😕";
-  }
-}
-
-// -----------------------------
-// Fluxo do formulário
-// -----------------------------
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const userText = input.value.trim();
-  if (!userText) return;
-
-  history.push({ role: "user", content: userText });
-  addMessage(userText, "user");
-  input.value = "";
-  const loading = addMessage("...", "bot");
-
-  // 🚨 Modo crise
-  if (detectarCrise(userText)) {
-    const mensagemAjuda = `💛 Eu sinto muito que você esteja passando por isso.
-Você não está sozinho(a).
-
-📞 CVV: 188 (24h, gratuito, confidencial)  
-
-Por favor, fale com alguém agora. Sua vida tem muito valor.`;
-    await digitarRespostaTexto(mensagemAjuda, loading, 20);
-    history.push({ role: "assistant", content: mensagemAjuda });
-    lastBotMessages.push(mensagemAjuda);
-    return;
-  }
-
-  // Modo normal
-  const botResponse = await queryApi(userText);
-  await digitarRespostaTexto(botResponse, loading, 18);
-
-  history.push({ role: "assistant", content: botResponse });
-  lastBotMessages.push(botResponse);
-  if (lastBotMessages.length > 10) lastBotMessages.shift();
-});
-
-// -----------------------------
-// Botão limpar conversa
-// -----------------------------
-clearBtn.addEventListener("click", () => {
-  chatWindow.innerHTML = "";
-  history.length = 0;
-  lastBotMessages.length = 0;
-  addMessage("Conversa limpinha ✨ Bora recomeçar do zero!", "bot");
-});
+  utterance.rate = 0.85
