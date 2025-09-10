@@ -110,7 +110,7 @@ function falarTexto(texto) {
 function mostrarDigitando() {
   const typingDiv = document.createElement("div");
   typingDiv.classList.add("message", "bot", "typing");
-  typingDiv.innerHTML = `<span>.</span><span>.</span><span>.</span>`;
+  typingDiv.innerHTML = `<span></span><span></span><span></span>`;
   chatWindow.appendChild(typingDiv);
   chatWindow.scrollTop = chatWindow.scrollHeight;
   return typingDiv;
@@ -214,3 +214,4 @@ if (themeToggle) {
     themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
   });
 }
+
