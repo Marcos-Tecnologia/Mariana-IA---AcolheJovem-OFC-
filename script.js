@@ -11,7 +11,7 @@ if (startBtn) {
     setTimeout(() => {
       intro.style.display = "none";
       chatContainer.style.display = "flex";
-      chatContainer.classList.add("fade-in");
+      chatContainer.classList.add("fade-in"); // animação suave
     }, 1000);
   });
 }
@@ -28,18 +28,17 @@ const clearBtn = document.getElementById("clear-btn");
 const history = [];
 const lastBotMessages = [];
 
-// Prompt Aurora V5.2
+// Prompt Aurora
 const SYSTEM_PROMPT = `
 Você é a Aurora, uma amiga brasileira acolhedora e calma.
-Estilo: leve, simples e carinhoso, com 0–1 emoji. Sem formalidade.
+Estilo: leve, simples e carinhoso, com 1-3 emoji. Sem formalidade.
 
 Regras:
 - Acolha sempre primeiro: ouça e valide os sentimentos do usuário.
-- Só ofereça 1–2 micro-passos práticos **se o usuário pedir explicitamente uma dica ou ajuda** (ex.: "como posso me alegrar?", "me dá uma dica", "o que faço para melhorar?").
-- Quando sugerir micro-passos, seja específico e curto (respiração 4-4-4, beber água, alongar pescoço, abrir janela, grounding 5-4-3-2-1).
-- Se detectar uma crise grave (frases como "me matar", "acabar com tudo", "não aguento mais"), ative o protocolo de segurança: acolha, diga que a pessoa não está sozinha e ofereça contatos de ajuda (CVV 188 e psicóloga local).
-- Evite frases repetitivas ou genéricas como: "tamo junto", "fica bem", "vai ficar tudo bem".
-- Responda de forma curta (até 60 palavras), variando aberturas ("entendi", "sei como é", "poxa", "peguei a visão").
+- Só ofereça 1–2 micro-passos práticos **se o usuário pedir explicitamente uma dica ou ajuda**.
+- Quando sugerir micro-passos, seja específico e curto.
+- Se detectar crise grave, ofereça apoio + contatos (CVV 188).
+- Evite repetições. Responda de forma curta (até 60 palavras).
 `;
 
 // -----------------------------
@@ -47,17 +46,11 @@ Regras:
 // -----------------------------
 function detectarCrise(texto) {
   const gatilhos = [
-    "me matar",
-    "não quero mais viver",
-    "tirar minha vida",
-    "acabar com tudo",
-    "não aguento mais",
-    "sumir do mundo",
-    "morrer",
-    "desviver"
+    "me matar", "não quero mais viver", "tirar minha vida",
+    "acabar com tudo", "não aguento mais", "sumir do mundo",
+    "morrer", "desviver", "suicidar"
   ];
-  const lower = texto.toLowerCase();
-  return gatilhos.some(g => lower.includes(g));
+  return gatilhos.some(g => texto.toLowerCase().includes(g));
 }
 
 // -----------------------------
@@ -91,8 +84,8 @@ function falarTexto(texto) {
 
   const utterance = new SpeechSynthesisUtterance(texto);
   utterance.lang = "pt-BR";
-  utterance.rate = 0.85;   // devagar
-  utterance.pitch = 0.95;  // tom suave
+  utterance.rate = 0.85;
+  utterance.pitch = 0.95;
   utterance.volume = 1.0;
 
   const prefer = ["Maria", "Helena", "Luciana", "Camila", "Vitória", "Fernanda", "Isabela"];
@@ -117,7 +110,7 @@ function mostrarDigitando() {
 }
 
 // -----------------------------
-// Chamada ao backend (Vercel /api/chat)
+// Chamada ao backend (/api/chat)
 // -----------------------------
 async function queryApi(userMessage) {
   try {
@@ -170,14 +163,12 @@ form.addEventListener("submit", async (e) => {
     const mensagemAjuda = `💛 Eu sinto muito que você esteja passando por isso.
 Você **não está sozinho(a)**.
 
-📞 CVV: 188 (24h, gratuito, confidencial)  
-📞 Psicóloga local: (99) 99999-9999  
+📞 CVV: 188 (24h, gratuito, confidencial)   
 
 Por favor, fale com alguém agora. Sua vida tem muito valor.`;
     const msgEl = addMessage("", "bot");
     await digitarRespostaTexto(mensagemAjuda, msgEl, 20);
     history.push({ role: "assistant", content: mensagemAjuda });
-    lastBotMessages.push(mensagemAjuda);
     return;
   }
 
@@ -188,8 +179,6 @@ Por favor, fale com alguém agora. Sua vida tem muito valor.`;
   await digitarRespostaTexto(botResponse, msgEl, 18);
 
   history.push({ role: "assistant", content: botResponse });
-  lastBotMessages.push(botResponse);
-  if (lastBotMessages.length > 10) lastBotMessages.shift();
 });
 
 // -----------------------------
@@ -205,7 +194,7 @@ clearBtn.addEventListener("click", () => {
 // -----------------------------
 // Dark/Light Mode
 // -----------------------------
-document.body.classList.add("light"); // Tema inicial
+document.body.classList.add("light");
 const themeToggle = document.getElementById("theme-toggle");
 if (themeToggle) {
   themeToggle.addEventListener("click", () => {
@@ -214,4 +203,3 @@ if (themeToggle) {
     themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
   });
 }
-
