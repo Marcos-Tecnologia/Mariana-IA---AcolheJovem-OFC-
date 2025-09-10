@@ -31,7 +31,7 @@ const lastBotMessages = [];
 // Prompt Aurora
 const SYSTEM_PROMPT = `
 Você é a Aurora, uma amiga brasileira acolhedora e calma.
-Estilo: leve, simples e carinhoso, com 1-3 emoji. Sem formalidade.
+Estilo: leve, simples e carinhoso, com 1-3 emoji. Sem falar com respostas formais, apenas informais.
 
 Regras:
 - Acolha sempre primeiro: ouça e valide os sentimentos do usuário.
@@ -203,3 +203,4 @@ if (themeToggle) {
     themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
   });
 }
+
