@@ -31,7 +31,7 @@ const lastBotMessages = [];
 // Prompt Aurora V5.2
 const SYSTEM_PROMPT = `
 Você é a Aurora, uma amiga brasileira acolhedora e calma.
-Estilo: leve, simples e carinhoso, com 1-2 emoji. Sem formalidade.
+Estilo: leve, simples e carinhoso, com 0–1 emoji. Sem formalidade.
 
 Regras:
 - Acolha sempre primeiro: ouça e valide os sentimentos do usuário.
@@ -105,6 +105,18 @@ function falarTexto(texto) {
 }
 
 // -----------------------------
+// Animação: Aurora digitando
+// -----------------------------
+function mostrarDigitando() {
+  const typingDiv = document.createElement("div");
+  typingDiv.classList.add("message", "bot", "typing");
+  typingDiv.innerHTML = `<span>.</span><span>.</span><span>.</span>`;
+  chatWindow.appendChild(typingDiv);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+  return typingDiv;
+}
+
+// -----------------------------
 // Chamada ao backend (Vercel /api/chat)
 // -----------------------------
 async function queryApi(userMessage) {
@@ -149,10 +161,12 @@ form.addEventListener("submit", async (e) => {
   history.push({ role: "user", content: userText });
   addMessage(userText, "user");
   input.value = "";
-  const loading = addMessage("...", "bot");
+
+  const loading = mostrarDigitando();
 
   // 🚨 Modo crise
   if (detectarCrise(userText)) {
+    loading.remove();
     const mensagemAjuda = `💛 Eu sinto muito que você esteja passando por isso.
 Você **não está sozinho(a)**.
 
@@ -160,7 +174,8 @@ Você **não está sozinho(a)**.
 📞 Psicóloga local: (99) 99999-9999  
 
 Por favor, fale com alguém agora. Sua vida tem muito valor.`;
-    await digitarRespostaTexto(mensagemAjuda, loading, 20);
+    const msgEl = addMessage("", "bot");
+    await digitarRespostaTexto(mensagemAjuda, msgEl, 20);
     history.push({ role: "assistant", content: mensagemAjuda });
     lastBotMessages.push(mensagemAjuda);
     return;
@@ -168,7 +183,9 @@ Por favor, fale com alguém agora. Sua vida tem muito valor.`;
 
   // Modo normal
   const botResponse = await queryApi(userText);
-  await digitarRespostaTexto(botResponse, loading, 18);
+  loading.remove();
+  const msgEl = addMessage("", "bot");
+  await digitarRespostaTexto(botResponse, msgEl, 18);
 
   history.push({ role: "assistant", content: botResponse });
   lastBotMessages.push(botResponse);
@@ -184,3 +201,16 @@ clearBtn.addEventListener("click", () => {
   lastBotMessages.length = 0;
   addMessage("Conversa limpinha ✨ Bora recomeçar do zero!", "bot");
 });
+
+// -----------------------------
+// Dark/Light Mode
+// -----------------------------
+document.body.classList.add("light"); // Tema inicial
+const themeToggle = document.getElementById("theme-toggle");
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    document.body.classList.toggle("light");
+    themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+  });
+}
