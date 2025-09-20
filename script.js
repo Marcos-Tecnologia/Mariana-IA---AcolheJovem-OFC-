@@ -85,30 +85,12 @@ async function digitarRespostaTexto(texto, el, delay = 25) {
     if (i % 2 === 0) await new Promise((r) => setTimeout(r, delay));
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
-  falarTexto(texto);
+ //SEM FALAR TEXTO
 }
 
 // -----------------------------
 // Voz (speechSynthesis simples)
 // -----------------------------
-function falarTexto(texto) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(texto);
-  utterance.lang = "pt-BR";
-  utterance.rate = 0.85;
-  utterance.pitch = 0.95;
-  utterance.volume = 1.0;
-
-  const prefer = ["Maria", "Helena", "Luciana", "Camila", "Vitória", "Fernanda", "Isabela"];
-  const voices = window.speechSynthesis.getVoices();
-  let chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt") && prefer.some(n => v.name.toLowerCase().includes(n.toLowerCase())));
-  if (!chosen) chosen = voices.find(v => v.lang.toLowerCase().startsWith("pt"));
-  if (chosen) utterance.voice = chosen;
-
-  window.speechSynthesis.speak(utterance);
-}
 
 // -----------------------------
 // Animação: Aurora digitando
@@ -216,5 +198,6 @@ if (themeToggle) {
     themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
   });
 }
+
 
 
