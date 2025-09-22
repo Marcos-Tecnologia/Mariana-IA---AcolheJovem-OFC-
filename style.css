@@ -167,6 +167,17 @@ button#clear-btn:hover {
   background: #aaa; /* quando desativado */
 }
 
+#chat-disclaimer {
+  font-size: 0.85rem;
+  color: #a3325b;         /* tom combinando com o tema rosa */
+  text-align: center;
+  padding: 8px 12px;
+  background: #fff0f6;
+  border-top: 1px solid #f8c8da;
+  border-bottom-left-radius: 25px;
+  border-bottom-right-radius: 25px;
+}
+
 /* ===== Digitando ===== */
 .typing {
   display: inline-flex;
@@ -217,3 +228,4 @@ button#clear-btn:hover {
     filter: blur(0);
   }
 }
+
