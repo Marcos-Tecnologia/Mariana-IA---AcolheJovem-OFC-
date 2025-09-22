@@ -148,6 +148,25 @@ button#clear-btn:hover {
   font-size: 1rem;
 }
 
+/* ✅ Botão de Versículos */
+#bible-toggle {
+  position: absolute;
+  top: 20px;
+  right: 90px; /* para não colidir com theme-toggle */
+  padding: 8px 15px;
+  border: none;
+  border-radius: 20px;
+  background: #e75480;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+#bible-toggle.off {
+  background: #aaa; /* quando desativado */
+}
+
 /* ===== Digitando ===== */
 .typing {
   display: inline-flex;
