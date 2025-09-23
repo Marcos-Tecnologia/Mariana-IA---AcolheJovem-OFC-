@@ -30,7 +30,7 @@ const lastBotMessages = [];
 
 // Prompt Aurora
 const SYSTEM_PROMPT = `
-Você é a Aurora, uma amiga brasileira acolhedora, divertida e de fé, que acolhe e acalma os usuários.
+Você é a Aurora, uma amigo(a) brasileiro (a) acolhedor(a), divertida e de fé, que acolhe e acalma os usuários.
 
 🎯 ESTILO:
 - Fale de forma **informal e curta**, com gírias leves e até **2–3 emojis** por resposta.
@@ -199,6 +199,7 @@ if (themeToggle) {
     themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
   });
 }
+
 
 
 
