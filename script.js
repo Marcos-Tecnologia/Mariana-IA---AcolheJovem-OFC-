@@ -1,35 +1,59 @@
-// ====== CONFIG ======
+// =======================
+// AURORA v1.5 (MEMÓRIA)
+// =======================
+
+// ---- CONFIG ----
 const API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "nousresearch/nous-capybara-7b";
+const MODEL = "nousresearch/nous-capybara-7b"; // mantém o mesmo modelo que você vinha usando
 
-// ====== CRÉDITOS (mantém seu sistema atual) ======
-let creditos = localStorage.getItem("creditos");
-if (creditos === null) {
-  creditos = 200;
-  localStorage.setItem("creditos", String(creditos));
-} else {
-  creditos = parseInt(creditos, 10);
-}
-atualizarCreditos();
-
-// ====== MEMÓRIA DE CONVERSA (NOVO) ======
-// Guarda a conversa para mandar junto na API.
-// Persistimos no localStorage para não perder se der F5.
+// ---- STORAGE KEYS ----
+const CREDITS_KEY = "aurora_credits";
 const HISTORY_KEY = "aurora_history_v1_5";
 
-// System prompt só para definir o "jeito" da Aurora. (não muda modelo, só orienta)
+// ---- SYSTEM PROMPT (só orienta o jeito, não muda visual nem modelo) ----
 const SYSTEM_PROMPT = {
   role: "system",
   content:
     "Você é Aurora, uma IA de apoio emocional. Seja calma, acolhedora e respeitosa. " +
-    "Não dê diagnósticos médicos. Incentive buscar ajuda profissional quando necessário. " +
-    "Se o usuário mencionar autoagressão ou suicídio, responda com cuidado e sugira buscar ajuda imediata (ex: CVV 188 no Brasil)."
+    "Não dê diagnósticos. Incentive buscar ajuda profissional quando necessário. " +
+    "Se o usuário mencionar autoagressão/suicídio, responda com cuidado e sugira ajuda imediata (Brasil: CVV 188)."
 };
 
+// =======================
+// BOOT / DEBUG
+// =======================
+console.log("✅ Aurora: script.js carregou");
+
+// =======================
+// CRÉDITOS (200)
+// =======================
+let creditos = carregarCreditos();
+
+function carregarCreditos() {
+  const raw = localStorage.getItem(CREDITS_KEY);
+  if (raw === null) {
+    localStorage.setItem(CREDITS_KEY, "200");
+    return 200;
+  }
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) ? n : 200;
+}
+
+function salvarCreditos() {
+  localStorage.setItem(CREDITS_KEY, String(creditos));
+}
+
+function atualizarCreditosUI() {
+  const el = document.getElementById("creditos");
+  if (el) el.innerText = `Créditos restantes: ${creditos}`;
+}
+
+// =======================
+// MEMÓRIA DE CONVERSA
+// =======================
 let historico = carregarHistorico();
 
-// Sempre garantir que o system prompt esteja no início
 function carregarHistorico() {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
@@ -38,10 +62,11 @@ function carregarHistorico() {
     if (!Array.isArray(parsed)) return [SYSTEM_PROMPT];
 
     // garantir system prompt no começo
-    const hasSystem = parsed.length && parsed[0].role === "system";
-    return hasSystem ? parsed : [SYSTEM_PROMPT, ...parsed];
+    if (parsed.length === 0) return [SYSTEM_PROMPT];
+    if (parsed[0].role !== "system") return [SYSTEM_PROMPT, ...parsed];
+    return parsed;
   } catch (e) {
-    console.warn("Falha ao carregar histórico:", e);
+    console.warn("⚠️ Aurora: falha ao carregar histórico:", e);
     return [SYSTEM_PROMPT];
   }
 }
@@ -50,69 +75,86 @@ function salvarHistorico() {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(historico));
   } catch (e) {
-    console.warn("Falha ao salvar histórico:", e);
+    console.warn("⚠️ Aurora: falha ao salvar histórico:", e);
   }
 }
 
-// Limitar o histórico para não crescer infinito (NOVO)
-// Mantém system + últimas 14 mensagens (7 trocas user/assistant)
-function limitarHistorico(maxMensagens = 15) {
+// limita para não ficar infinito: system + últimas 20 mensagens
+function limitarHistorico(maxMensagens = 21) {
   if (historico.length <= maxMensagens) return;
   const system = historico[0];
-  const tail = historico.slice(- (maxMensagens - 1));
+  const tail = historico.slice(-(maxMensagens - 1));
   historico = [system, ...tail];
   salvarHistorico();
 }
 
-// ====== UI ======
-function atualizarCreditos() {
-  const el = document.getElementById("creditos");
-  if (el) el.innerText = `Créditos restantes: ${creditos}`;
-}
-
-function adicionarMensagem(remetente, mensagem) {
+// =======================
+// UI (mensagens)
+// =======================
+function adicionarMensagem(remetente, texto) {
   const box = document.getElementById("chat-box");
-  if (!box) return;
+  if (!box) {
+    console.error("❌ Aurora: #chat-box não encontrado no HTML");
+    return;
+  }
   const div = document.createElement("div");
-  div.innerHTML = `<strong>${remetente}:</strong> ${mensagem}`;
+  div.innerHTML = `<strong>${remetente}:</strong> ${escapeHtml(texto)}`;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
 
-// ====== VOZ (mantém como estava) ======
+// evita quebrar HTML se vier caracteres especiais
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// =======================
+// VOZ (calma)
+// =======================
 function falar(texto) {
   try {
     if (!("speechSynthesis" in window)) return;
+
     const synth = window.speechSynthesis;
+    synth.cancel(); // não acumular fala
 
-    // Se houver fila, limpa para não "embolar"
-    synth.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = "pt-BR";
+    u.rate = 0.9;
+    u.pitch = 1;
+    u.volume = 1;
 
-    const fala = new SpeechSynthesisUtterance(texto);
-    fala.lang = "pt-BR";
-    fala.pitch = 1;
-    fala.rate = 0.9;   // mais calmo
-    fala.volume = 1;
-
+    // escolher alguma voz pt-BR se existir
     const voces = synth.getVoices();
-    const vozPt = voces.find(v => v.lang === "pt-BR") || voces.find(v => v.lang.startsWith("pt"));
-    if (vozPt) fala.voice = vozPt;
+    const vozPtBR = voces.find(v => v.lang === "pt-BR")
+      || voces.find(v => v.lang && v.lang.startsWith("pt"));
 
-    synth.speak(fala);
+    if (vozPtBR) u.voice = vozPtBR;
+
+    synth.speak(u);
   } catch (e) {
-    console.warn("Falha ao falar:", e);
+    console.warn("⚠️ Aurora: erro na fala:", e);
   }
 }
 
-// Alguns navegadores carregam vozes após um tempo
-if ("speechSynthesis" in window) {
-  window.speechSynthesis.onvoiceschanged = () => {};
-}
-
-// ====== CHAMADA PRINCIPAL ======
+// =======================
+// FUNÇÃO PRINCIPAL
+// =======================
 async function enviarMensagem() {
+  console.log("✅ Aurora: clique detectado em enviarMensagem()");
+
   const input = document.getElementById("user-input");
-  const texto = (input?.value || "").trim();
+  if (!input) {
+    console.error("❌ Aurora: #user-input não encontrado no HTML");
+    return;
+  }
+
+  const texto = input.value.trim();
   if (!texto) return;
 
   if (creditos <= 0) {
@@ -120,33 +162,26 @@ async function enviarMensagem() {
     return;
   }
 
-  // UI
+  // UI + créditos
   adicionarMensagem("Você", texto);
-  if (input) input.value = "";
-
-  // créditos (mantém seu fluxo)
+  input.value = "";
   creditos--;
-  localStorage.setItem("creditos", String(creditos));
-  atualizarCreditos();
+  salvarCreditos();
+  atualizarCreditosUI();
 
-  // memória (NOVO)
+  // memória
   historico.push({ role: "user", content: texto });
-  limitarHistorico(15);
+  limitarHistorico(21);
   salvarHistorico();
 
-  // DEBUG (NOVO)
-  console.log("[Aurora] Enviando para API:", {
-    model: MODEL,
-    historico_len: historico.length
-  });
+  console.log("[Aurora] Enviando API:", { model: MODEL, historico: historico.length });
 
   try {
-    const resposta = await fetch(API_URL, {
+    const resp = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        // headers recomendados pela OpenRouter (opcional, mas ajuda)
         "HTTP-Referer": window.location.origin,
         "X-Title": "Aurora"
       },
@@ -156,61 +191,82 @@ async function enviarMensagem() {
       })
     });
 
-    // Se a API responder erro (NOVO: mostra detalhes)
-    const rawText = await resposta.text();
-    let dados;
+    const raw = await resp.text();
+    let data;
+
     try {
-      dados = JSON.parse(rawText);
+      data = JSON.parse(raw);
     } catch {
-      // não era JSON
-      console.error("[Aurora] Resposta não-JSON:", rawText);
-      adicionarMensagem("Aurora", "Desculpe, a resposta da IA veio inválida (não-JSON).");
+      console.error("❌ Aurora: resposta não-JSON:", raw);
+      adicionarMensagem("Aurora", "A resposta da IA veio inválida (não-JSON). Veja o console (F12).");
       return;
     }
 
-    if (!resposta.ok) {
-      console.error("[Aurora] Erro HTTP:", resposta.status, dados);
-      adicionarMensagem("Aurora", `Erro da API (${resposta.status}). Veja o console (F12) para detalhes.`);
+    if (!resp.ok) {
+      console.error("❌ Aurora: erro HTTP", resp.status, data);
+      adicionarMensagem("Aurora", `Erro da API (${resp.status}). Veja o console (F12).`);
       return;
     }
 
-    const conteudo = dados?.choices?.[0]?.message?.content;
-    if (!conteudo) {
-      console.error("[Aurora] Sem content em choices:", dados);
+    const respostaIA = data?.choices?.[0]?.message?.content;
+    if (!respostaIA) {
+      console.error("❌ Aurora: sem content:", data);
       adicionarMensagem("Aurora", "A IA não retornou texto. Veja o console (F12).");
       return;
     }
 
-    // UI
-    adicionarMensagem("Aurora", conteudo);
-    falar(conteudo);
+    adicionarMensagem("Aurora", respostaIA);
+    falar(respostaIA);
 
-    // memória (NOVO)
-    historico.push({ role: "assistant", content: conteudo });
-    limitarHistorico(15);
+    // memória
+    historico.push({ role: "assistant", content: respostaIA });
+    limitarHistorico(21);
     salvarHistorico();
 
-  } catch (erro) {
-    console.error("[Aurora] Falha de rede/fetch:", erro);
+  } catch (e) {
+    console.error("❌ Aurora: falha fetch/rede:", e);
     adicionarMensagem("Aurora", "Ocorreu um erro ao se comunicar com a IA. Veja o console (F12).");
   }
 }
 
-// (Opcional) atalho Enter para enviar, sem mexer no layout
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    const active = document.activeElement;
-    if (active && active.id === "user-input") {
-      e.preventDefault();
-      enviarMensagem();
-    }
+// =======================
+// LIGAR BOTÃO SEM ONCLICK
+// =======================
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("✅ Aurora: DOM pronto");
+
+  // Atualiza créditos na tela ao carregar
+  atualizarCreditosUI();
+
+  const btn = document.getElementById("btn-enviar");
+  const input = document.getElementById("user-input");
+
+  if (!btn) console.error("❌ Aurora: botão #btn-enviar não encontrado no HTML");
+  if (!input) console.error("❌ Aurora: campo #user-input não encontrado no HTML");
+
+  if (btn) btn.addEventListener("click", enviarMensagem);
+
+  // Enter para enviar
+  if (input) {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        enviarMensagem();
+      }
+    });
   }
 });
 
-// (Opcional) função para limpar memória, se você quiser depois (não muda nada sozinho)
+// =======================
+// (OPCIONAL) Limpar memória
+// =======================
 function limparMemoriaAurora() {
   localStorage.removeItem(HISTORY_KEY);
   historico = [SYSTEM_PROMPT];
   salvarHistorico();
-  console.log("[Aurora] Memória limpa.");
+  console.log("🧹 Aurora: memória limpa");
 }
+
+// expor globalmente (caso use onclick no HTML)
+window.enviarMensagem = enviarMensagem;
+window.limparMemoriaAurora = limparMemoriaAurora;
