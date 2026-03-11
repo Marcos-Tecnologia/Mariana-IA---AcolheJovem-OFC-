@@ -2,17 +2,15 @@ const API_KEY = "sk-or-v1-ec26abe03f9425ec3d563975deea0c4785bbbb7871194c5f6d791e
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "nousresearch/nous-capybara-7b";
 
-const HISTORY_KEY = "aurora_history_sem_creditos";
+const HISTORY_KEY = "aurora_history_restore";
 
 const SYSTEM_PROMPT = {
   role: "system",
   content:
     "Você é Aurora, uma IA de apoio emocional. Seja calma, acolhedora, respeitosa e empática. " +
     "Não dê diagnósticos médicos. Responda com cuidado. " +
-    "Se a pessoa mencionar suicídio, autoagressão ou perigo imediato, recomende ajuda urgente e cite CVV 188 no Brasil."
+    "Se houver menção de suicídio, autoagressão ou perigo imediato, recomende ajuda urgente e cite CVV 188 no Brasil."
 };
-
-console.log("✅ Aurora: script.js carregou");
 
 let historico = carregarHistorico();
 
@@ -41,10 +39,7 @@ function limitarHistorico() {
 
 function adicionarMensagem(remetente, texto) {
   const box = document.getElementById("chat-box");
-  if (!box) {
-    console.error("❌ chat-box não encontrado");
-    return;
-  }
+  if (!box) return;
 
   const div = document.createElement("div");
   div.style.marginBottom = "10px";
@@ -70,7 +65,7 @@ function falar(texto) {
 
   const utter = new SpeechSynthesisUtterance(texto);
   utter.lang = "pt-BR";
-  utter.rate = 0.88;
+  utter.rate = 0.9;
   utter.pitch = 1;
   utter.volume = 1;
 
@@ -85,28 +80,16 @@ function falar(texto) {
 }
 
 function abrirChat() {
-  console.log("✅ botão Conversar com Aurora clicado");
-
   const inicio = document.getElementById("inicio-container");
   const chat = document.getElementById("chat-container");
 
-  if (!chat) {
-    console.error("❌ chat-container não encontrado");
-    return;
-  }
-
   if (inicio) inicio.classList.add("hidden");
-  chat.classList.remove("hidden");
+  if (chat) chat.classList.remove("hidden");
 }
 
 async function enviarMensagem() {
-  console.log("✅ botão Enviar clicado");
-
   const input = document.getElementById("user-input");
-  if (!input) {
-    console.error("❌ user-input não encontrado");
-    return;
-  }
+  if (!input) return;
 
   const texto = input.value.trim();
   if (!texto) return;
@@ -141,21 +124,21 @@ async function enviarMensagem() {
     try {
       dados = JSON.parse(raw);
     } catch (e) {
-      console.error("❌ resposta não JSON:", raw);
       adicionarMensagem("Aurora", "A resposta da IA veio inválida.");
+      console.error("Resposta não JSON:", raw);
       return;
     }
 
     if (!resposta.ok) {
-      console.error("❌ erro HTTP:", resposta.status, dados);
       adicionarMensagem("Aurora", `Erro da API (${resposta.status}).`);
+      console.error("Erro HTTP:", resposta.status, dados);
       return;
     }
 
     const respostaIA = dados?.choices?.[0]?.message?.content;
     if (!respostaIA) {
-      console.error("❌ resposta sem conteúdo:", dados);
       adicionarMensagem("Aurora", "A IA não retornou texto.");
+      console.error("Resposta sem conteúdo:", dados);
       return;
     }
 
@@ -168,34 +151,23 @@ async function enviarMensagem() {
     salvarHistorico();
 
   } catch (erro) {
-    console.error("❌ erro ao se comunicar com a IA:", erro);
     adicionarMensagem("Aurora", "Ocorreu um erro ao se comunicar com a IA.");
+    console.error("Erro de comunicação:", erro);
   }
 }
 
-function limparConversa() {
-  historico = [];
-  localStorage.removeItem(HISTORY_KEY);
-
-  const box = document.getElementById("chat-box");
-  if (box) box.innerHTML = "";
-
-  console.log("🧹 conversa limpa");
-}
-
 window.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ DOM carregado");
-
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
   const input = document.getElementById("user-input");
 
-  if (!btnAbrir) console.error("❌ botão #btn-abrir-chat não encontrado");
-  if (!btnEnviar) console.error("❌ botão #btn-enviar não encontrado");
-  if (!input) console.error("❌ campo #user-input não encontrado");
+  if (btnAbrir) {
+    btnAbrir.addEventListener("click", abrirChat);
+  }
 
-  if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
-  if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
+  if (btnEnviar) {
+    btnEnviar.addEventListener("click", enviarMensagem);
+  }
 
   if (input) {
     input.addEventListener("keydown", (e) => {
