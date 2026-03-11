@@ -1,27 +1,15 @@
-// ====== CONFIG ======
-const API_KEY = "COLE_SUA_CHAVE_AQUI";
+const API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "nousresearch/nous-capybara-7b";
 
-// ====== CRÉDITOS ======
-let creditos = localStorage.getItem("creditos");
-if (creditos === null) {
-  creditos = 200;
-  localStorage.setItem("creditos", String(creditos));
-} else {
-  creditos = parseInt(creditos, 10);
-}
-atualizarCreditos();
-
-// ====== MEMÓRIA ======
-const HISTORY_KEY = "aurora_history_v1_5";
+const HISTORY_KEY = "aurora_history_v1";
 
 const SYSTEM_PROMPT = {
   role: "system",
   content:
-    "Você é Aurora, uma IA de apoio emocional. Seja calma, acolhedora e respeitosa. " +
-    "Não dê diagnósticos médicos. Incentive buscar ajuda profissional quando necessário. " +
-    "Se o usuário mencionar autoagressão ou suicídio, responda com cuidado e sugira buscar ajuda imediata (CVV 188 no Brasil)."
+    "Você é Aurora, uma IA de apoio emocional. Seja calma, acolhedora, respeitosa e empática. " +
+    "Não dê diagnósticos médicos. Responda com cuidado. " +
+    "Se houver menção de suicídio, autoagressão ou perigo imediato, recomende ajuda urgente e cite CVV 188 no Brasil."
 };
 
 let historico = carregarHistorico();
@@ -29,19 +17,12 @@ let historico = carregarHistorico();
 function carregarHistorico() {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
-    if (!raw) return [SYSTEM_PROMPT];
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-
-    if (!Array.isArray(parsed)) return [SYSTEM_PROMPT];
-
-    if (parsed.length === 0 || parsed[0].role !== "system") {
-      return [SYSTEM_PROMPT, ...parsed];
-    }
-
-    return parsed;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
-    console.warn("Falha ao carregar histórico:", e);
-    return [SYSTEM_PROMPT];
+    console.error("Erro ao carregar histórico:", e);
+    return [];
   }
 }
 
@@ -49,90 +30,71 @@ function salvarHistorico() {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(historico));
 }
 
-function limitarHistorico(maxMensagens = 15) {
-  if (historico.length <= maxMensagens) return;
-
-  const system = historico[0];
-  const tail = historico.slice(-(maxMensagens - 1));
-
-  historico = [system, ...tail];
-  salvarHistorico();
-}
-
-// ====== UI ======
-function atualizarCreditos() {
-  const el = document.getElementById("creditos");
-  if (el) el.innerText = `Créditos restantes: ${creditos}`;
-}
-
-function adicionarMensagem(remetente, mensagem) {
+function adicionarMensagem(remetente, texto) {
   const box = document.getElementById("chat-box");
   if (!box) return;
 
   const div = document.createElement("div");
-  div.innerHTML = `<strong>${remetente}:</strong> ${mensagem}`;
-
+  div.style.marginBottom = "10px";
+  div.innerHTML = `<strong>${remetente}:</strong> ${texto}`;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
 
-// ====== VOZ ======
 function falar(texto) {
-  try {
-    if (!("speechSynthesis" in window)) return;
+  if (!("speechSynthesis" in window)) return;
 
-    const synth = window.speechSynthesis;
-    synth.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
 
-    const fala = new SpeechSynthesisUtterance(texto);
-    fala.lang = "pt-BR";
-    fala.pitch = 1;
-    fala.rate = 0.9;
-    fala.volume = 1;
+  const utter = new SpeechSynthesisUtterance(texto);
+  utter.lang = "pt-BR";
+  utter.rate = 0.9;
+  utter.pitch = 1;
+  utter.volume = 1;
 
-    const voces = synth.getVoices();
-    const vozPt =
-      voces.find(v => v.lang === "pt-BR") ||
-      voces.find(v => v.lang.startsWith("pt"));
+  const voices = synth.getVoices();
+  const vozPt =
+    voices.find(v => v.lang === "pt-BR") ||
+    voices.find(v => v.lang && v.lang.startsWith("pt"));
 
-    if (vozPt) fala.voice = vozPt;
+  if (vozPt) utter.voice = vozPt;
 
-    synth.speak(fala);
-  } catch (e) {
-    console.warn("Falha ao falar:", e);
+  synth.speak(utter);
+}
+
+function abrirChat() {
+  console.log("Botão abrir chat clicado");
+
+  const inicio = document.getElementById("inicio-container");
+  const chat = document.getElementById("chat-container");
+
+  if (inicio) {
+    inicio.classList.add("hidden");
+  }
+
+  if (chat) {
+    chat.classList.remove("hidden");
   }
 }
 
-// ====== FUNÇÃO PRINCIPAL ======
 async function enviarMensagem() {
-
   const input = document.getElementById("user-input");
-  const texto = (input?.value || "").trim();
+  if (!input) return;
 
+  const texto = input.value.trim();
   if (!texto) return;
-
-  if (creditos <= 0) {
-    alert("Você não tem mais créditos. Volte amanhã.");
-    return;
-  }
 
   adicionarMensagem("Você", texto);
   input.value = "";
 
-  creditos--;
-  localStorage.setItem("creditos", String(creditos));
-  atualizarCreditos();
-
-  historico.push({
-    role: "user",
-    content: texto
-  });
-
-  limitarHistorico();
-  salvarHistorico();
+  const mensagensParaEnviar = [
+    SYSTEM_PROMPT,
+    ...historico,
+    { role: "user", content: texto }
+  ];
 
   try {
-
     const resposta = await fetch(API_URL, {
       method: "POST",
       headers: {
@@ -141,67 +103,57 @@ async function enviarMensagem() {
       },
       body: JSON.stringify({
         model: MODEL,
-        messages: historico
+        messages: mensagensParaEnviar
       })
     });
 
-    const data = await resposta.json();
+    const dados = await resposta.json();
 
     if (!resposta.ok) {
-      console.error("Erro da API:", data);
-      adicionarMensagem("Aurora", "Erro da API. Veja o console.");
+      console.error("Erro da API:", dados);
+      adicionarMensagem("Aurora", "Erro da API.");
       return;
     }
 
-    const conteudo = data?.choices?.[0]?.message?.content;
+    const respostaIA = dados?.choices?.[0]?.message?.content || "A IA não retornou resposta.";
+    adicionarMensagem("Aurora", respostaIA);
+    falar(respostaIA);
 
-    if (!conteudo) {
-      adicionarMensagem("Aurora", "A IA não retornou texto.");
-      return;
-    }
-
-    adicionarMensagem("Aurora", conteudo);
-    falar(conteudo);
-
-    historico.push({
-      role: "assistant",
-      content: conteudo
-    });
-
-    limitarHistorico();
+    historico.push({ role: "user", content: texto });
+    historico.push({ role: "assistant", content: respostaIA });
     salvarHistorico();
 
   } catch (erro) {
-    console.error("Erro de comunicação:", erro);
-    adicionarMensagem("Aurora", "Erro ao se comunicar com a IA.");
+    console.error("Erro ao se comunicar com a IA:", erro);
+    adicionarMensagem("Aurora", "Ocorreu um erro ao se comunicar com a IA.");
   }
 }
 
-// ====== ENTER ENVIA ======
-document.addEventListener("keydown", (e) => {
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM carregado");
 
-  if (e.key === "Enter" && !e.shiftKey) {
+  const btnAbrir = document.getElementById("btn-abrir-chat");
+  const btnEnviar = document.getElementById("btn-enviar");
+  const input = document.getElementById("user-input");
 
-    const active = document.activeElement;
-
-    if (active && active.id === "user-input") {
-      e.preventDefault();
-      enviarMensagem();
-    }
-
+  if (btnAbrir) {
+    btnAbrir.addEventListener("click", abrirChat);
+  } else {
+    console.error("Botão btn-abrir-chat não encontrado");
   }
 
-});
+  if (btnEnviar) {
+    btnEnviar.addEventListener("click", enviarMensagem);
+  } else {
+    console.error("Botão btn-enviar não encontrado");
+  }
 
-// ====== LIMPAR MEMÓRIA ======
-function limparMemoriaAurora() {
-
-  localStorage.removeItem(HISTORY_KEY);
-
-  historico = [SYSTEM_PROMPT];
-
-  salvarHistorico();
-
-  console.log("Memória limpa");
-
-}
+  if (input) {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        enviarMensagem();
+      }
+    });
+  }
+});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
