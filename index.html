@@ -2,37 +2,25 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aurora IA - Acolhedora</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aurora</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- INTRO -->
-  <div id="intro">
-    <h1>✨ Aurora IA ✨</h1>
-    <p>Sua IA acolhedora e relaxante 🌙</p>
-    <button id="start-btn">Conversar 💬</button>
+  <div id="container">
+    <div id="inicio-container">
+      <h1>Aurora</h1>
+      <h3>IA de Apoio Social</h3>
+      <button id="btn-abrir-chat" type="button">Conversar com Aurora</button>
+    </div>
+
+    <div id="chat-container" class="hidden">
+      <div id="chat-box"></div>
+      <textarea id="user-input" rows="3" placeholder="Digite aqui..."></textarea>
+      <button id="btn-enviar" type="button">Enviar</button>
+    </div>
   </div>
 
-  <!-- CHAT escondido no começo -->
-  <div id="chat-container">
-    <header id="chat-header">
-      <h1>🌸 Aurora IA – Acolhedora</h1>
-    </header>
-    <div id="chat"></div>
-    <div id="controls">
-      <button id="clear-btn">🧹 Limpar conversa</button>
-    </div>
-    <form id="form">
-      <input type="text" id="input" placeholder="Manda aqui sua mensagem..." autocomplete="off"/>
-      <button type="submit" id="send-btn">Enviar</button>
-    </form>
-  <p id="chat-disclaimer">
-  A Aurora pode cometer erros e coisas inesperadas. Verifique informações importantes.
-</p>
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
-
