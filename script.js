@@ -1,4 +1,4 @@
-const API_KEY = "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";
+const API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "nousresearch/nous-capybara-7b";
 
@@ -157,3 +157,4 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 });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
+
