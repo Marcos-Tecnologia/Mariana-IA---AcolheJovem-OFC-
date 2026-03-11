@@ -1,4 +1,4 @@
-const API_KEY = "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";
+const API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "nousresearch/nous-capybara-7b";
 
@@ -119,8 +119,9 @@ async function enviarMensagem() {
     });
 
     const raw = await resposta.text();
-    let dados;
+    console.log("Resposta bruta da API:", raw);
 
+    let dados;
     try {
       dados = JSON.parse(raw);
     } catch (e) {
@@ -161,13 +162,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnEnviar = document.getElementById("btn-enviar");
   const input = document.getElementById("user-input");
 
-  if (btnAbrir) {
-    btnAbrir.addEventListener("click", abrirChat);
-  }
-
-  if (btnEnviar) {
-    btnEnviar.addEventListener("click", enviarMensagem);
-  }
+  if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
+  if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
 
   if (input) {
     input.addEventListener("keydown", (e) => {
