@@ -1,15 +1,5 @@
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "nousresearch/nous-capybara-7b";
-const HISTORY_KEY = "aurora_history_prompt_key";
-
-// pede a chave ao abrir a página
-let API_KEY = sessionStorage.getItem("aurora_api_key");
-if (!API_KEY) {
-  API_KEY = prompt("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");
-  if (API_KEY) {
-    sessionStorage.setItem("aurora_api_key", API_KEY.trim());
-  }
-}
+const API_URL = "/api/chat";
+const HISTORY_KEY = "aurora_history_v1";
 
 const SYSTEM_PROMPT = {
   role: "system",
@@ -46,10 +36,7 @@ function limitarHistorico() {
 
 function adicionarMensagem(remetente, texto) {
   const box = document.getElementById("chat-box");
-  if (!box) {
-    console.error("chat-box não encontrado");
-    return;
-  }
+  if (!box) return;
 
   const div = document.createElement("div");
   div.style.marginBottom = "10px";
@@ -90,34 +77,19 @@ function falar(texto) {
 }
 
 function abrirChat() {
-  console.log("Botão Conversar com Aurora clicado");
-
   const inicio = document.getElementById("inicio-container");
   const chat = document.getElementById("chat-container");
 
-  if (!chat) {
-    console.error("chat-container não encontrado");
-    return;
-  }
-
   if (inicio) inicio.classList.add("hidden");
-  chat.classList.remove("hidden");
+  if (chat) chat.classList.remove("hidden");
 }
 
 async function enviarMensagem() {
   const input = document.getElementById("user-input");
-  if (!input) {
-    console.error("user-input não encontrado");
-    return;
-  }
+  if (!input) return;
 
   const texto = input.value.trim();
   if (!texto) return;
-
-  if (!API_KEY) {
-    adicionarMensagem("Aurora", "Nenhuma chave da OpenRouter foi informada.");
-    return;
-  }
 
   adicionarMensagem("Você", texto);
   input.value = "";
@@ -132,13 +104,9 @@ async function enviarMensagem() {
     const resposta = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Authorization": "Bearer " + API_KEY,
-        "Content-Type": "application/json",
-        "HTTP-Referer": window.location.origin,
-        "X-Title": "Aurora"
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: MODEL,
         messages: mensagensParaEnviar
       })
     });
@@ -160,7 +128,7 @@ async function enviarMensagem() {
       return;
     }
 
-    const respostaIA = dados?.choices?.[0]?.message?.content;
+    const respostaIA = dados?.reply || dados?.choices?.[0]?.message?.content;
     if (!respostaIA) {
       console.error("Resposta sem conteúdo:", dados);
       adicionarMensagem("Aurora", "A IA não retornou texto.");
@@ -181,31 +149,13 @@ async function enviarMensagem() {
   }
 }
 
-function limparMemoriaAurora() {
-  historico = [];
-  localStorage.removeItem(HISTORY_KEY);
-  const box = document.getElementById("chat-box");
-  if (box) box.innerHTML = "";
-}
-
 window.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM carregado");
-
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
   const input = document.getElementById("user-input");
 
-  if (!btnAbrir) {
-    console.error("Botão btn-abrir-chat não encontrado");
-  } else {
-    btnAbrir.addEventListener("click", abrirChat);
-  }
-
-  if (!btnEnviar) {
-    console.error("Botão btn-enviar não encontrado");
-  } else {
-    btnEnviar.addEventListener("click", enviarMensagem);
-  }
+  if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
+  if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
 
   if (input) {
     input.addEventListener("keydown", (e) => {
