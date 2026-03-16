@@ -4,64 +4,31 @@
 
 body {
   font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  min-height: 100vh;
   background: linear-gradient(-45deg, #ffd6e7, #ffe4f0, #f8d7ff, #ffdceb);
   background-size: 400% 400%;
   animation: fundoAurora 12s ease infinite;
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
 }
 
 @keyframes fundoAurora {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 #container {
   width: 100%;
   max-width: 560px;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 28px;
   box-shadow: 0 10px 35px rgba(189, 98, 146, 0.18);
-  animation: subirSuave 0.8s ease;
-}
-
-@keyframes subirSuave {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-#inicio-container,
-#chat-container {
-  animation: fadeSuave 0.5s ease;
-}
-
-@keyframes fadeSuave {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 h1 {
@@ -70,7 +37,6 @@ h1 {
   font-size: 2.4rem;
   color: #c25b8d;
   letter-spacing: 1px;
-  text-shadow: 0 2px 10px rgba(194, 91, 141, 0.12);
 }
 
 h3 {
@@ -147,18 +113,41 @@ textarea:focus {
   border-radius: 999px;
 }
 
-#chat-box div {
-  margin-bottom: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
+.msg {
+  max-width: 85%;
+  padding: 12px 14px;
+  border-radius: 18px;
+  margin-bottom: 10px;
   line-height: 1.5;
-  animation: msgEntrada 0.25s ease;
+  word-wrap: break-word;
+  animation: msgFade 0.25s ease;
 }
 
-@keyframes msgEntrada {
+.msg-user {
+  margin-left: auto;
+  background: #dff1ff;
+  color: #334;
+  border-bottom-right-radius: 6px;
+}
+
+.msg-aurora {
+  margin-right: auto;
+  background: #ffe7f1;
+  color: #5b4250;
+  border-bottom-left-radius: 6px;
+}
+
+.msg strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #c25b8d;
+  font-size: 0.95rem;
+}
+
+@keyframes msgFade {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -166,8 +155,48 @@ textarea:focus {
   }
 }
 
-#chat-box div strong {
-  color: #c25b8d;
+/* Digitando estilo WhatsApp */
+.typing-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffe7f1;
+  padding: 10px 14px;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(194, 91, 141, 0.08);
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: #d787b0;
+  border-radius: 50%;
+  animation: auroraTyping 1.3s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes auroraTyping {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
 }
 
 .hidden {
