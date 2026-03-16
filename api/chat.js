@@ -1,72 +1,66 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Método não permitido" });
   }
 
   try {
-    const body = req.body || {};
-    const messages = Array.isArray(body.messages)
-      ? body.messages
-      : [{ role: "user", content: body.message || "Olá" }];
+    const { messages } = req.body || {};
 
-    const key = (process.env.OPENROUTER_API_KEY || "").trim();
-    if (!key.startsWith("sk-or-")) {
-      return res.status(500).json({ error: "OPENROUTER_API_KEY missing or invalid" });
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: "Campo 'messages' inválido." });
     }
 
-    const referer =
-      (req.headers["x-forwarded-host"] && `https://${req.headers["x-forwarded-host"]}`) ||
-      (req.headers.host && `https://${req.headers.host}`) ||
-      "https://vercel.app";
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    async function callModel(modelId) {
-      const payload = { model: modelId, messages, temperature: 0.7, max_tokens: 400 };
-
-      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${key}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": referer,
-          "X-Title": "Mariana IA (AcolheJovem)"
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await r.text();
-      let data = null;
-      try { data = JSON.parse(text); } catch {}
-      return { status: r.status, data, text };
-    }
-
-    // Fallback de modelos confiáveis
-    const models = [
-      "openai/gpt-4o-mini",
-      "nousresearch/nous-hermes-2-mixtral",
-      "mistralai/mixtral-8x7b-instruct"
-    ];
-
-    let result;
-    for (const model of models) {
-      result = await callModel(model);
-      console.log(`📡 Tentativa com ${model} →`, result.status);
-      if (result.status >= 200 && result.status < 300) break;
-    }
-
-    if (!result || result.status < 200 || result.status >= 300) {
-      return res.status(result?.status || 500).json({
-        error: result?.data?.error || result?.text || "Todos os modelos falharam"
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "A variável OPENROUTER_API_KEY não está configurada na Vercel."
       });
     }
 
-    const reply =
-      result.data?.choices?.[0]?.message?.content ||
-      "Desculpe, não consegui responder agora.";
+    const resposta = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "nousresearch/nous-capybara-7b",
+        messages
+      })
+    });
+
+    const raw = await resposta.text();
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.status(500).json({
+        error: "A resposta da OpenRouter não veio em JSON.",
+        raw
+      });
+    }
+
+    if (!resposta.ok) {
+      return res.status(resposta.status).json(data);
+    }
+
+    const reply = data?.choices?.[0]?.message?.content;
+
+    if (!reply) {
+      return res.status(500).json({
+        error: "A OpenRouter respondeu sem conteúdo.",
+        data
+      });
+    }
 
     return res.status(200).json({ reply });
 
-  } catch (err) {
-    console.error("💥 Erro inesperado:", err);
-    return res.status(500).json({ error: err.message });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Erro interno no backend.",
+      details: String(error)
+    });
   }
 }
