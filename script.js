@@ -4,8 +4,11 @@ const HISTORY_KEY = "aurora_history_v1";
 const SYSTEM_PROMPT = {
   role: "system",
   content:
-    "Você é Aurora, uma IA de apoio emocional. Seja calma, acolhedora, respeitosa e empática. " +
-    "Não dê diagnósticos médicos. Responda com cuidado. " +
+    "Você é Aurora, uma IA de apoio emocional gentil, fofa, humana e acolhedora. " +
+    "Responda de forma curta, natural e reconfortante. " +
+    "Evite repetir sempre as mesmas frases. Varie as respostas. " +
+    "Às vezes, quando fizer sentido, ofereça uma passagem bíblica de conforto de forma suave e respeitosa. " +
+    "Nunca dê diagnósticos médicos. " +
     "Se houver menção de suicídio, autoagressão ou perigo imediato, recomende ajuda urgente e cite CVV 188 no Brasil."
 };
 
@@ -34,17 +37,6 @@ function limitarHistorico() {
   }
 }
 
-function adicionarMensagem(remetente, texto) {
-  const box = document.getElementById("chat-box");
-  if (!box) return;
-
-  const div = document.createElement("div");
-  div.style.marginBottom = "10px";
-  div.innerHTML = `<strong>${remetente}:</strong> ${escapeHtml(texto)}`;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
-
 function escapeHtml(texto) {
   return String(texto)
     .replaceAll("&", "&amp;")
@@ -52,6 +44,72 @@ function escapeHtml(texto) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function adicionarMensagem(remetente, texto, tipo = "aurora") {
+  const box = document.getElementById("chat-box");
+  if (!box) return null;
+
+  const div = document.createElement("div");
+  div.className = `msg ${tipo === "user" ? "msg-user" : "msg-aurora"}`;
+  div.innerHTML = `<strong>${remetente}</strong><span>${escapeHtml(texto)}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+function mostrarDigitando() {
+  const box = document.getElementById("chat-box");
+  if (!box) return null;
+
+  removerDigitando();
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "typing-wrapper";
+  wrapper.id = "aurora-typing";
+
+  wrapper.innerHTML = `
+    <div class="typing-bubble">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+
+  box.appendChild(wrapper);
+  box.scrollTop = box.scrollHeight;
+  return wrapper;
+}
+
+function removerDigitando() {
+  const el = document.getElementById("aurora-typing");
+  if (el) el.remove();
+}
+
+async function escreverTextoAnimado(remetente, texto) {
+  const box = document.getElementById("chat-box");
+  if (!box) return;
+
+  const div = document.createElement("div");
+  div.className = "msg msg-aurora";
+  div.innerHTML = `<strong>${remetente}</strong><span></span>`;
+  box.appendChild(div);
+
+  const span = div.querySelector("span");
+  let i = 0;
+
+  return new Promise((resolve) => {
+    const intervalo = setInterval(() => {
+      span.innerHTML = escapeHtml(texto.slice(0, i + 1));
+      i++;
+      box.scrollTop = box.scrollHeight;
+
+      if (i >= texto.length) {
+        clearInterval(intervalo);
+        resolve();
+      }
+    }, 18);
+  });
 }
 
 function falar(texto) {
@@ -71,7 +129,9 @@ function falar(texto) {
     voices.find(v => v.lang === "pt-BR") ||
     voices.find(v => v.lang && v.lang.startsWith("pt"));
 
-  if (vozPt) utter.voice = vozPt;
+  if (vozPt) {
+    utter.voice = vozPt;
+  }
 
   synth.speak(utter);
 }
@@ -91,7 +151,7 @@ async function enviarMensagem() {
   const texto = input.value.trim();
   if (!texto) return;
 
-  adicionarMensagem("Você", texto);
+  adicionarMensagem("Você", texto, "user");
   input.value = "";
 
   const mensagensParaEnviar = [
@@ -99,6 +159,8 @@ async function enviarMensagem() {
     ...historico,
     { role: "user", content: texto }
   ];
+
+  mostrarDigitando();
 
   try {
     const resposta = await fetch(API_URL, {
@@ -118,40 +180,57 @@ async function enviarMensagem() {
     try {
       dados = JSON.parse(raw);
     } catch (e) {
+      removerDigitando();
       adicionarMensagem("Aurora", "A resposta da IA veio inválida.");
       console.error("Resposta do backend não é JSON:", raw);
       return;
     }
 
     if (!resposta.ok) {
+      removerDigitando();
+
       if (resposta.status === 402) {
         adicionarMensagem("Aurora", "Esse modelo está sem créditos no momento.");
+      } else if (resposta.status === 429) {
+        adicionarMensagem("Aurora", "A Aurora está recebendo muitas mensagens agora. Tente novamente em instantes.");
       } else {
         adicionarMensagem("Aurora", `Erro da API (${resposta.status}).`);
       }
+
       console.error("Erro HTTP:", resposta.status, dados);
       return;
     }
 
     const respostaIA = dados.reply;
     if (!respostaIA) {
+      removerDigitando();
       adicionarMensagem("Aurora", "A IA não retornou texto.");
       console.error("Sem reply:", dados);
       return;
     }
-
-    adicionarMensagem("Aurora", respostaIA);
-    falar(respostaIA);
 
     historico.push({ role: "user", content: texto });
     historico.push({ role: "assistant", content: respostaIA });
     limitarHistorico();
     salvarHistorico();
 
+    removerDigitando();
+    await escreverTextoAnimado("Aurora", respostaIA);
+    falar(respostaIA);
+
   } catch (erro) {
+    removerDigitando();
     console.error("Erro ao se comunicar com a IA:", erro);
     adicionarMensagem("Aurora", "Ocorreu um erro ao se comunicar com a IA.");
   }
+}
+
+function limparMemoriaAurora() {
+  historico = [];
+  localStorage.removeItem(HISTORY_KEY);
+
+  const box = document.getElementById("chat-box");
+  if (box) box.innerHTML = "";
 }
 
 window.addEventListener("DOMContentLoaded", () => {
