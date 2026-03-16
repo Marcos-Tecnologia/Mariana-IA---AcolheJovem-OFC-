@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "nousresearch/nous-capybara-7b",
+        model: "openai/gpt-4o",",
         messages
       })
     });
