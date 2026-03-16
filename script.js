@@ -36,7 +36,10 @@ function limitarHistorico() {
 
 function adicionarMensagem(remetente, texto) {
   const box = document.getElementById("chat-box");
-  if (!box) return;
+  if (!box) {
+    console.error("chat-box não encontrado");
+    return;
+  }
 
   const div = document.createElement("div");
   div.style.marginBottom = "10px";
@@ -71,7 +74,9 @@ function falar(texto) {
     voices.find(v => v.lang === "pt-BR") ||
     voices.find(v => v.lang && v.lang.startsWith("pt"));
 
-  if (vozPt) utter.voice = vozPt;
+  if (vozPt) {
+    utter.voice = vozPt;
+  }
 
   synth.speak(utter);
 }
@@ -86,7 +91,10 @@ function abrirChat() {
 
 async function enviarMensagem() {
   const input = document.getElementById("user-input");
-  if (!input) return;
+  if (!input) {
+    console.error("user-input não encontrado");
+    return;
+  }
 
   const texto = input.value.trim();
   if (!texto) return;
@@ -112,26 +120,27 @@ async function enviarMensagem() {
     });
 
     const raw = await resposta.text();
-    let dados;
+    console.log("RAW /api/chat:", raw);
 
+    let dados;
     try {
       dados = JSON.parse(raw);
     } catch (e) {
-      console.error("Resposta não JSON:", raw);
       adicionarMensagem("Aurora", "A resposta da IA veio inválida.");
+      console.error("Resposta do backend não é JSON:", raw);
       return;
     }
 
     if (!resposta.ok) {
-      console.error("Erro HTTP:", resposta.status, dados);
       adicionarMensagem("Aurora", `Erro da API (${resposta.status}).`);
+      console.error("Erro HTTP:", resposta.status, dados);
       return;
     }
 
-    const respostaIA = dados?.reply || dados?.choices?.[0]?.message?.content;
+    const respostaIA = dados.reply;
     if (!respostaIA) {
-      console.error("Resposta sem conteúdo:", dados);
       adicionarMensagem("Aurora", "A IA não retornou texto.");
+      console.error("Sem reply:", dados);
       return;
     }
 
@@ -149,13 +158,34 @@ async function enviarMensagem() {
   }
 }
 
+function limparMemoriaAurora() {
+  historico = [];
+  localStorage.removeItem(HISTORY_KEY);
+
+  const box = document.getElementById("chat-box");
+  if (box) box.innerHTML = "";
+
+  console.log("Memória da Aurora limpa");
+}
+
 window.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM carregado");
+
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
   const input = document.getElementById("user-input");
 
-  if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
-  if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
+  if (!btnAbrir) {
+    console.error("Botão btn-abrir-chat não encontrado");
+  } else {
+    btnAbrir.addEventListener("click", abrirChat);
+  }
+
+  if (!btnEnviar) {
+    console.error("Botão btn-enviar não encontrado");
+  } else {
+    btnEnviar.addEventListener("click", enviarMensagem);
+  }
 
   if (input) {
     input.addEventListener("keydown", (e) => {
