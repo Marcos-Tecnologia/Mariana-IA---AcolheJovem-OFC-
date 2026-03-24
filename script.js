@@ -1,6 +1,7 @@
 const API_URL = "/api/chat";
 const CONVERSATIONS_KEY = "aurora_conversations_v1";
 const ACTIVE_CONVERSATION_KEY = "aurora_active_conversation_v1";
+const THEME_KEY = "aurora_theme_v1";
 
 const SYSTEM_PROMPT = {
   role: "system",
@@ -17,6 +18,7 @@ const SYSTEM_PROMPT = {
 let conversations = carregarConversas();
 let activeConversationId = carregarConversaAtiva();
 
+aplicarTemaSalvo();
 garantirConversaInicial();
 renderConversationList();
 
@@ -44,6 +46,26 @@ function salvarConversaAtiva() {
   if (activeConversationId) {
     localStorage.setItem(ACTIVE_CONVERSATION_KEY, activeConversationId);
   }
+}
+
+function aplicarTema(theme) {
+  document.body.setAttribute("data-theme", theme);
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function aplicarTemaSalvo() {
+  const theme = localStorage.getItem(THEME_KEY) || "rosa";
+  document.body.setAttribute("data-theme", theme);
+}
+
+function abrirConfig() {
+  const modal = document.getElementById("config-modal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function fecharConfig() {
+  const modal = document.getElementById("config-modal");
+  if (modal) modal.classList.add("hidden");
 }
 
 function gerarId() {
@@ -312,24 +334,18 @@ function escolherVozFemininaCalma() {
   if (!("speechSynthesis" in window)) return null;
 
   const voices = window.speechSynthesis.getVoices();
-
   if (!voices || voices.length === 0) return null;
 
-  const favoritas = [
-    "maria",
-    "helena",
-    "luciana",
-    "female",
-    "feminina",
-    "google português do brasil",
-    "portuguese brazil",
-    "pt-br"
-  ];
-
-  let voz =
+  const voz =
     voices.find(v =>
       v.lang === "pt-BR" &&
-      favoritas.some(nome => v.name.toLowerCase().includes(nome))
+      (
+        v.name.toLowerCase().includes("female") ||
+        v.name.toLowerCase().includes("feminina") ||
+        v.name.toLowerCase().includes("maria") ||
+        v.name.toLowerCase().includes("helena") ||
+        v.name.toLowerCase().includes("luciana")
+      )
     ) ||
     voices.find(v => v.lang === "pt-BR") ||
     voices.find(v => v.lang && v.lang.startsWith("pt")) ||
@@ -346,8 +362,8 @@ function falar(texto) {
 
   const utter = new SpeechSynthesisUtterance(texto);
   utter.lang = "pt-BR";
-  utter.rate = 0.82;   // mais calma
-  utter.pitch = 1.05;  // levemente suave
+  utter.rate = 0.82;
+  utter.pitch = 1.05;
   utter.volume = 1;
 
   const voz = escolherVozFemininaCalma();
@@ -487,12 +503,24 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnEnviar = document.getElementById("btn-enviar");
   const btnNova = document.getElementById("btn-nova-conversa");
   const btnExcluir = document.getElementById("btn-excluir-conversa");
+  const btnConfig = document.getElementById("btn-config");
+  const btnFecharConfig = document.getElementById("btn-fechar-config");
   const input = document.getElementById("user-input");
+  const themeButtons = document.querySelectorAll(".theme-btn");
 
   if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
   if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
   if (btnNova) btnNova.addEventListener("click", criarNovaConversa);
   if (btnExcluir) btnExcluir.addEventListener("click", excluirConversaAtual);
+  if (btnConfig) btnConfig.addEventListener("click", abrirConfig);
+  if (btnFecharConfig) btnFecharConfig.addEventListener("click", fecharConfig);
+
+  themeButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const theme = btn.getAttribute("data-theme-choice");
+      aplicarTema(theme);
+    });
+  });
 
   if (input) {
     input.addEventListener("keydown", (e) => {
