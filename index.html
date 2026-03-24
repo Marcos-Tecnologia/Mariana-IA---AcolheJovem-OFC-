@@ -6,14 +6,16 @@
   <title>Aurora - IA de Apoio Social</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body data-theme="rosa">
   <div id="app">
 
     <aside id="sidebar">
       <div class="sidebar-top">
         <h2>Aurora</h2>
+
         <button id="btn-nova-conversa" type="button">+ Nova conversa</button>
         <button id="btn-excluir-conversa" type="button">Excluir conversa</button>
+        <button id="btn-config" type="button">⚙️ Configurações</button>
       </div>
 
       <div id="conversation-list"></div>
@@ -40,7 +42,7 @@
           <textarea
             id="user-input"
             rows="3"
-            placeholder="Escreva o que estiver sentindo..."
+            placeholder="Digite sua mensagem ❤️"
           ></textarea>
 
           <button id="btn-enviar" type="button">Enviar</button>
@@ -49,6 +51,23 @@
       </div>
     </main>
 
+  </div>
+
+  <!-- Modal de configurações -->
+  <div id="config-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Configurações</h2>
+      <p>Escolha um tema:</p>
+
+      <div class="theme-options">
+        <button class="theme-btn" data-theme-choice="rosa">Rosa</button>
+        <button class="theme-btn" data-theme-choice="azul">Azul</button>
+        <button class="theme-btn" data-theme-choice="branco">Branco</button>
+        <button class="theme-btn" data-theme-choice="preto">Preto</button>
+      </div>
+
+      <button id="btn-fechar-config" type="button">Fechar</button>
+    </div>
   </div>
 
   <script src="script.js"></script>
