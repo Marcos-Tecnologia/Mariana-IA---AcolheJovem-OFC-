@@ -52,6 +52,7 @@ function gerarId() {
 
 function criarNovaConversa() {
   const id = gerarId();
+
   const nova = {
     id,
     title: "Nova conversa",
@@ -61,6 +62,7 @@ function criarNovaConversa() {
 
   conversations.unshift(nova);
   activeConversationId = id;
+
   salvarConversas();
   salvarConversaAtiva();
   renderConversationList();
@@ -69,24 +71,32 @@ function criarNovaConversa() {
 }
 
 function excluirConversaAtual() {
-  if (conversations.length === 0) return;
+  const conv = getActiveConversation();
 
-  const confirmacao = confirm("Deseja excluir esta conversa?");
-  if (!confirmacao) return;
+  if (!conv) {
+    alert("Nenhuma conversa selecionada.");
+    return;
+  }
+
+  const confirmar = confirm(`Deseja excluir a conversa "${conv.title}"?`);
+  if (!confirmar) return;
 
   conversations = conversations.filter(c => c.id !== activeConversationId);
 
   if (conversations.length === 0) {
     const id = gerarId();
-    conversations.push({
+    const nova = {
       id,
       title: "Nova conversa",
       messages: [],
       updatedAt: new Date().toISOString()
-    });
+    };
+    conversations.unshift(nova);
+    activeConversationId = id;
+  } else {
+    activeConversationId = conversations[0].id;
   }
 
-  activeConversationId = conversations[0].id;
   salvarConversas();
   salvarConversaAtiva();
   renderConversationList();
@@ -100,6 +110,7 @@ function garantirConversaInicial() {
   }
 
   const existe = conversations.some(c => c.id === activeConversationId);
+
   if (!activeConversationId || !existe) {
     activeConversationId = conversations[0].id;
     salvarConversaAtiva();
@@ -210,10 +221,12 @@ function adicionarMensagem(remetente, texto, tipo = "aurora", createdAt = null) 
     const reaction = document.createElement("div");
     reaction.className = "msg-reactions";
     reaction.innerHTML = `<span>🤍</span>`;
+
     reaction.onclick = () => {
       const span = reaction.querySelector("span");
       span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
     };
+
     div.appendChild(reaction);
   }
 
@@ -295,6 +308,36 @@ async function escreverTextoAnimado(remetente, texto, createdAt) {
   });
 }
 
+function escolherVozFemininaCalma() {
+  if (!("speechSynthesis" in window)) return null;
+
+  const voices = window.speechSynthesis.getVoices();
+
+  if (!voices || voices.length === 0) return null;
+
+  const favoritas = [
+    "maria",
+    "helena",
+    "luciana",
+    "female",
+    "feminina",
+    "google português do brasil",
+    "portuguese brazil",
+    "pt-br"
+  ];
+
+  let voz =
+    voices.find(v =>
+      v.lang === "pt-BR" &&
+      favoritas.some(nome => v.name.toLowerCase().includes(nome))
+    ) ||
+    voices.find(v => v.lang === "pt-BR") ||
+    voices.find(v => v.lang && v.lang.startsWith("pt")) ||
+    null;
+
+  return voz;
+}
+
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
 
@@ -303,18 +346,18 @@ function falar(texto) {
 
   const utter = new SpeechSynthesisUtterance(texto);
   utter.lang = "pt-BR";
-  utter.rate = 0.88;
-  utter.pitch = 1;
+  utter.rate = 0.82;   // mais calma
+  utter.pitch = 1.05;  // levemente suave
   utter.volume = 1;
 
-  const voices = synth.getVoices();
-  const vozPt =
-    voices.find(v => v.lang === "pt-BR") ||
-    voices.find(v => v.lang && v.lang.startsWith("pt"));
-
-  if (vozPt) utter.voice = vozPt;
+  const voz = escolherVozFemininaCalma();
+  if (voz) utter.voice = voz;
 
   synth.speak(utter);
+}
+
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.onvoiceschanged = () => {};
 }
 
 function abrirChat() {
