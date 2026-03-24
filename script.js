@@ -68,6 +68,31 @@ function criarNovaConversa() {
   abrirChat();
 }
 
+function excluirConversaAtual() {
+  if (conversations.length === 0) return;
+
+  const confirmacao = confirm("Deseja excluir esta conversa?");
+  if (!confirmacao) return;
+
+  conversations = conversations.filter(c => c.id !== activeConversationId);
+
+  if (conversations.length === 0) {
+    const id = gerarId();
+    conversations.push({
+      id,
+      title: "Nova conversa",
+      messages: [],
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  activeConversationId = conversations[0].id;
+  salvarConversas();
+  salvarConversaAtiva();
+  renderConversationList();
+  renderChat();
+}
+
 function garantirConversaInicial() {
   if (conversations.length === 0) {
     criarNovaConversa();
@@ -418,11 +443,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
   const btnNova = document.getElementById("btn-nova-conversa");
+  const btnExcluir = document.getElementById("btn-excluir-conversa");
   const input = document.getElementById("user-input");
 
   if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
   if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
   if (btnNova) btnNova.addEventListener("click", criarNovaConversa);
+  if (btnExcluir) btnExcluir.addEventListener("click", excluirConversaAtual);
 
   if (input) {
     input.addEventListener("keydown", (e) => {
