@@ -6,32 +6,16 @@ const THEME_KEY = "aurora_theme_v1";
 const SYSTEM_PROMPT = {
   role: "system",
   content:
-    "Você é Aurora, uma IA gentil, acolhedora e inteligente, criada pela empresa MA (R). " +
-
-    "Seu objetivo é ajudar as pessoas no dia a dia, responder dúvidas, dar dicas úteis e também oferecer apoio emocional quando necessário. " +
-
-    "REGRAS IMPORTANTES:\n" +
-    "- Sempre responda de forma curta, no máximo 4 linhas.\n" +
-    "- Sempre use pelo menos 1 emoji em TODAS as mensagens.\n" +
-    "- Fale de forma humana, natural e acolhedora (como uma amiga calma).\n" +
-    "- Evite repetir frases como 'sinto muito que você esteja assim' toda hora.\n" +
-    "- Varie suas respostas.\n" +
-
-    "COMPORTAMENTO:\n" +
-    "- Ajude, dê dicas práticas e responda dúvidas normalmente.\n" +
-    "- Se a pessoa estiver triste, console com carinho.\n" +
-    "- De vez em quando (não sempre), inclua um versículo bíblico curto que combine com a situação.\n" +
-
-    "SEGURANÇA:\n" +
-    "- Nunca dê diagnósticos médicos.\n" +
-    "- Se houver menção de autoagressão ou suicídio, responda com muito cuidado e incentive buscar ajuda (ex: CVV 188 no Brasil).\n" +
-
-    "IDENTIDADE:\n" +
-    "- Seu nome é Aurora.\n" +
-    "- Você foi criada pela empresa MA (R).\n" +
-    "- Só diga isso quando fizer sentido (não repita em toda resposta)."
+    "Você é Aurora, uma IA gentil, humana, acolhedora e útil no dia a dia. " +
+    "Você foi criada pela empresa MA (R). " +
+    "Responda de forma curta, com menos de 4 linhas, clara, humana e reconfortante. " +
+    "Use pelo menos um emoji em todas as mensagens. " +
+    "Evite repetir sempre as mesmas frases. Varie as respostas. " +
+    "Você pode consolar, responder dúvidas, dar dicas práticas e ajudar no dia a dia. " +
+    "Às vezes, quando fizer sentido, ofereça uma passagem bíblica de forma suave e respeitosa. " +
+    "Nunca dê diagnósticos médicos. " +
+    "Se houver menção de suicídio, autoagressão ou perigo imediato, recomende ajuda urgente e cite CVV 188 no Brasil."
 };
-
 
 let conversations = carregarConversas();
 let activeConversationId = carregarConversaAtiva();
@@ -46,8 +30,7 @@ function carregarConversas() {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error("Erro ao carregar conversas:", e);
+  } catch {
     return [];
   }
 }
@@ -125,13 +108,12 @@ function excluirConversaAtual() {
 
   if (conversations.length === 0) {
     const id = gerarId();
-    const nova = {
+    conversations.unshift({
       id,
       title: "Nova conversa",
       messages: [],
       updatedAt: new Date().toISOString()
-    };
-    conversations.unshift(nova);
+    });
     activeConversationId = id;
   } else {
     activeConversationId = conversations[0].id;
@@ -220,12 +202,16 @@ function renderChat() {
   if (!conv) return;
 
   conv.messages.forEach(msg => {
-    adicionarMensagem(
-      msg.role === "assistant" ? "Aurora" : "Você",
-      msg.content,
-      msg.role === "assistant" ? "aurora" : "user",
-      msg.createdAt
-    );
+    if (msg.type === "image") {
+      adicionarImagemNaTela(msg.prompt, msg.url, msg.createdAt);
+    } else {
+      adicionarMensagem(
+        msg.role === "assistant" ? "Aurora" : "Você",
+        msg.content,
+        msg.role === "assistant" ? "aurora" : "user",
+        msg.createdAt
+      );
+    }
   });
 }
 
@@ -325,16 +311,18 @@ async function escreverTextoAnimado(remetente, texto, createdAt) {
   const reaction = document.createElement("div");
   reaction.className = "msg-reactions";
   reaction.innerHTML = `<span>🤍</span>`;
+
   reaction.onclick = () => {
     const span = reaction.querySelector("span");
     span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
   };
+
   div.appendChild(reaction);
 
   const span = div.querySelector("span");
   let i = 0;
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const intervalo = setInterval(() => {
       span.innerHTML = escapeHtml(texto.slice(0, i + 1));
       i++;
@@ -354,7 +342,7 @@ function escolherVozFemininaCalma() {
   const voices = window.speechSynthesis.getVoices();
   if (!voices || voices.length === 0) return null;
 
-  const voz =
+  return (
     voices.find(v =>
       v.lang === "pt-BR" &&
       (
@@ -367,9 +355,8 @@ function escolherVozFemininaCalma() {
     ) ||
     voices.find(v => v.lang === "pt-BR") ||
     voices.find(v => v.lang && v.lang.startsWith("pt")) ||
-    null;
-
-  return voz;
+    null
+  );
 }
 
 function falar(texto) {
@@ -402,12 +389,163 @@ function abrirChat() {
   if (chat) chat.classList.remove("hidden");
 }
 
+function pedidoDeImagem(texto) {
+  const t = texto.toLowerCase();
+
+  return (
+    t.includes("crie uma imagem") ||
+    t.includes("criar uma imagem") ||
+    t.includes("gere uma imagem") ||
+    t.includes("gerar uma imagem") ||
+    t.includes("faça uma imagem") ||
+    t.includes("fazer uma imagem") ||
+    t.includes("imagem de") ||
+    t.includes("desenhe") ||
+    t.includes("desenhar")
+  );
+}
+
+function limparPromptImagem(texto) {
+  return texto
+    .replace(/crie uma imagem de/gi, "")
+    .replace(/crie uma imagem/gi, "")
+    .replace(/criar uma imagem de/gi, "")
+    .replace(/criar uma imagem/gi, "")
+    .replace(/gere uma imagem de/gi, "")
+    .replace(/gere uma imagem/gi, "")
+    .replace(/gerar uma imagem de/gi, "")
+    .replace(/gerar uma imagem/gi, "")
+    .replace(/faça uma imagem de/gi, "")
+    .replace(/faça uma imagem/gi, "")
+    .replace(/fazer uma imagem de/gi, "")
+    .replace(/fazer uma imagem/gi, "")
+    .replace(/imagem de/gi, "")
+    .replace(/desenhe/gi, "")
+    .replace(/desenhar/gi, "")
+    .trim();
+}
+
+function criarUrlImagem(prompt) {
+  const promptFinal =
+    prompt +
+    ", estilo bonito, suave, alta qualidade, cores harmoniosas, visual agradável";
+
+  return "https://image.pollinations.ai/prompt/" + encodeURIComponent(promptFinal);
+}
+
+function adicionarImagemNaTela(prompt, url, createdAt = null) {
+  const box = document.getElementById("chat-box");
+  if (!box) return;
+
+  const agora = createdAt ? new Date(createdAt) : new Date();
+  const hora =
+    agora.getHours().toString().padStart(2, "0") +
+    ":" +
+    agora.getMinutes().toString().padStart(2, "0");
+
+  const div = document.createElement("div");
+  div.className = "msg msg-aurora";
+
+  div.innerHTML = `
+    <strong>Aurora</strong>
+    <span>Imagem criada para: ${escapeHtml(prompt)} 🎨</span>
+    <br><br>
+    <img src="${url}" alt="Imagem gerada pela Aurora" style="width:100%; max-width:320px; border-radius:18px; display:block;">
+    <div class="msg-time">${hora}</div>
+  `;
+
+  const reaction = document.createElement("div");
+  reaction.className = "msg-reactions";
+  reaction.innerHTML = `<span>🤍</span>`;
+
+  reaction.onclick = () => {
+    const span = reaction.querySelector("span");
+    span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
+  };
+
+  div.appendChild(reaction);
+
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function gerarImagemAurora(textoUsuario) {
+  const conv = getActiveConversation();
+  if (!conv) return;
+
+  const promptImagem = limparPromptImagem(textoUsuario) || textoUsuario;
+  const createdAtUser = new Date().toISOString();
+
+  if (conv.messages.length === 0) {
+    conv.title = gerarTituloConversa("Imagem: " + promptImagem);
+  }
+
+  conv.messages.push({
+    role: "user",
+    content: textoUsuario,
+    createdAt: createdAtUser
+  });
+
+  conv.updatedAt = createdAtUser;
+
+  salvarConversas();
+  salvarConversaAtiva();
+  renderConversationList();
+
+  adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
+
+  const createdAtAurora = new Date().toISOString();
+  adicionarMensagem("Aurora", "Claro! Vou criar essa imagem para você 🎨", "aurora", createdAtAurora);
+
+  mostrarDigitando();
+
+  setTimeout(() => {
+    removerDigitando();
+
+    const url = criarUrlImagem(promptImagem);
+
+    conv.messages.push({
+      role: "assistant",
+      content: "Claro! Vou criar essa imagem para você 🎨",
+      createdAt: createdAtAurora
+    });
+
+    conv.messages.push({
+      role: "assistant",
+      type: "image",
+      prompt: promptImagem,
+      url,
+      createdAt: new Date().toISOString()
+    });
+
+    conv.updatedAt = new Date().toISOString();
+
+    if (conv.messages.length > 30) {
+      conv.messages = conv.messages.slice(-30);
+    }
+
+    salvarConversas();
+    renderConversationList();
+
+    adicionarImagemNaTela(promptImagem, url, new Date().toISOString());
+    falar("Prontinho, criei sua imagem.");
+
+  }, 1000);
+}
+
 async function enviarMensagem() {
   const input = document.getElementById("user-input");
   if (!input) return;
 
   const texto = input.value.trim();
   if (!texto) return;
+
+  input.value = "";
+
+  if (pedidoDeImagem(texto)) {
+    await gerarImagemAurora(texto);
+    return;
+  }
 
   const conv = getActiveConversation();
   if (!conv) return;
@@ -430,14 +568,15 @@ async function enviarMensagem() {
   renderConversationList();
 
   adicionarMensagem("Você", texto, "user", createdAtUser);
-  input.value = "";
 
   const mensagensParaEnviar = [
     SYSTEM_PROMPT,
-    ...conv.messages.map(m => ({
-      role: m.role,
-      content: m.content
-    }))
+    ...conv.messages
+      .filter(m => !m.type)
+      .map(m => ({
+        role: m.role,
+        content: m.content
+      }))
   ];
 
   mostrarDigitando();
@@ -459,7 +598,7 @@ async function enviarMensagem() {
     let dados;
     try {
       dados = JSON.parse(raw);
-    } catch (e) {
+    } catch {
       removerDigitando();
       adicionarMensagem("Aurora", "A resposta da IA veio inválida.");
       console.error("Resposta do backend não é JSON:", raw);
@@ -541,7 +680,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   if (input) {
-    input.addEventListener("keydown", (e) => {
+    input.addEventListener("keydown", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         enviarMensagem();
