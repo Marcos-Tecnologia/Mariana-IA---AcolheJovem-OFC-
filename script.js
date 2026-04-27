@@ -1,28 +1,24 @@
 const API_URL = "/api/chat";
-const CONVERSATIONS_KEY = "aurora_conversations_v1";
-const ACTIVE_CONVERSATION_KEY = "aurora_active_conversation_v1";
-const THEME_KEY = "aurora_theme_v1";
+const CONVERSATIONS_KEY = "maxi_conversations_v1";
+const ACTIVE_CONVERSATION_KEY = "maxi_active_conversation_v1";
+const THEME_KEY = "maxi_theme_v1";
 
 const SYSTEM_PROMPT = {
   role: "system",
   content:
-    "Você é Aurora, uma IA gentil, humana, acolhedora e útil no dia a dia. " +
-    "Você foi criada pela empresa MA (R). " +
-    "Responda de forma curta, com menos de 4 linhas, clara, humana e reconfortante. " +
-    "Use pelo menos um emoji em todas as mensagens. " +
-    "Evite repetir sempre as mesmas frases. Varie as respostas. " +
-    "Você pode consolar, responder dúvidas, dar dicas práticas e ajudar no dia a dia. " +
-    "Às vezes, quando fizer sentido, ofereça uma passagem bíblica de forma suave e respeitosa. " +
-    "Nunca dê diagnósticos médicos. " +
-    "Se houver menção de suicídio, autoagressão ou perigo imediato, recomende ajuda urgente e cite CVV 188 no Brasil."
+    "Você é Maxi, uma IA inteligente criada pela empresa MA (R). " +
+    "Seu objetivo é ajudar em pesquisas, estudos, dúvidas, tarefas do dia a dia, dicas práticas e criação de ideias. " +
+    "Responda de forma clara, útil e natural, com no máximo 4 linhas na maioria das respostas. " +
+    "Use pelo menos 1 emoji em todas as mensagens. " +
+    "Seja moderna, simples de entender e evite repetir frases. " +
+    "Você pode ajudar com estudos, pesquisas, explicações, criatividade, organização, dúvidas e conselhos práticos. " +
+    "Quando fizer sentido, pode oferecer um versículo bíblico curto de forma suave e respeitosa. " +
+    "Não seja excessivamente emocional, mas seja educada, amigável e prestativa. " +
+    "Nunca dê diagnósticos médicos. Em situações graves, recomende ajuda profissional."
 };
 
 let conversations = carregarConversas();
 let activeConversationId = carregarConversaAtiva();
-
-aplicarTemaSalvo();
-garantirConversaInicial();
-renderConversationList();
 
 function carregarConversas() {
   try {
@@ -156,7 +152,16 @@ function formatarHorario(dataIso) {
 function gerarTituloConversa(texto) {
   const limpo = texto.trim();
   if (!limpo) return "Nova conversa";
-  return limpo.length > 28 ? limpo.slice(0, 28) + "..." : limpo;
+  return limpo.length > 30 ? limpo.slice(0, 30) + "..." : limpo;
+}
+
+function escapeHtml(texto) {
+  return String(texto)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function renderConversationList() {
@@ -171,12 +176,14 @@ function renderConversationList() {
 
     const previewMessage =
       conv.messages.length > 0
-        ? conv.messages[conv.messages.length - 1].content
+        ? (conv.messages[conv.messages.length - 1].type === "image"
+            ? "Imagem / cena gerada"
+            : conv.messages[conv.messages.length - 1].content)
         : "Sem mensagens ainda";
 
     item.innerHTML = `
       <div class="conversation-title">${escapeHtml(conv.title)}</div>
-      <div class="conversation-preview">${escapeHtml(previewMessage.slice(0, 60))}</div>
+      <div class="conversation-preview">${escapeHtml(String(previewMessage).slice(0, 60))}</div>
       <div class="conversation-time">${formatarHorario(conv.updatedAt)}</div>
     `;
 
@@ -203,28 +210,19 @@ function renderChat() {
 
   conv.messages.forEach(msg => {
     if (msg.type === "image") {
-      adicionarImagemNaTela(msg.prompt, msg.url, msg.createdAt);
+      adicionarImagemNaTela(msg.prompt, msg.url, msg.createdAt, msg.animated);
     } else {
       adicionarMensagem(
-        msg.role === "assistant" ? "Aurora" : "Você",
+        msg.role === "assistant" ? "Maxi" : "Você",
         msg.content,
-        msg.role === "assistant" ? "aurora" : "user",
+        msg.role === "assistant" ? "maxi" : "user",
         msg.createdAt
       );
     }
   });
 }
 
-function escapeHtml(texto) {
-  return String(texto)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function adicionarMensagem(remetente, texto, tipo = "aurora", createdAt = null) {
+function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
   const box = document.getElementById("chat-box");
   if (!box) return null;
 
@@ -235,7 +233,7 @@ function adicionarMensagem(remetente, texto, tipo = "aurora", createdAt = null) 
     agora.getMinutes().toString().padStart(2, "0");
 
   const div = document.createElement("div");
-  div.className = `msg ${tipo === "user" ? "msg-user" : "msg-aurora"}`;
+  div.className = `msg ${tipo === "user" ? "msg-user" : "msg-maxi"}`;
 
   div.innerHTML = `
     <strong>${remetente}</strong>
@@ -261,18 +259,24 @@ function adicionarMensagem(remetente, texto, tipo = "aurora", createdAt = null) 
   return div;
 }
 
-function mostrarDigitando() {
+function mostrarCarregando(tipo = "mensagem") {
   const box = document.getElementById("chat-box");
   if (!box) return null;
 
-  removerDigitando();
+  removerCarregando();
+
+  let texto = "Maxi está pensando";
+
+  if (tipo === "imagem") texto = "Gerando imagem";
+  if (tipo === "cena") texto = "Criando cena animada";
 
   const wrapper = document.createElement("div");
   wrapper.className = "typing-wrapper";
-  wrapper.id = "aurora-typing";
+  wrapper.id = "maxi-loading";
 
   wrapper.innerHTML = `
     <div class="typing-bubble">
+      <span class="typing-label">${texto}</span>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
@@ -284,8 +288,8 @@ function mostrarDigitando() {
   return wrapper;
 }
 
-function removerDigitando() {
-  const el = document.getElementById("aurora-typing");
+function removerCarregando() {
+  const el = document.getElementById("maxi-loading");
   if (el) el.remove();
 }
 
@@ -300,7 +304,7 @@ async function escreverTextoAnimado(remetente, texto, createdAt) {
     data.getMinutes().toString().padStart(2, "0");
 
   const div = document.createElement("div");
-  div.className = "msg msg-aurora";
+  div.className = "msg msg-maxi";
   div.innerHTML = `
     <strong>${remetente}</strong>
     <span></span>
@@ -332,7 +336,7 @@ async function escreverTextoAnimado(remetente, texto, createdAt) {
         clearInterval(intervalo);
         resolve();
       }
-    }, 18);
+    }, 16);
   });
 }
 
@@ -367,8 +371,8 @@ function falar(texto) {
 
   const utter = new SpeechSynthesisUtterance(texto);
   utter.lang = "pt-BR";
-  utter.rate = 0.82;
-  utter.pitch = 1.05;
+  utter.rate = 0.84;
+  utter.pitch = 1.02;
   utter.volume = 1;
 
   const voz = escolherVozFemininaCalma();
@@ -389,10 +393,19 @@ function abrirChat() {
   if (chat) chat.classList.remove("hidden");
 }
 
-function pedidoDeImagem(texto) {
+function detectarTipoVisual(texto) {
   const t = texto.toLowerCase();
 
-  return (
+  const cena =
+    t.includes("cena animada") ||
+    t.includes("mini vídeo") ||
+    t.includes("mini video") ||
+    t.includes("vídeo fake") ||
+    t.includes("video fake");
+
+  if (cena) return "cena";
+
+  const imagem =
     t.includes("crie uma imagem") ||
     t.includes("criar uma imagem") ||
     t.includes("gere uma imagem") ||
@@ -401,12 +414,23 @@ function pedidoDeImagem(texto) {
     t.includes("fazer uma imagem") ||
     t.includes("imagem de") ||
     t.includes("desenhe") ||
-    t.includes("desenhar")
-  );
+    t.includes("desenhar");
+
+  if (imagem) return "imagem";
+
+  return null;
 }
 
-function limparPromptImagem(texto) {
+function limparPromptVisual(texto) {
   return texto
+    .replace(/crie uma cena animada de/gi, "")
+    .replace(/crie uma cena animada/gi, "")
+    .replace(/gerar cena animada de/gi, "")
+    .replace(/gerar cena animada/gi, "")
+    .replace(/gere uma cena animada de/gi, "")
+    .replace(/gere uma cena animada/gi, "")
+    .replace(/mini vídeo de/gi, "")
+    .replace(/mini video de/gi, "")
     .replace(/crie uma imagem de/gi, "")
     .replace(/crie uma imagem/gi, "")
     .replace(/criar uma imagem de/gi, "")
@@ -425,15 +449,17 @@ function limparPromptImagem(texto) {
     .trim();
 }
 
-function criarUrlImagem(prompt) {
-  const promptFinal =
-    prompt +
-    ", estilo bonito, suave, alta qualidade, cores harmoniosas, visual agradável";
+function criarUrlImagem(prompt, animated = false) {
+  const extra = animated
+    ? ", cena cinematográfica, movimento suave, visual bonito, alta qualidade"
+    : ", estilo bonito, alta qualidade, cores harmoniosas, visual agradável";
+
+  const promptFinal = prompt + extra;
 
   return "https://image.pollinations.ai/prompt/" + encodeURIComponent(promptFinal);
 }
 
-function adicionarImagemNaTela(prompt, url, createdAt = null) {
+function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) {
   const box = document.getElementById("chat-box");
   if (!box) return;
 
@@ -444,13 +470,12 @@ function adicionarImagemNaTela(prompt, url, createdAt = null) {
     agora.getMinutes().toString().padStart(2, "0");
 
   const div = document.createElement("div");
-  div.className = "msg msg-aurora";
+  div.className = "msg msg-maxi";
 
   div.innerHTML = `
-    <strong>Aurora</strong>
-    <span>Imagem criada para: ${escapeHtml(prompt)} 🎨</span>
-    <br><br>
-    <img src="${url}" alt="Imagem gerada pela Aurora" style="width:100%; max-width:320px; border-radius:18px; display:block;">
+    <strong>Maxi</strong>
+    <span>${animated ? "Cena animada criada para" : "Imagem criada para"}: ${escapeHtml(prompt)} 🎨</span>
+    <img src="${url}" alt="Visual gerado pela Maxi" class="${animated ? "animated-scene-img" : "generated-image"}">
     <div class="msg-time">${hora}</div>
   `;
 
@@ -469,15 +494,16 @@ function adicionarImagemNaTela(prompt, url, createdAt = null) {
   box.scrollTop = box.scrollHeight;
 }
 
-async function gerarImagemAurora(textoUsuario) {
+async function gerarVisualMaxi(textoUsuario, tipo) {
   const conv = getActiveConversation();
   if (!conv) return;
 
-  const promptImagem = limparPromptImagem(textoUsuario) || textoUsuario;
+  const promptVisual = limparPromptVisual(textoUsuario) || textoUsuario;
+  const animated = tipo === "cena";
   const createdAtUser = new Date().toISOString();
 
   if (conv.messages.length === 0) {
-    conv.title = gerarTituloConversa("Imagem: " + promptImagem);
+    conv.title = gerarTituloConversa((animated ? "Cena: " : "Imagem: ") + promptVisual);
   }
 
   conv.messages.push({
@@ -494,43 +520,48 @@ async function gerarImagemAurora(textoUsuario) {
 
   adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
 
-  const createdAtAurora = new Date().toISOString();
-  adicionarMensagem("Aurora", "Claro! Vou criar essa imagem para você 🎨", "aurora", createdAtAurora);
+  const createdAtMaxi = new Date().toISOString();
+  const respostaTexto = animated
+    ? "Beleza! Vou criar uma cena animada para você 🎬"
+    : "Claro! Vou criar essa imagem para você 🎨";
 
-  mostrarDigitando();
+  conv.messages.push({
+    role: "assistant",
+    content: respostaTexto,
+    createdAt: createdAtMaxi
+  });
+
+  adicionarMensagem("Maxi", respostaTexto, "maxi", createdAtMaxi);
+
+  mostrarCarregando(animated ? "cena" : "imagem");
 
   setTimeout(() => {
-    removerDigitando();
+    removerCarregando();
 
-    const url = criarUrlImagem(promptImagem);
-
-    conv.messages.push({
-      role: "assistant",
-      content: "Claro! Vou criar essa imagem para você 🎨",
-      createdAt: createdAtAurora
-    });
+    const url = criarUrlImagem(promptVisual, animated);
+    const createdAtImage = new Date().toISOString();
 
     conv.messages.push({
       role: "assistant",
       type: "image",
-      prompt: promptImagem,
+      prompt: promptVisual,
       url,
-      createdAt: new Date().toISOString()
+      animated,
+      createdAt: createdAtImage
     });
 
-    conv.updatedAt = new Date().toISOString();
+    conv.updatedAt = createdAtImage;
 
-    if (conv.messages.length > 30) {
-      conv.messages = conv.messages.slice(-30);
+    if (conv.messages.length > 40) {
+      conv.messages = conv.messages.slice(-40);
     }
 
     salvarConversas();
     renderConversationList();
 
-    adicionarImagemNaTela(promptImagem, url, new Date().toISOString());
-    falar("Prontinho, criei sua imagem.");
-
-  }, 1000);
+    adicionarImagemNaTela(promptVisual, url, createdAtImage, animated);
+    falar(animated ? "Prontinho, criei sua cena animada." : "Prontinho, criei sua imagem.");
+  }, 1200);
 }
 
 async function enviarMensagem() {
@@ -542,8 +573,10 @@ async function enviarMensagem() {
 
   input.value = "";
 
-  if (pedidoDeImagem(texto)) {
-    await gerarImagemAurora(texto);
+  const tipoVisual = detectarTipoVisual(texto);
+
+  if (tipoVisual) {
+    await gerarVisualMaxi(texto, tipoVisual);
     return;
   }
 
@@ -579,7 +612,7 @@ async function enviarMensagem() {
       }))
   ];
 
-  mostrarDigitando();
+  mostrarCarregando("mensagem");
 
   try {
     const resposta = await fetch(API_URL, {
@@ -599,21 +632,21 @@ async function enviarMensagem() {
     try {
       dados = JSON.parse(raw);
     } catch {
-      removerDigitando();
-      adicionarMensagem("Aurora", "A resposta da IA veio inválida.");
+      removerCarregando();
+      adicionarMensagem("Maxi", "A resposta da IA veio inválida.");
       console.error("Resposta do backend não é JSON:", raw);
       return;
     }
 
     if (!resposta.ok) {
-      removerDigitando();
+      removerCarregando();
 
       if (resposta.status === 402) {
-        adicionarMensagem("Aurora", "Esse modelo está sem créditos no momento.");
+        adicionarMensagem("Maxi", "Esse modelo está sem créditos no momento.");
       } else if (resposta.status === 429) {
-        adicionarMensagem("Aurora", "A Aurora está recebendo muitas mensagens agora. Tente de novo em instantes.");
+        adicionarMensagem("Maxi", "Estou recebendo muitas mensagens agora. Tente de novo em instantes.");
       } else {
-        adicionarMensagem("Aurora", `Erro da API (${resposta.status}).`);
+        adicionarMensagem("Maxi", `Erro da API (${resposta.status}).`);
       }
 
       console.error("Erro HTTP:", resposta.status, dados);
@@ -621,41 +654,46 @@ async function enviarMensagem() {
     }
 
     const respostaIA = dados.reply;
+
     if (!respostaIA) {
-      removerDigitando();
-      adicionarMensagem("Aurora", "A IA não retornou texto.");
+      removerCarregando();
+      adicionarMensagem("Maxi", "A IA não retornou texto.");
       console.error("Sem reply:", dados);
       return;
     }
 
-    const createdAtAurora = new Date().toISOString();
+    const createdAtMaxi = new Date().toISOString();
 
     conv.messages.push({
       role: "assistant",
       content: respostaIA,
-      createdAt: createdAtAurora
+      createdAt: createdAtMaxi
     });
 
-    if (conv.messages.length > 30) {
-      conv.messages = conv.messages.slice(-30);
+    if (conv.messages.length > 40) {
+      conv.messages = conv.messages.slice(-40);
     }
 
-    conv.updatedAt = createdAtAurora;
+    conv.updatedAt = createdAtMaxi;
     salvarConversas();
     renderConversationList();
 
-    removerDigitando();
-    await escreverTextoAnimado("Aurora", respostaIA, createdAtAurora);
+    removerCarregando();
+    await escreverTextoAnimado("Maxi", respostaIA, createdAtMaxi);
     falar(respostaIA);
 
   } catch (erro) {
-    removerDigitando();
+    removerCarregando();
     console.error("Erro ao se comunicar com a IA:", erro);
-    adicionarMensagem("Aurora", "Ocorreu um erro ao se comunicar com a IA.");
+    adicionarMensagem("Maxi", "Ocorreu um erro ao se comunicar com a IA.");
   }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  aplicarTemaSalvo();
+  garantirConversaInicial();
+  renderConversationList();
+
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
   const btnNova = document.getElementById("btn-nova-conversa");
@@ -664,6 +702,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnFecharConfig = document.getElementById("btn-fechar-config");
   const input = document.getElementById("user-input");
   const themeButtons = document.querySelectorAll(".theme-btn");
+  const modal = document.getElementById("config-modal");
 
   if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
   if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
@@ -671,6 +710,12 @@ window.addEventListener("DOMContentLoaded", () => {
   if (btnExcluir) btnExcluir.addEventListener("click", excluirConversaAtual);
   if (btnConfig) btnConfig.addEventListener("click", abrirConfig);
   if (btnFecharConfig) btnFecharConfig.addEventListener("click", fecharConfig);
+
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) fecharConfig();
+    });
+  }
 
   themeButtons.forEach(btn => {
     btn.addEventListener("click", () => {
