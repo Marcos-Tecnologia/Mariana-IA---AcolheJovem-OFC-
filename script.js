@@ -72,14 +72,13 @@ function gerarId() {
 function criarNovaConversa() {
   const id = gerarId();
 
-  const nova = {
+  conversations.unshift({
     id,
     title: "Nova conversa",
     messages: [],
     updatedAt: new Date().toISOString()
-  };
+  });
 
-  conversations.unshift(nova);
   activeConversationId = id;
 
   salvarConversas();
@@ -177,9 +176,13 @@ function renderConversationList() {
     const last = conv.messages[conv.messages.length - 1];
 
     let previewMessage = "Sem mensagens ainda";
+
     if (last) {
-      if (last.type === "image") previewMessage = last.animated ? "Cena animada gerada" : "Imagem gerada";
-      else previewMessage = last.content || "Mensagem";
+      if (last.type === "image") {
+        previewMessage = last.animated ? "Cena animada gerada" : "Imagem gerada";
+      } else {
+        previewMessage = last.content || "Mensagem";
+      }
     }
 
     item.innerHTML = `
@@ -432,29 +435,32 @@ function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) 
     agora.getMinutes().toString().padStart(2, "0");
 
   const div = document.createElement("div");
-  div.className = "msg msg-maxi";
+  div.className = "msg-visual";
 
-  const spanTexto = document.createElement("span");
-  spanTexto.textContent = animated
+  const titulo = document.createElement("strong");
+  titulo.textContent = "Maxi";
+
+  const texto = document.createElement("span");
+  texto.textContent = animated
     ? `Cena animada criada para: ${prompt} 🎬`
     : `Imagem criada para: ${prompt} 🎨`;
-
-  const strong = document.createElement("strong");
-  strong.textContent = "Maxi";
 
   const img = document.createElement("img");
   img.src = url;
   img.alt = animated ? "Cena animada gerada pela Maxi" : "Imagem gerada pela Maxi";
   img.className = animated ? "animated-scene-img" : "generated-image";
 
+  img.onload = () => {
+    box.scrollTop = box.scrollHeight;
+  };
+
+  img.onerror = () => {
+    texto.textContent = "Não consegui carregar a imagem agora. Tente novamente em alguns instantes ⚠️";
+  };
+
   const time = document.createElement("div");
   time.className = "msg-time";
   time.textContent = hora;
-
-  div.appendChild(strong);
-  div.appendChild(spanTexto);
-  div.appendChild(img);
-  div.appendChild(time);
 
   const reaction = document.createElement("div");
   reaction.className = "msg-reactions";
@@ -465,6 +471,10 @@ function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) 
     span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
   };
 
+  div.appendChild(titulo);
+  div.appendChild(texto);
+  div.appendChild(img);
+  div.appendChild(time);
   div.appendChild(reaction);
 
   box.appendChild(div);
@@ -490,7 +500,6 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
   });
 
   conv.updatedAt = createdAtUser;
-
   salvarConversas();
   salvarConversaAtiva();
   renderConversationList();
@@ -513,8 +522,6 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
   mostrarCarregando(animated ? "cena" : "imagem");
 
   setTimeout(() => {
-    removerCarregando();
-
     const url = criarUrlImagem(promptVisual, animated);
     const createdAtImage = new Date().toISOString();
 
@@ -537,8 +544,48 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     salvarConversas();
     renderConversationList();
 
+    removerCarregando();
     adicionarImagemNaTela(promptVisual, url, createdAtImage, animated);
   }, 1200);
+}
+
+function criarControlesRolagem() {
+  const chatContainer = document.getElementById("chat-container");
+  const chatBox = document.getElementById("chat-box");
+
+  if (!chatContainer || !chatBox) return;
+  if (document.getElementById("scroll-controls")) return;
+
+  const controls = document.createElement("div");
+  controls.id = "scroll-controls";
+  controls.className = "scroll-controls";
+
+  const btnTopo = document.createElement("button");
+  btnTopo.type = "button";
+  btnTopo.textContent = "↑ Subir";
+
+  const btnBaixo = document.createElement("button");
+  btnBaixo.type = "button";
+  btnBaixo.textContent = "↓ Descer";
+
+  btnTopo.onclick = () => {
+    chatBox.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
+  btnBaixo.onclick = () => {
+    chatBox.scrollTo({
+      top: chatBox.scrollHeight,
+      behavior: "smooth"
+    });
+  };
+
+  controls.appendChild(btnTopo);
+  controls.appendChild(btnBaixo);
+
+  chatContainer.insertBefore(controls, chatBox.nextSibling);
 }
 
 async function enviarMensagem() {
@@ -669,6 +716,7 @@ window.addEventListener("DOMContentLoaded", () => {
   aplicarTemaSalvo();
   garantirConversaInicial();
   renderConversationList();
+  criarControlesRolagem();
 
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
