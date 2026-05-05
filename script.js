@@ -224,6 +224,8 @@ function renderChat() {
       );
     }
   });
+
+  box.scrollTop = box.scrollHeight;
 }
 
 function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
@@ -502,7 +504,6 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
   conv.updatedAt = createdAtUser;
   salvarConversas();
   salvarConversaAtiva();
-  renderConversationList();
 
   adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
 
@@ -518,6 +519,7 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
   });
 
   adicionarMensagem("Maxi", respostaTexto, "maxi", createdAtMaxi);
+  renderConversationList();
 
   mostrarCarregando(animated ? "cena" : "imagem");
 
@@ -547,45 +549,6 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     removerCarregando();
     adicionarImagemNaTela(promptVisual, url, createdAtImage, animated);
   }, 1200);
-}
-
-function criarControlesRolagem() {
-  const chatContainer = document.getElementById("chat-container");
-  const chatBox = document.getElementById("chat-box");
-
-  if (!chatContainer || !chatBox) return;
-  if (document.getElementById("scroll-controls")) return;
-
-  const controls = document.createElement("div");
-  controls.id = "scroll-controls";
-  controls.className = "scroll-controls";
-
-  const btnTopo = document.createElement("button");
-  btnTopo.type = "button";
-  btnTopo.textContent = "↑ Subir";
-
-  const btnBaixo = document.createElement("button");
-  btnBaixo.type = "button";
-  btnBaixo.textContent = "↓ Descer";
-
-  btnTopo.onclick = () => {
-    chatBox.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  };
-
-  btnBaixo.onclick = () => {
-    chatBox.scrollTo({
-      top: chatBox.scrollHeight,
-      behavior: "smooth"
-    });
-  };
-
-  controls.appendChild(btnTopo);
-  controls.appendChild(btnBaixo);
-
-  chatContainer.insertBefore(controls, chatBox.nextSibling);
 }
 
 async function enviarMensagem() {
@@ -716,7 +679,6 @@ window.addEventListener("DOMContentLoaded", () => {
   aplicarTemaSalvo();
   garantirConversaInicial();
   renderConversationList();
-  criarControlesRolagem();
 
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
