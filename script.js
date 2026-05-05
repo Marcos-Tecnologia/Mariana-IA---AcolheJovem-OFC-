@@ -174,12 +174,13 @@ function renderConversationList() {
     const item = document.createElement("div");
     item.className = "conversation-item" + (conv.id === activeConversationId ? " active" : "");
 
-    const previewMessage =
-      conv.messages.length > 0
-        ? (conv.messages[conv.messages.length - 1].type === "image"
-            ? "Imagem / cena gerada"
-            : conv.messages[conv.messages.length - 1].content)
-        : "Sem mensagens ainda";
+    const last = conv.messages[conv.messages.length - 1];
+
+    let previewMessage = "Sem mensagens ainda";
+    if (last) {
+      if (last.type === "image") previewMessage = last.animated ? "Cena animada gerada" : "Imagem gerada";
+      else previewMessage = last.content || "Mensagem";
+    }
 
     item.innerHTML = `
       <div class="conversation-title">${escapeHtml(conv.title)}</div>
@@ -266,7 +267,6 @@ function mostrarCarregando(tipo = "mensagem") {
   removerCarregando();
 
   let texto = "Maxi está pensando";
-
   if (tipo === "imagem") texto = "Gerando imagem";
   if (tipo === "cena") texto = "Criando cena animada";
 
@@ -340,51 +340,6 @@ async function escreverTextoAnimado(remetente, texto, createdAt) {
   });
 }
 
-function escolherVozFemininaCalma() {
-  if (!("speechSynthesis" in window)) return null;
-
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices || voices.length === 0) return null;
-
-  return (
-    voices.find(v =>
-      v.lang === "pt-BR" &&
-      (
-        v.name.toLowerCase().includes("female") ||
-        v.name.toLowerCase().includes("feminina") ||
-        v.name.toLowerCase().includes("maria") ||
-        v.name.toLowerCase().includes("helena") ||
-        v.name.toLowerCase().includes("luciana")
-      )
-    ) ||
-    voices.find(v => v.lang === "pt-BR") ||
-    voices.find(v => v.lang && v.lang.startsWith("pt")) ||
-    null
-  );
-}
-
-function falar(texto) {
-  if (!("speechSynthesis" in window)) return;
-
-  const synth = window.speechSynthesis;
-  synth.cancel();
-
-  const utter = new SpeechSynthesisUtterance(texto);
-  utter.lang = "pt-BR";
-  utter.rate = 0.84;
-  utter.pitch = 1.02;
-  utter.volume = 1;
-
-  const voz = escolherVozFemininaCalma();
-  if (voz) utter.voice = voz;
-
-  synth.speak(utter);
-}
-
-if ("speechSynthesis" in window) {
-  window.speechSynthesis.onvoiceschanged = () => {};
-}
-
 function abrirChat() {
   const inicio = document.getElementById("inicio-container");
   const chat = document.getElementById("chat-container");
@@ -401,7 +356,9 @@ function detectarTipoVisual(texto) {
     t.includes("mini vídeo") ||
     t.includes("mini video") ||
     t.includes("vídeo fake") ||
-    t.includes("video fake");
+    t.includes("video fake") ||
+    t.includes("visual animado") ||
+    t.includes("imagem animada");
 
   if (cena) return "cena";
 
@@ -425,12 +382,16 @@ function limparPromptVisual(texto) {
   return texto
     .replace(/crie uma cena animada de/gi, "")
     .replace(/crie uma cena animada/gi, "")
+    .replace(/criar uma cena animada de/gi, "")
+    .replace(/criar uma cena animada/gi, "")
     .replace(/gerar cena animada de/gi, "")
     .replace(/gerar cena animada/gi, "")
     .replace(/gere uma cena animada de/gi, "")
     .replace(/gere uma cena animada/gi, "")
     .replace(/mini vídeo de/gi, "")
     .replace(/mini video de/gi, "")
+    .replace(/visual animado de/gi, "")
+    .replace(/imagem animada de/gi, "")
     .replace(/crie uma imagem de/gi, "")
     .replace(/crie uma imagem/gi, "")
     .replace(/criar uma imagem de/gi, "")
@@ -451,12 +412,13 @@ function limparPromptVisual(texto) {
 
 function criarUrlImagem(prompt, animated = false) {
   const extra = animated
-    ? ", cena cinematográfica, movimento suave, visual bonito, alta qualidade"
-    : ", estilo bonito, alta qualidade, cores harmoniosas, visual agradável";
+    ? ", cinematic animated scene, soft movement, beautiful visual, high quality, no text"
+    : ", beautiful style, high quality, harmonious colors, pleasant visual, no text";
 
   const promptFinal = prompt + extra;
+  const seed = Math.floor(Math.random() * 999999);
 
-  return "https://image.pollinations.ai/prompt/" + encodeURIComponent(promptFinal);
+  return "https://image.pollinations.ai/prompt/" + encodeURIComponent(promptFinal) + "?width=768&height=512&seed=" + seed;
 }
 
 function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) {
@@ -472,12 +434,27 @@ function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) 
   const div = document.createElement("div");
   div.className = "msg msg-maxi";
 
-  div.innerHTML = `
-    <strong>Maxi</strong>
-    <span>${animated ? "Cena animada criada para" : "Imagem criada para"}: ${escapeHtml(prompt)} 🎨</span>
-    <img src="${url}" alt="Visual gerado pela Maxi" class="${animated ? "animated-scene-img" : "generated-image"}">
-    <div class="msg-time">${hora}</div>
-  `;
+  const spanTexto = document.createElement("span");
+  spanTexto.textContent = animated
+    ? `Cena animada criada para: ${prompt} 🎬`
+    : `Imagem criada para: ${prompt} 🎨`;
+
+  const strong = document.createElement("strong");
+  strong.textContent = "Maxi";
+
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = animated ? "Cena animada gerada pela Maxi" : "Imagem gerada pela Maxi";
+  img.className = animated ? "animated-scene-img" : "generated-image";
+
+  const time = document.createElement("div");
+  time.className = "msg-time";
+  time.textContent = hora;
+
+  div.appendChild(strong);
+  div.appendChild(spanTexto);
+  div.appendChild(img);
+  div.appendChild(time);
 
   const reaction = document.createElement("div");
   reaction.className = "msg-reactions";
@@ -522,7 +499,7 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
 
   const createdAtMaxi = new Date().toISOString();
   const respostaTexto = animated
-    ? "Beleza! Vou criar uma cena animada para você 🎬"
+    ? "Certo! Vou criar uma cena animada visual para você 🎬"
     : "Claro! Vou criar essa imagem para você 🎨";
 
   conv.messages.push({
@@ -544,6 +521,7 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     conv.messages.push({
       role: "assistant",
       type: "image",
+      content: animated ? "Cena animada gerada" : "Imagem gerada",
       prompt: promptVisual,
       url,
       animated,
@@ -560,7 +538,6 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     renderConversationList();
 
     adicionarImagemNaTela(promptVisual, url, createdAtImage, animated);
-    falar(animated ? "Prontinho, criei sua cena animada." : "Prontinho, criei sua imagem.");
   }, 1200);
 }
 
@@ -680,7 +657,6 @@ async function enviarMensagem() {
 
     removerCarregando();
     await escreverTextoAnimado("Maxi", respostaIA, createdAtMaxi);
-    falar(respostaIA);
 
   } catch (erro) {
     removerCarregando();
