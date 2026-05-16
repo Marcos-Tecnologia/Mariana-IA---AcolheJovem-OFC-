@@ -182,6 +182,7 @@ function verificarSegurancaVisual(texto) {
   const t = normalizarTexto(texto);
 
   const bloqueados = [
+    // adulto / sexual
     "nudez",
     "nua",
     "nu ",
@@ -216,23 +217,54 @@ function verificarSegurancaVisual(texto) {
     "genitais",
     "vagina",
     "penis",
-    "estupro",
+    "estupr",
     "abuso sexual",
     "menor pelada",
     "crianca nua",
     "adolescente nua",
     "menina nua",
     "menino nu",
+
+    // violência pesada / morte
+    "matando",
+    "matar",
+    "morreu",
+    "morrendo",
+    "morto",
+    "morta",
+    "mortos",
+    "mortas",
+    "assassinato",
+    "assassinar",
+    "assassino",
+    "assassina",
+    "executando",
+    "execucao",
+    "esfaqueando",
+    "esfaquear",
+    "facada",
+    "tiroteio",
+    "atirando em pessoa",
     "sangue extremo",
+    "muito sangue",
     "gore",
     "mutilacao",
+    "mutilado",
     "decapitacao",
-    "matando",
-    "morrendo",
-    "sangue",
-    "machucando",
-    "assassinato",
-    "morte"
+    "decapitado",
+    "desmembrado",
+    "corpo aberto",
+    "cadaver",
+    "cadaveres",
+    "tortura",
+    "torturando",
+    "suicidio",
+    "autoagressao",
+    "se machucando",
+    "enforcado",
+    "enforcando",
+    "queimando pessoa",
+    "massacre"
   ];
 
   return bloqueados.some(palavra => t.includes(palavra));
@@ -262,7 +294,7 @@ function responderBloqueioVisual(textoUsuario) {
   adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
 
   const resposta =
-    "Não posso criar imagem ou cena com conteúdo íntimo, adulto ou impróprio 😅 Posso fazer uma versão segura, bonita e apropriada se quiser.";
+    "Não posso criar imagem ou cena com conteúdo adulto, íntimo, violento ou impróprio 😅 Posso fazer uma versão segura, bonita e apropriada.";
 
   const createdAtMaxi = new Date().toISOString();
 
@@ -403,8 +435,8 @@ function mostrarCarregando(tipo = "mensagem") {
   removerCarregando();
 
   let texto = "Maxi está pensando";
-  if (tipo === "imagem") texto = "Gerando imagem";
-  if (tipo === "cena") texto = "Criando cena animada";
+  if (tipo === "imagem") texto = "Gerando imagem melhorada";
+  if (tipo === "cena") texto = "Criando cena animada melhorada";
 
   const wrapper = document.createElement("div");
   wrapper.className = "typing-wrapper";
@@ -483,7 +515,7 @@ function abrirChat() {
   if (chat) chat.classList.remove("hidden");
 }
 
-/* ===== IMAGEM / CENA ===== */
+/* ===== IMAGEM / CENA MELHORADA ===== */
 
 function detectarTipoVisual(texto) {
   const t = normalizarTexto(texto);
@@ -545,15 +577,87 @@ function limparPromptVisual(texto) {
     .trim();
 }
 
-function criarUrlImagem(prompt, animated = false) {
-  const extra = animated
-    ? ", cinematic animated scene, soft movement, beautiful visual, high quality, no text"
-    : ", beautiful style, high quality, harmonious colors, pleasant visual, no text";
+function detectarEstiloImagem(texto) {
+  const t = normalizarTexto(texto);
 
-  const promptFinal = prompt + extra;
+  if (t.includes("anime")) {
+    return "anime style, clean line art, vibrant colors, expressive lighting";
+  }
+
+  if (t.includes("realista") || t.includes("realismo") || t.includes("fotorealista") || t.includes("foto realista")) {
+    return "photorealistic, realistic lighting, natural colors, detailed textures";
+  }
+
+  if (t.includes("3d") || t.includes("3d render") || t.includes("render")) {
+    return "3D render, soft studio lighting, smooth surfaces, detailed 3D style";
+  }
+
+  if (t.includes("cartoon") || t.includes("desenho animado")) {
+    return "cartoon style, friendly shapes, colorful, clean illustration";
+  }
+
+  if (t.includes("pixel art") || t.includes("pixel")) {
+    return "pixel art style, crisp pixels, retro game aesthetic, detailed pixel scene";
+  }
+
+  if (t.includes("cinematic") || t.includes("cinematografico") || t.includes("cinematográfico")) {
+    return "cinematic style, dramatic lighting, beautiful composition, high detail";
+  }
+
+  if (t.includes("fofo") || t.includes("cute") || t.includes("kawaii")) {
+    return "cute kawaii style, soft colors, adorable design, friendly atmosphere";
+  }
+
+  if (t.includes("logo")) {
+    return "modern logo design, clean vector style, minimal, centered composition";
+  }
+
+  return "beautiful digital art, polished composition, soft lighting, high quality";
+}
+
+function melhorarPromptImagem(promptOriginal, animated = false) {
+  const estilo = detectarEstiloImagem(promptOriginal);
+
+  const base = [
+    promptOriginal,
+    estilo,
+    "high quality",
+    "sharp details",
+    "balanced composition",
+    "beautiful lighting",
+    "harmonious colors",
+    "clean background when appropriate",
+    "visually appealing",
+    "no text",
+    "no watermark",
+    "no logo unless requested",
+    "safe for all audiences"
+  ];
+
+  if (animated) {
+    base.push(
+      "cinematic animated scene",
+      "soft camera movement feeling",
+      "dynamic atmosphere",
+      "gentle motion impression",
+      "mini video frame look"
+    );
+  }
+
+  return base.join(", ");
+}
+
+function criarUrlImagem(prompt, animated = false) {
+  const promptFinal = melhorarPromptImagem(prompt, animated);
   const seed = Math.floor(Math.random() * 999999);
 
-  return "https://image.pollinations.ai/prompt/" + encodeURIComponent(promptFinal) + "?width=768&height=512&seed=" + seed;
+  return (
+    "https://image.pollinations.ai/prompt/" +
+    encodeURIComponent(promptFinal) +
+    "?width=1024&height=768&seed=" +
+    seed +
+    "&nologo=true"
+  );
 }
 
 function adicionarMidiaNaTela(prompt, url, createdAt = null, animated = false) {
@@ -574,8 +678,8 @@ function adicionarMidiaNaTela(prompt, url, createdAt = null, animated = false) {
 
   const texto = document.createElement("span");
   texto.textContent = animated
-    ? `Cena animada criada para: ${prompt} 🎬`
-    : `Imagem criada para: ${prompt} 🎨`;
+    ? `Cena animada melhorada criada para: ${prompt} 🎬`
+    : `Imagem melhorada criada para: ${prompt} 🎨`;
 
   const frame = document.createElement("div");
   frame.className = "media-frame";
@@ -640,8 +744,8 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
 
   const createdAtMaxi = new Date().toISOString();
   const respostaTexto = animated
-    ? "Certo! Vou criar uma cena animada visual para você 🎬"
-    : "Claro! Vou criar essa imagem para você 🎨";
+    ? "Certo! Vou criar uma cena animada visual melhorada para você 🎬"
+    : "Claro! Vou criar uma imagem melhorada para você 🎨";
 
   conv.messages.push({
     role: "assistant",
@@ -661,7 +765,7 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     conv.messages.push({
       role: "assistant",
       type: "image",
-      content: animated ? "Cena animada gerada" : "Imagem gerada",
+      content: animated ? "Cena animada melhorada gerada" : "Imagem melhorada gerada",
       prompt: promptVisual,
       url,
       animated,
