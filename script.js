@@ -163,6 +163,12 @@ function escapeHtml(texto) {
     .replace(/'/g, "&#039;");
 }
 
+function rolarParaBaixo() {
+  const box = document.getElementById("chat-box");
+  if (!box) return;
+  box.scrollTop = box.scrollHeight;
+}
+
 function renderConversationList() {
   const list = document.getElementById("conversation-list");
   if (!list) return;
@@ -214,7 +220,7 @@ function renderChat() {
 
   conv.messages.forEach(msg => {
     if (msg.type === "image") {
-      adicionarImagemNaTela(msg.prompt, msg.url, msg.createdAt, msg.animated);
+      adicionarMidiaNaTela(msg.prompt, msg.url, msg.createdAt, msg.animated);
     } else {
       adicionarMensagem(
         msg.role === "assistant" ? "Maxi" : "Você",
@@ -225,7 +231,7 @@ function renderChat() {
     }
   });
 
-  box.scrollTop = box.scrollHeight;
+  rolarParaBaixo();
 }
 
 function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
@@ -241,28 +247,41 @@ function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
   const div = document.createElement("div");
   div.className = `msg ${tipo === "user" ? "msg-user" : "msg-maxi"}`;
 
-  div.innerHTML = `
-    <strong>${remetente}</strong>
-    <span>${escapeHtml(texto)}</span>
-    <div class="msg-time">${hora}</div>
-  `;
+  const strong = document.createElement("strong");
+  strong.textContent = remetente;
+
+  const span = document.createElement("span");
+  span.textContent = texto;
+
+  const time = document.createElement("div");
+  time.className = "msg-time";
+  time.textContent = hora;
+
+  div.appendChild(strong);
+  div.appendChild(span);
+  div.appendChild(time);
 
   if (tipo !== "user") {
-    const reaction = document.createElement("div");
-    reaction.className = "msg-reactions";
-    reaction.innerHTML = `<span>🤍</span>`;
-
-    reaction.onclick = () => {
-      const span = reaction.querySelector("span");
-      span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
-    };
-
-    div.appendChild(reaction);
+    div.appendChild(criarReacao());
   }
 
   box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
+  rolarParaBaixo();
+
   return div;
+}
+
+function criarReacao() {
+  const reaction = document.createElement("div");
+  reaction.className = "msg-reactions";
+  reaction.innerHTML = `<span>🤍</span>`;
+
+  reaction.onclick = () => {
+    const span = reaction.querySelector("span");
+    span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
+  };
+
+  return reaction;
 }
 
 function mostrarCarregando(tipo = "mensagem") {
@@ -289,7 +308,8 @@ function mostrarCarregando(tipo = "mensagem") {
   `;
 
   box.appendChild(wrapper);
-  box.scrollTop = box.scrollHeight;
+  rolarParaBaixo();
+
   return wrapper;
 }
 
@@ -310,32 +330,30 @@ async function escreverTextoAnimado(remetente, texto, createdAt) {
 
   const div = document.createElement("div");
   div.className = "msg msg-maxi";
-  div.innerHTML = `
-    <strong>${remetente}</strong>
-    <span></span>
-    <div class="msg-time">${hora}</div>
-  `;
+
+  const strong = document.createElement("strong");
+  strong.textContent = remetente;
+
+  const span = document.createElement("span");
+
+  const time = document.createElement("div");
+  time.className = "msg-time";
+  time.textContent = hora;
+
+  div.appendChild(strong);
+  div.appendChild(span);
+  div.appendChild(time);
+  div.appendChild(criarReacao());
+
   box.appendChild(div);
 
-  const reaction = document.createElement("div");
-  reaction.className = "msg-reactions";
-  reaction.innerHTML = `<span>🤍</span>`;
-
-  reaction.onclick = () => {
-    const span = reaction.querySelector("span");
-    span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
-  };
-
-  div.appendChild(reaction);
-
-  const span = div.querySelector("span");
   let i = 0;
 
   return new Promise(resolve => {
     const intervalo = setInterval(() => {
-      span.innerHTML = escapeHtml(texto.slice(0, i + 1));
+      span.textContent = texto.slice(0, i + 1);
       i++;
-      box.scrollTop = box.scrollHeight;
+      rolarParaBaixo();
 
       if (i >= texto.length) {
         clearInterval(intervalo);
@@ -426,7 +444,7 @@ function criarUrlImagem(prompt, animated = false) {
   return "https://image.pollinations.ai/prompt/" + encodeURIComponent(promptFinal) + "?width=768&height=512&seed=" + seed;
 }
 
-function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) {
+function adicionarMidiaNaTela(prompt, url, createdAt = null, animated = false) {
   const box = document.getElementById("chat-box");
   if (!box) return;
 
@@ -436,16 +454,19 @@ function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) 
     ":" +
     agora.getMinutes().toString().padStart(2, "0");
 
-  const div = document.createElement("div");
-  div.className = "msg-visual";
+  const card = document.createElement("div");
+  card.className = "media-card";
 
-  const titulo = document.createElement("strong");
-  titulo.textContent = "Maxi";
+  const strong = document.createElement("strong");
+  strong.textContent = "Maxi";
 
   const texto = document.createElement("span");
   texto.textContent = animated
     ? `Cena animada criada para: ${prompt} 🎬`
     : `Imagem criada para: ${prompt} 🎨`;
+
+  const frame = document.createElement("div");
+  frame.className = "media-frame";
 
   const img = document.createElement("img");
   img.src = url;
@@ -453,34 +474,27 @@ function adicionarImagemNaTela(prompt, url, createdAt = null, animated = false) 
   img.className = animated ? "animated-scene-img" : "generated-image";
 
   img.onload = () => {
-    box.scrollTop = box.scrollHeight;
+    rolarParaBaixo();
   };
 
   img.onerror = () => {
     texto.textContent = "Não consegui carregar a imagem agora. Tente novamente em alguns instantes ⚠️";
   };
 
+  frame.appendChild(img);
+
   const time = document.createElement("div");
   time.className = "msg-time";
   time.textContent = hora;
 
-  const reaction = document.createElement("div");
-  reaction.className = "msg-reactions";
-  reaction.innerHTML = `<span>🤍</span>`;
+  card.appendChild(strong);
+  card.appendChild(texto);
+  card.appendChild(frame);
+  card.appendChild(time);
+  card.appendChild(criarReacao());
 
-  reaction.onclick = () => {
-    const span = reaction.querySelector("span");
-    span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
-  };
-
-  div.appendChild(titulo);
-  div.appendChild(texto);
-  div.appendChild(img);
-  div.appendChild(time);
-  div.appendChild(reaction);
-
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
+  box.appendChild(card);
+  rolarParaBaixo();
 }
 
 async function gerarVisualMaxi(textoUsuario, tipo) {
@@ -547,7 +561,7 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     renderConversationList();
 
     removerCarregando();
-    adicionarImagemNaTela(promptVisual, url, createdAtImage, animated);
+    adicionarMidiaNaTela(promptVisual, url, createdAtImage, animated);
   }, 1200);
 }
 
