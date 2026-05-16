@@ -2,6 +2,7 @@ const API_URL = "/api/chat";
 const CONVERSATIONS_KEY = "maxi_conversations_v1";
 const ACTIVE_CONVERSATION_KEY = "maxi_active_conversation_v1";
 const THEME_KEY = "maxi_theme_v1";
+const MEMORY_KEY = "maxi_memory_profile_v1";
 
 const SYSTEM_PROMPT = {
   role: "system",
@@ -14,11 +15,167 @@ const SYSTEM_PROMPT = {
     "Você pode ajudar com estudos, pesquisas, explicações, criatividade, organização, dúvidas e conselhos práticos. " +
     "Quando fizer sentido, pode oferecer um versículo bíblico curto de forma suave e respeitosa. " +
     "Não seja excessivamente emocional, mas seja educada, amigável e prestativa. " +
+    "Use a memória do usuário de forma natural. Não diga que está usando memória toda hora. " +
+    "Se perceber um gosto, projeto ou objetivo antigo do usuário, pode fazer uma recomendação curta no final. " +
     "Nunca dê diagnósticos médicos. Em situações graves, recomende ajuda profissional."
 };
 
 let conversations = carregarConversas();
 let activeConversationId = carregarConversaAtiva();
+let memoryProfile = carregarMemoria();
+
+/* ===== MEMÓRIA INTELIGENTE ===== */
+
+function carregarMemoria() {
+  try {
+    const raw = localStorage.getItem(MEMORY_KEY);
+    if (!raw) {
+      return {
+        interests: [],
+        projects: [],
+        preferences: [],
+        recentTopics: []
+      };
+    }
+
+    const parsed = JSON.parse(raw);
+
+    return {
+      interests: Array.isArray(parsed.interests) ? parsed.interests : [],
+      projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+      preferences: Array.isArray(parsed.preferences) ? parsed.preferences : [],
+      recentTopics: Array.isArray(parsed.recentTopics) ? parsed.recentTopics : []
+    };
+  } catch {
+    return {
+      interests: [],
+      projects: [],
+      preferences: [],
+      recentTopics: []
+    };
+  }
+}
+
+function salvarMemoria() {
+  localStorage.setItem(MEMORY_KEY, JSON.stringify(memoryProfile));
+}
+
+function adicionarUnico(lista, valor, limite = 12) {
+  if (!valor) return;
+
+  const limpo = valor.trim();
+  if (!limpo) return;
+
+  const existe = lista.some(item => item.toLowerCase() === limpo.toLowerCase());
+  if (!existe) lista.unshift(limpo);
+
+  if (lista.length > limite) lista.length = limite;
+}
+
+function atualizarMemoriaComTexto(texto) {
+  const t = normalizarTexto(texto);
+
+  const interesses = [
+    ["maquiagem", "maquiagem"],
+    ["makeup", "maquiagem"],
+    ["loja", "loja / negócio"],
+    ["anuncio", "anúncios"],
+    ["marketing", "marketing"],
+    ["logo", "logo / identidade visual"],
+    ["site", "criação de site"],
+    ["wix", "Wix"],
+    ["github", "GitHub"],
+    ["vercel", "Vercel"],
+    ["estudo", "estudos"],
+    ["prova", "estudos"],
+    ["trabalho escolar", "trabalhos escolares"],
+    ["imagem", "criação de imagens"],
+    ["cena animada", "cenas animadas"],
+    ["video", "vídeos / cenas animadas"],
+    ["python", "programação em Python"],
+    ["html", "HTML/CSS/JS"],
+    ["css", "HTML/CSS/JS"],
+    ["javascript", "JavaScript"],
+    ["roblox", "Roblox Studio"],
+    ["jogo", "criação de jogos"],
+    ["ia", "inteligência artificial"]
+  ];
+
+  interesses.forEach(([chave, valor]) => {
+    if (t.includes(chave)) adicionarUnico(memoryProfile.interests, valor);
+  });
+
+  const projetos = [
+    ["maxi", "IA Maxi"],
+    ["aurora", "antigo projeto Aurora"],
+    ["minha loja", "loja do usuário"],
+    ["loja makeup", "loja de maquiagem"],
+    ["meu site", "site do usuário"],
+    ["meu app", "app do usuário"],
+    ["meu jogo", "jogo do usuário"]
+  ];
+
+  projetos.forEach(([chave, valor]) => {
+    if (t.includes(chave)) adicionarUnico(memoryProfile.projects, valor);
+  });
+
+  const preferencias = [
+    ["resumido", "prefere respostas resumidas"],
+    ["curto", "prefere respostas curtas"],
+    ["completo", "prefere código completo"],
+    ["codigo completo", "prefere código completo"],
+    ["sem mudar", "prefere manter o visual/função principal"],
+    ["bonito", "gosta de visual bonito"],
+    ["profissional", "gosta de estilo profissional"],
+    ["rosa", "gosta de tema rosa"],
+    ["azul", "gosta de tema azul"]
+  ];
+
+  preferencias.forEach(([chave, valor]) => {
+    if (t.includes(chave)) adicionarUnico(memoryProfile.preferences, valor);
+  });
+
+  adicionarUnico(memoryProfile.recentTopics, texto.slice(0, 80), 10);
+  salvarMemoria();
+}
+
+function criarPromptMemoria() {
+  const partes = [];
+
+  if (memoryProfile.interests.length) {
+    partes.push("Interesses percebidos do usuário: " + memoryProfile.interests.join(", ") + ".");
+  }
+
+  if (memoryProfile.projects.length) {
+    partes.push("Projetos percebidos do usuário: " + memoryProfile.projects.join(", ") + ".");
+  }
+
+  if (memoryProfile.preferences.length) {
+    partes.push("Preferências percebidas: " + memoryProfile.preferences.join(", ") + ".");
+  }
+
+  if (memoryProfile.recentTopics.length) {
+    partes.push("Assuntos recentes: " + memoryProfile.recentTopics.slice(0, 5).join(" | ") + ".");
+  }
+
+  if (!partes.length) {
+    return {
+      role: "system",
+      content:
+        "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
+    };
+  }
+
+  return {
+    role: "system",
+    content:
+      "Memória local da Maxi sobre o usuário. Use apenas para personalizar respostas e recomendações curtas, sem ser invasiva. " +
+      partes.join(" ") +
+      " Se fizer sentido, no final da resposta dê uma recomendação curta baseada nesses interesses."
+  };
+}
+
+/* ===== BASE ===== */
 
 function carregarConversas() {
   try {
@@ -169,7 +326,7 @@ function rolarParaBaixo() {
   box.scrollTop = box.scrollHeight;
 }
 
-/* ===== FILTRO DE SEGURANÇA PARA IMAGEM / CENA ===== */
+/* ===== FILTRO DE SEGURANÇA ===== */
 
 function normalizarTexto(texto) {
   return String(texto)
@@ -182,7 +339,6 @@ function verificarSegurancaVisual(texto) {
   const t = normalizarTexto(texto);
 
   const bloqueados = [
-    // adulto / sexual
     "nudez",
     "nua",
     "nu ",
@@ -224,46 +380,29 @@ function verificarSegurancaVisual(texto) {
     "adolescente nua",
     "menina nua",
     "menino nu",
-
-    // violência pesada / morte
     "matando",
     "matar",
     "morreu",
     "morrendo",
     "morto",
     "morta",
-    "mortos",
-    "mortas",
     "assassinato",
     "assassinar",
     "assassino",
-    "assassina",
     "executando",
     "execucao",
     "esfaqueando",
-    "esfaquear",
     "facada",
     "tiroteio",
-    "atirando em pessoa",
     "sangue extremo",
     "muito sangue",
     "gore",
     "mutilacao",
-    "mutilado",
     "decapitacao",
-    "decapitado",
-    "desmembrado",
-    "corpo aberto",
     "cadaver",
-    "cadaveres",
     "tortura",
-    "torturando",
     "suicidio",
     "autoagressao",
-    "se machucando",
-    "enforcado",
-    "enforcando",
-    "queimando pessoa",
     "massacre"
   ];
 
@@ -279,6 +418,8 @@ function responderBloqueioVisual(textoUsuario) {
   if (conv.messages.length === 0) {
     conv.title = gerarTituloConversa(textoUsuario);
   }
+
+  atualizarMemoriaComTexto(textoUsuario);
 
   conv.messages.push({
     role: "user",
@@ -515,7 +656,7 @@ function abrirChat() {
   if (chat) chat.classList.remove("hidden");
 }
 
-/* ===== IMAGEM / CENA MELHORADA ===== */
+/* ===== IMAGEM / CENA ===== */
 
 function detectarTipoVisual(texto) {
   const t = normalizarTexto(texto);
@@ -588,7 +729,7 @@ function detectarEstiloImagem(texto) {
     return "photorealistic, realistic lighting, natural colors, detailed textures";
   }
 
-  if (t.includes("3d") || t.includes("3d render") || t.includes("render")) {
+  if (t.includes("3d") || t.includes("render")) {
     return "3D render, soft studio lighting, smooth surfaces, detailed 3D style";
   }
 
@@ -630,7 +771,6 @@ function melhorarPromptImagem(promptOriginal, animated = false) {
     "visually appealing",
     "no text",
     "no watermark",
-    "no logo unless requested",
     "safe for all audiences"
   ];
 
@@ -722,6 +862,8 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     return;
   }
 
+  atualizarMemoriaComTexto(textoUsuario);
+
   const promptVisual = limparPromptVisual(textoUsuario) || textoUsuario;
   const animated = tipo === "cena";
   const createdAtUser = new Date().toISOString();
@@ -804,6 +946,8 @@ async function enviarMensagem() {
     return;
   }
 
+  atualizarMemoriaComTexto(texto);
+
   const conv = getActiveConversation();
   if (!conv) return;
 
@@ -828,6 +972,7 @@ async function enviarMensagem() {
 
   const mensagensParaEnviar = [
     SYSTEM_PROMPT,
+    criarPromptMemoria(),
     ...conv.messages
       .filter(m => !m.type)
       .map(m => ({
