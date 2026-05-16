@@ -1,28 +1,125 @@
 const API_URL = "/api/chat";
+
 const CONVERSATIONS_KEY = "maxi_conversations_v1";
 const ACTIVE_CONVERSATION_KEY = "maxi_active_conversation_v1";
 const THEME_KEY = "maxi_theme_v1";
 const MEMORY_KEY = "maxi_memory_profile_v1";
+const STYLE_KEY = "maxi_style_mode_v1";
 
 const SYSTEM_PROMPT = {
   role: "system",
   content:
     "Você é Maxi, uma IA inteligente criada pela empresa MA (R). " +
     "Seu objetivo é ajudar em pesquisas, estudos, dúvidas, tarefas do dia a dia, dicas práticas e criação de ideias. " +
-    "Responda de forma clara, útil e natural, com no máximo 4 linhas na maioria das respostas. " +
-    "Use pelo menos 1 emoji em todas as mensagens. " +
+    "Responda de forma clara, útil e natural. Use pelo menos 1 emoji em todas as mensagens. " +
     "Seja moderna, simples de entender e evite repetir frases. " +
     "Você pode ajudar com estudos, pesquisas, explicações, criatividade, organização, dúvidas e conselhos práticos. " +
     "Quando fizer sentido, pode oferecer um versículo bíblico curto de forma suave e respeitosa. " +
-    "Não seja excessivamente emocional, mas seja educada, amigável e prestativa. " +
     "Use a memória do usuário de forma natural. Não diga que está usando memória toda hora. " +
     "Se perceber um gosto, projeto ou objetivo antigo do usuário, pode fazer uma recomendação curta no final. " +
     "Nunca dê diagnósticos médicos. Em situações graves, recomende ajuda profissional."
 };
 
+const STYLE_PROMPTS = {
+  rapido: {
+    label: "Rápido",
+    prompt:
+      "Modo Rápido: responda de forma curta, direta e objetiva. Use no máximo 4 linhas. Priorize velocidade, clareza e utilidade."
+  },
+  avancado: {
+    label: "Avançado",
+    prompt:
+      "Modo Avançado: pense com mais cuidado e entregue uma resposta melhor, mais completa e organizada. Pode passar de 4 linhas se for necessário, mas sem enrolar."
+  },
+  pesquisa: {
+    label: "Pesquisa",
+    prompt:
+      "Modo Pesquisa: responda como se estivesse organizando uma pesquisa. Explique com cuidado, cite pontos importantes e avise quando algo precisar ser confirmado na internet. Se não houver ferramenta real de busca conectada, seja transparente e não invente fontes."
+  },
+  estudo: {
+    label: "Estudo",
+    prompt:
+      "Modo Estudo: ensine como um tutor. Explique passo a passo, use exemplos simples, faça analogias e ajude o usuário a aprender, não apenas copiar."
+  },
+  professor: {
+    label: "Professor",
+    prompt:
+      "Modo Professor: ajude professores a criar atividades, dinâmicas, planos de aula, jogos educativos, projetos e avaliações de acordo com assunto, série e objetivo."
+  },
+  atividade: {
+    label: "Atividade",
+    prompt:
+      "Modo Atividade: ajude em atividades escolares explicando o raciocínio. Não entregue apenas a resposta final quando for tarefa de aprendizado; ensine o caminho."
+  }
+};
+
 let conversations = carregarConversas();
 let activeConversationId = carregarConversaAtiva();
 let memoryProfile = carregarMemoria();
+let currentStyle = carregarEstilo();
+
+/* ===== ESTILO DA MAXI ===== */
+
+function carregarEstilo() {
+  const saved = localStorage.getItem(STYLE_KEY);
+  if (saved && STYLE_PROMPTS[saved]) return saved;
+  return "rapido";
+}
+
+function salvarEstilo(style) {
+  if (!STYLE_PROMPTS[style]) return;
+
+  currentStyle = style;
+  localStorage.setItem(STYLE_KEY, style);
+  atualizarTextoModoAtual();
+  atualizarBotoesEstilo();
+
+  const resposta = `Modo ${STYLE_PROMPTS[style].label} ativado ✨`;
+
+  const chatAberto = document.getElementById("chat-container");
+  const estaAberto = chatAberto && !chatAberto.classList.contains("hidden");
+
+  if (estaAberto) {
+    adicionarMensagem("Maxi", resposta, "maxi", new Date().toISOString());
+  }
+}
+
+function atualizarTextoModoAtual() {
+  const el = document.getElementById("modo-atual");
+  if (el) el.textContent = STYLE_PROMPTS[currentStyle]?.label || "Rápido";
+}
+
+function atualizarBotoesEstilo() {
+  const buttons = document.querySelectorAll(".style-btn");
+
+  buttons.forEach(btn => {
+    const style = btn.getAttribute("data-style-choice");
+
+    if (style === currentStyle) {
+      btn.classList.add("active-style");
+    } else {
+      btn.classList.remove("active-style");
+    }
+  });
+}
+
+function criarPromptEstilo() {
+  return {
+    role: "system",
+    content: STYLE_PROMPTS[currentStyle]?.prompt || STYLE_PROMPTS.rapido.prompt
+  };
+}
+
+function abrirEstilo() {
+  const modal = document.getElementById("estilo-modal");
+  if (modal) modal.classList.remove("hidden");
+  atualizarBotoesEstilo();
+}
+
+function fecharEstilo() {
+  const modal = document.getElementById("estilo-modal");
+  if (modal) modal.classList.add("hidden");
+}
 
 /* ===== MEMÓRIA INTELIGENTE ===== */
 
@@ -80,6 +177,7 @@ function atualizarMemoriaComTexto(texto) {
     ["makeup", "maquiagem"],
     ["loja", "loja / negócio"],
     ["anuncio", "anúncios"],
+    ["anúncio", "anúncios"],
     ["marketing", "marketing"],
     ["logo", "logo / identidade visual"],
     ["site", "criação de site"],
@@ -89,20 +187,24 @@ function atualizarMemoriaComTexto(texto) {
     ["estudo", "estudos"],
     ["prova", "estudos"],
     ["trabalho escolar", "trabalhos escolares"],
+    ["atividade escolar", "atividades escolares"],
     ["imagem", "criação de imagens"],
     ["cena animada", "cenas animadas"],
     ["video", "vídeos / cenas animadas"],
+    ["vídeo", "vídeos / cenas animadas"],
     ["python", "programação em Python"],
     ["html", "HTML/CSS/JS"],
     ["css", "HTML/CSS/JS"],
     ["javascript", "JavaScript"],
     ["roblox", "Roblox Studio"],
     ["jogo", "criação de jogos"],
-    ["ia", "inteligência artificial"]
+    ["ia", "inteligência artificial"],
+    ["professor", "ferramentas para professores"],
+    ["aula", "criação de aulas"]
   ];
 
   interesses.forEach(([chave, valor]) => {
-    if (t.includes(chave)) adicionarUnico(memoryProfile.interests, valor);
+    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.interests, valor);
   });
 
   const projetos = [
@@ -112,11 +214,12 @@ function atualizarMemoriaComTexto(texto) {
     ["loja makeup", "loja de maquiagem"],
     ["meu site", "site do usuário"],
     ["meu app", "app do usuário"],
-    ["meu jogo", "jogo do usuário"]
+    ["meu jogo", "jogo do usuário"],
+    ["minha ia", "IA do usuário"]
   ];
 
   projetos.forEach(([chave, valor]) => {
-    if (t.includes(chave)) adicionarUnico(memoryProfile.projects, valor);
+    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.projects, valor);
   });
 
   const preferencias = [
@@ -124,6 +227,7 @@ function atualizarMemoriaComTexto(texto) {
     ["curto", "prefere respostas curtas"],
     ["completo", "prefere código completo"],
     ["codigo completo", "prefere código completo"],
+    ["código completo", "prefere código completo"],
     ["sem mudar", "prefere manter o visual/função principal"],
     ["bonito", "gosta de visual bonito"],
     ["profissional", "gosta de estilo profissional"],
@@ -132,7 +236,7 @@ function atualizarMemoriaComTexto(texto) {
   ];
 
   preferencias.forEach(([chave, valor]) => {
-    if (t.includes(chave)) adicionarUnico(memoryProfile.preferences, valor);
+    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.preferences, valor);
   });
 
   adicionarUnico(memoryProfile.recentTopics, texto.slice(0, 80), 10);
@@ -161,8 +265,7 @@ function criarPromptMemoria() {
   if (!partes.length) {
     return {
       role: "system",
-      content:
-        "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
+      content: "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
     };
   }
 
@@ -972,6 +1075,7 @@ async function enviarMensagem() {
 
   const mensagensParaEnviar = [
     SYSTEM_PROMPT,
+    criarPromptEstilo(),
     criarPromptMemoria(),
     ...conv.messages
       .filter(m => !m.type)
@@ -1061,6 +1165,8 @@ window.addEventListener("DOMContentLoaded", () => {
   aplicarTemaSalvo();
   garantirConversaInicial();
   renderConversationList();
+  atualizarTextoModoAtual();
+  atualizarBotoesEstilo();
 
   const btnAbrir = document.getElementById("btn-abrir-chat");
   const btnEnviar = document.getElementById("btn-enviar");
@@ -1068,9 +1174,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnExcluir = document.getElementById("btn-excluir-conversa");
   const btnConfig = document.getElementById("btn-config");
   const btnFecharConfig = document.getElementById("btn-fechar-config");
+  const btnEstilo = document.getElementById("btn-estilo");
+  const btnFecharEstilo = document.getElementById("btn-fechar-estilo");
   const input = document.getElementById("user-input");
   const themeButtons = document.querySelectorAll(".theme-btn");
+  const styleButtons = document.querySelectorAll(".style-btn");
   const modal = document.getElementById("config-modal");
+  const estiloModal = document.getElementById("estilo-modal");
   const chatBox = document.getElementById("chat-box");
 
   if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
@@ -1079,6 +1189,8 @@ window.addEventListener("DOMContentLoaded", () => {
   if (btnExcluir) btnExcluir.addEventListener("click", excluirConversaAtual);
   if (btnConfig) btnConfig.addEventListener("click", abrirConfig);
   if (btnFecharConfig) btnFecharConfig.addEventListener("click", fecharConfig);
+  if (btnEstilo) btnEstilo.addEventListener("click", abrirEstilo);
+  if (btnFecharEstilo) btnFecharEstilo.addEventListener("click", fecharEstilo);
 
   if (modal) {
     modal.addEventListener("click", (e) => {
@@ -1086,10 +1198,23 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (estiloModal) {
+    estiloModal.addEventListener("click", (e) => {
+      if (e.target === estiloModal) fecharEstilo();
+    });
+  }
+
   themeButtons.forEach(btn => {
     btn.addEventListener("click", () => {
       const theme = btn.getAttribute("data-theme-choice");
       aplicarTema(theme);
+    });
+  });
+
+  styleButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const style = btn.getAttribute("data-style-choice");
+      salvarEstilo(style);
     });
   });
 
