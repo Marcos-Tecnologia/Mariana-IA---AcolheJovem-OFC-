@@ -290,6 +290,11 @@ h3 {
   font-size: 0.95rem;
 }
 
+#modo-atual {
+  font-weight: 800;
+  color: var(--title);
+}
+
 /* BOTÕES */
 
 button {
@@ -318,7 +323,8 @@ button:active {
 
 #btn-nova-conversa,
 #btn-excluir-conversa,
-#btn-config {
+#btn-config,
+#btn-estilo {
   margin-bottom: 10px;
 }
 
@@ -369,7 +375,7 @@ button:active {
   margin-top: 6px;
 }
 
-/* CHAT COM BARRA DE ROLAGEM */
+/* CHAT */
 
 #chat-box {
   height: 390px;
@@ -629,6 +635,47 @@ textarea:focus {
 
 .theme-btn {
   margin: 0;
+}
+
+/* MODAL ESTILO */
+
+.estilo-modal-content {
+  max-width: 540px;
+}
+
+.style-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 18px 0;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.style-btn {
+  text-align: left;
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.style-btn strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.style-btn span {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 500;
+  opacity: 0.95;
+  line-height: 1.35;
+}
+
+.style-btn.active-style {
+  outline: 3px solid rgba(255, 255, 255, 0.8);
+  filter: brightness(1.08);
 }
 
 /* UTIL */
