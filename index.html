@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Maxi IA 💻 </title>
+  <title>Maxi - IA Inteligente 💻</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -12,12 +12,13 @@
 
     <aside id="sidebar">
       <div class="sidebar-top">
-        <h2>Maxi IA</h2>
-        <p class="sidebar-slogan">Pergunte, descubra, evolua.</p>
+        <h2>Maxi</h2>
+        <p class="sidebar-slogan">Pergunte, descubra, crie, evolua.</p>
 
         <button id="btn-nova-conversa" type="button">+ Nova conversa</button>
         <button id="btn-excluir-conversa" type="button">Excluir conversa</button>
         <button id="btn-config" type="button">⚙️ Configurações</button>
+        <button id="btn-estilo" type="button">🎛️ Estilo</button>
       </div>
 
       <div id="conversation-list"></div>
@@ -28,15 +29,15 @@
 
         <div id="inicio-container">
           <div class="intro-glow"></div>
-          <h1>Maxi IA</h1>
-          <h3>Inteligência que te acompanha todos os dias.</h3>
-          <button id="btn-abrir-chat" type="button">Conversar com a Maxi</button>
+          <h1>Maxi 💻</h1>
+          <h3>Pergunte, descubra, crie, evolua.</h3>
+          <button id="btn-abrir-chat" type="button">Conversar com Maxi</button>
         </div>
 
         <div id="chat-container" class="hidden">
           <div id="chat-header">
-            <h1 class="chat-title">Maxi IA</h1>
-            <p class="chat-subtitle">Pergunte, estude, crie e descubra ✨</p>
+            <h1 class="chat-title">Maxi</h1>
+            <p class="chat-subtitle">Modo atual: <span id="modo-atual">Rápido</span></p>
           </div>
 
           <div id="chat-box"></div>
@@ -56,7 +57,7 @@
 
   <div id="config-modal" class="modal hidden">
     <div class="modal-content">
-      <h2>Configurações</h2>
+      <h2>⚙️Configurações</h2>
       <p>Escolha um tema:</p>
 
       <div class="theme-options">
@@ -67,6 +68,47 @@
       </div>
 
       <button id="btn-fechar-config" type="button">Fechar</button>
+    </div>
+  </div>
+
+  <div id="estilo-modal" class="modal hidden">
+    <div class="modal-content estilo-modal-content">
+      <h2>Estilo da Maxi</h2>
+      <p>Escolha como ela deve responder:</p>
+
+      <div class="style-options">
+        <button class="style-btn" data-style-choice="rapido">
+          <strong>⚡ Rápido</strong>
+          <span>Responde rápido, curto e direto.</span>
+        </button>
+
+        <button class="style-btn" data-style-choice="avancado">
+          <strong>🧠 Avançado</strong>
+          <span>Pensa melhor e entrega respostas mais completas.</span>
+        </button>
+
+        <button class="style-btn" data-style-choice="pesquisa">
+          <strong>🌐 Pesquisa</strong>
+          <span>Responde com foco em pesquisa e organização de informações.</span>
+        </button>
+
+        <button class="style-btn" data-style-choice="estudo">
+          <strong>📚 Estudo</strong>
+          <span>Ensina passo a passo para ajudar no aprendizado.</span>
+        </button>
+
+        <button class="style-btn" data-style-choice="professor">
+          <strong>👩‍🏫 Professor</strong>
+          <span>Cria atividades, dinâmicas e ideias para aulas.</span>
+        </button>
+
+        <button class="style-btn" data-style-choice="atividade">
+          <strong>📝 Atividade</strong>
+          <span>Ajuda em atividades escolares explicando o raciocínio.</span>
+        </button>
+      </div>
+
+      <button id="btn-fechar-estilo" type="button">Fechar</button>
     </div>
   </div>
 
