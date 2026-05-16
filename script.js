@@ -169,6 +169,112 @@ function rolarParaBaixo() {
   box.scrollTop = box.scrollHeight;
 }
 
+/* ===== FILTRO DE SEGURANÇA PARA IMAGEM / CENA ===== */
+
+function normalizarTexto(texto) {
+  return String(texto)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function verificarSegurancaVisual(texto) {
+  const t = normalizarTexto(texto);
+
+  const bloqueados = [
+    "nudez",
+    "nua",
+    "nu ",
+    "pelada",
+    "pelado",
+    "sem roupa",
+    "calcinha",
+    "sutia",
+    "lingerie",
+    "roupa intima",
+    "bikini sensual",
+    "biquini sensual",
+    "sexy",
+    "sensual",
+    "erotico",
+    "erotica",
+    "porn",
+    "porno",
+    "pornografia",
+    "adulto",
+    "18+",
+    "onlyfans",
+    "strip",
+    "stripper",
+    "orgia",
+    "sexo",
+    "sexual",
+    "peitos",
+    "seios",
+    "bunda",
+    "genital",
+    "genitais",
+    "vagina",
+    "penis",
+    "estupr",
+    "abuso sexual",
+    "menor pelada",
+    "crianca nua",
+    "adolescente nua",
+    "menina nua",
+    "menino nu",
+    "sangue extremo",
+    "gore",
+    "mutilacao",
+    "decapitacao"
+  ];
+
+  return bloqueados.some(palavra => t.includes(palavra));
+}
+
+function responderBloqueioVisual(textoUsuario) {
+  const conv = getActiveConversation();
+  if (!conv) return;
+
+  const createdAtUser = new Date().toISOString();
+
+  if (conv.messages.length === 0) {
+    conv.title = gerarTituloConversa(textoUsuario);
+  }
+
+  conv.messages.push({
+    role: "user",
+    content: textoUsuario,
+    createdAt: createdAtUser
+  });
+
+  conv.updatedAt = createdAtUser;
+  salvarConversas();
+  salvarConversaAtiva();
+  renderConversationList();
+
+  adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
+
+  const resposta =
+    "Não posso criar imagem ou cena com conteúdo íntimo, adulto ou impróprio 😅 Posso fazer uma versão segura, bonita e apropriada se quiser.";
+
+  const createdAtMaxi = new Date().toISOString();
+
+  conv.messages.push({
+    role: "assistant",
+    content: resposta,
+    createdAt: createdAtMaxi
+  });
+
+  conv.updatedAt = createdAtMaxi;
+
+  salvarConversas();
+  renderConversationList();
+  adicionarMensagem("Maxi", resposta, "maxi", createdAtMaxi);
+}
+
+/* ===== CONVERSAS ===== */
+
 function renderConversationList() {
   const list = document.getElementById("conversation-list");
   if (!list) return;
@@ -371,14 +477,14 @@ function abrirChat() {
   if (chat) chat.classList.remove("hidden");
 }
 
+/* ===== IMAGEM / CENA ===== */
+
 function detectarTipoVisual(texto) {
-  const t = texto.toLowerCase();
+  const t = normalizarTexto(texto);
 
   const cena =
     t.includes("cena animada") ||
-    t.includes("mini vídeo") ||
     t.includes("mini video") ||
-    t.includes("vídeo fake") ||
     t.includes("video fake") ||
     t.includes("visual animado") ||
     t.includes("imagem animada");
@@ -390,7 +496,7 @@ function detectarTipoVisual(texto) {
     t.includes("criar uma imagem") ||
     t.includes("gere uma imagem") ||
     t.includes("gerar uma imagem") ||
-    t.includes("faça uma imagem") ||
+    t.includes("faca uma imagem") ||
     t.includes("fazer uma imagem") ||
     t.includes("imagem de") ||
     t.includes("desenhe") ||
@@ -501,6 +607,11 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
   const conv = getActiveConversation();
   if (!conv) return;
 
+  if (verificarSegurancaVisual(textoUsuario)) {
+    responderBloqueioVisual(textoUsuario);
+    return;
+  }
+
   const promptVisual = limparPromptVisual(textoUsuario) || textoUsuario;
   const animated = tipo === "cena";
   const createdAtUser = new Date().toISOString();
@@ -564,6 +675,8 @@ async function gerarVisualMaxi(textoUsuario, tipo) {
     adicionarMidiaNaTela(promptVisual, url, createdAtImage, animated);
   }, 1200);
 }
+
+/* ===== ENVIO NORMAL ===== */
 
 async function enviarMensagem() {
   const input = document.getElementById("user-input");
@@ -703,6 +816,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("user-input");
   const themeButtons = document.querySelectorAll(".theme-btn");
   const modal = document.getElementById("config-modal");
+  const chatBox = document.getElementById("chat-box");
 
   if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
   if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
@@ -730,6 +844,12 @@ window.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         enviarMensagem();
       }
+    });
+  }
+
+  if (chatBox) {
+    chatBox.addEventListener("wheel", (e) => {
+      e.stopPropagation();
     });
   }
 });
