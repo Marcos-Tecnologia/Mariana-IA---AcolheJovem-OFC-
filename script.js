@@ -216,7 +216,7 @@ function verificarSegurancaVisual(texto) {
     "genitais",
     "vagina",
     "penis",
-    "estupr",
+    "estupro",
     "abuso sexual",
     "menor pelada",
     "crianca nua",
@@ -226,7 +226,13 @@ function verificarSegurancaVisual(texto) {
     "sangue extremo",
     "gore",
     "mutilacao",
-    "decapitacao"
+    "decapitacao",
+    "matando",
+    "morrendo",
+    "sangue",
+    "machucando",
+    "assassinato",
+    "morte"
   ];
 
   return bloqueados.some(palavra => t.includes(palavra));
