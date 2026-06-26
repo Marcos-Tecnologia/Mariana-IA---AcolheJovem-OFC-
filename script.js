@@ -18,30 +18,81 @@ const SYSTEM_PROMPT = {
     "Nunca dê diagnósticos médicos. Em situações graves, recomende ajuda profissional."
 };
 
+/* ===== MODOS PROFISSIONAIS DA MAXI ===== */
+
 const STYLE_PROMPTS = {
   rapido: {
-    label: "Rápido",
-    prompt: "Modo Rápido: responda curto, direto e objetivo. Use no máximo 4 linhas."
+    label: "⚡ Rápido",
+    prompt:
+      "MODO RÁPIDO ATIVADO. " +
+      "Responda com velocidade, clareza e objetividade. " +
+      "Use respostas curtas, diretas e fáceis de entender. " +
+      "Evite explicações longas, listas grandes e detalhes desnecessários. " +
+      "Use no máximo 4 linhas na maioria das respostas. " +
+      "Se o usuário pedir código, documento, atividade ou algo completo, entregue completo mesmo assim."
   },
+
   avancado: {
-    label: "Avançado",
-    prompt: "Modo Avançado: entregue uma resposta melhor, mais completa e organizada."
+    label: "🧠 Avançado",
+    prompt:
+      "MODO AVANÇADO ATIVADO. " +
+      "Responda com mais profundidade, organização e qualidade. " +
+      "Analise o pedido antes de responder. " +
+      "Explique alternativas, vantagens, desvantagens e recomendações quando fizer sentido. " +
+      "Use estrutura clara com tópicos, passos ou seções. " +
+      "Não enrole, mas entregue uma resposta mais completa e bem pensada. " +
+      "Se houver risco de ambiguidade, faça a melhor suposição possível e explique rapidamente."
   },
+
   pesquisa: {
-    label: "Pesquisa",
-    prompt: "Modo Pesquisa: organize como pesquisa. Não invente fontes. Avise quando algo precisar ser confirmado na internet."
+    label: "🌐 Pesquisa",
+    prompt:
+      "MODO PESQUISA ATIVADO. " +
+      "Organize a resposta como uma pesquisa clara e confiável. " +
+      "Use formato com resumo, pontos principais, explicação e conclusão quando fizer sentido. " +
+      "Não invente fontes, datas, links ou dados atuais. " +
+      "Se a informação depender de internet atualizada, avise que precisa ser verificada online. " +
+      "Diferencie conhecimento geral de informação recente. " +
+      "Se o usuário pedir uma pesquisa escolar, explique de forma organizada e apropriada para estudo."
   },
+
   estudo: {
-    label: "Estudo",
-    prompt: "Modo Estudo: ensine passo a passo, como tutor, com exemplos simples."
+    label: "📚 Estudo",
+    prompt:
+      "MODO ESTUDO ATIVADO. " +
+      "Aja como uma tutora paciente e didática. " +
+      "O objetivo é ensinar, não apenas responder. " +
+      "Explique passo a passo, com linguagem simples e exemplos. " +
+      "Quando o assunto for difícil, divida em partes pequenas. " +
+      "Use analogias quando ajudar. " +
+      "No final, quando fizer sentido, dê uma dica de memorização ou um mini exercício. " +
+      "Evite entregar só a resposta final se o usuário estiver tentando aprender. " +
+      "Se o usuário pedir explicação curta, respeite e seja breve."
   },
+
   professor: {
-    label: "Professor",
-    prompt: "Modo Professor: crie atividades, dinâmicas, planos de aula, jogos educativos e avaliações."
+    label: "👩‍🏫 Professor",
+    prompt:
+      "MODO PROFESSOR ATIVADO. " +
+      "Aja como uma assistente para professores. " +
+      "Ajude a criar planos de aula, atividades, dinâmicas, projetos, avaliações, rubricas, jogos educativos e sequências didáticas. " +
+      "Quando o usuário informar assunto, série, disciplina ou tempo de aula, use essas informações. " +
+      "Quando faltar algum detalhe, ainda entregue uma versão útil com suposições razoáveis. " +
+      "Organize materiais com objetivo, materiais necessários, passo a passo, tempo estimado e forma de avaliação quando fizer sentido. " +
+      "Mantenha linguagem profissional e prática."
   },
+
   atividade: {
-    label: "Atividade",
-    prompt: "Modo Atividade: ajude em atividades escolares explicando o raciocínio, sem só dar resposta pronta."
+    label: "📝 Atividade",
+    prompt:
+      "MODO ATIVIDADE ATIVADO. " +
+      "Ajude o usuário em atividades escolares com foco no aprendizado. " +
+      "Explique o raciocínio e o passo a passo. " +
+      "Não entregue apenas a resposta seca quando for uma questão de estudo. " +
+      "Se for matemática, mostre as etapas. " +
+      "Se for interpretação, explique de onde saiu a resposta. " +
+      "Se for redação ou texto, ajude a estruturar sem fazer de forma desonesta. " +
+      "Se o usuário pedir resposta final, pode dar, mas junto com uma explicação curta."
   }
 };
 
@@ -70,17 +121,24 @@ function salvarEstilo(style) {
   const estaAberto = chatAberto && !chatAberto.classList.contains("hidden");
 
   if (estaAberto) {
-    adicionarMensagem("Maxi", `Modo ${STYLE_PROMPTS[style].label} ativado ✨`, "maxi", new Date().toISOString());
+    adicionarMensagem(
+      "Maxi",
+      `Modo ${STYLE_PROMPTS[style].label} ativado ✨`,
+      "maxi",
+      new Date().toISOString()
+    );
   }
 }
 
 function atualizarTextoModoAtual() {
   const el = document.getElementById("modo-atual");
-  if (el) el.textContent = STYLE_PROMPTS[currentStyle]?.label || "Rápido";
+  if (el) el.textContent = STYLE_PROMPTS[currentStyle]?.label || "⚡ Rápido";
 }
 
 function atualizarBotoesEstilo() {
-  document.querySelectorAll(".style-btn").forEach(btn => {
+  const buttons = document.querySelectorAll(".style-btn");
+
+  buttons.forEach(btn => {
     const style = btn.getAttribute("data-style-choice");
     btn.classList.toggle("active-style", style === currentStyle);
   });
@@ -109,6 +167,7 @@ function fecharEstilo() {
 function carregarMemoria() {
   try {
     const raw = localStorage.getItem(MEMORY_KEY);
+
     if (!raw) {
       return {
         interests: [],
@@ -142,10 +201,12 @@ function salvarMemoria() {
 
 function adicionarUnico(lista, valor, limite = 12) {
   if (!valor) return;
+
   const limpo = valor.trim();
   if (!limpo) return;
 
   const existe = lista.some(item => item.toLowerCase() === limpo.toLowerCase());
+
   if (!existe) lista.unshift(limpo);
   if (lista.length > limite) lista.length = limite;
 }
@@ -158,6 +219,7 @@ function atualizarMemoriaComTexto(texto) {
     ["makeup", "maquiagem"],
     ["loja", "loja / negócio"],
     ["anuncio", "anúncios"],
+    ["anúncio", "anúncios"],
     ["marketing", "marketing"],
     ["logo", "logo / identidade visual"],
     ["site", "criação de site"],
@@ -165,10 +227,13 @@ function atualizarMemoriaComTexto(texto) {
     ["github", "GitHub"],
     ["vercel", "Vercel"],
     ["estudo", "estudos"],
+    ["prova", "estudos"],
+    ["trabalho escolar", "trabalhos escolares"],
     ["atividade escolar", "atividades escolares"],
     ["imagem", "criação de imagens"],
     ["cena animada", "cenas animadas"],
     ["video", "vídeos / cenas animadas"],
+    ["vídeo", "vídeos / cenas animadas"],
     ["python", "programação em Python"],
     ["html", "HTML/CSS/JS"],
     ["css", "HTML/CSS/JS"],
@@ -183,7 +248,9 @@ function atualizarMemoriaComTexto(texto) {
   ];
 
   interesses.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.interests, valor);
+    if (t.includes(normalizarTexto(chave))) {
+      adicionarUnico(memoryProfile.interests, valor);
+    }
   });
 
   const projetos = [
@@ -199,12 +266,15 @@ function atualizarMemoriaComTexto(texto) {
   ];
 
   projetos.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.projects, valor);
+    if (t.includes(normalizarTexto(chave))) {
+      adicionarUnico(memoryProfile.projects, valor);
+    }
   });
 
   const preferencias = [
     ["resumido", "prefere respostas resumidas"],
     ["curto", "prefere respostas curtas"],
+    ["completo", "prefere código completo"],
     ["codigo completo", "prefere código completo"],
     ["código completo", "prefere código completo"],
     ["sem mudar", "prefere manter o visual/função principal"],
@@ -215,7 +285,9 @@ function atualizarMemoriaComTexto(texto) {
   ];
 
   preferencias.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.preferences, valor);
+    if (t.includes(normalizarTexto(chave))) {
+      adicionarUnico(memoryProfile.preferences, valor);
+    }
   });
 
   adicionarUnico(memoryProfile.recentTopics, texto.slice(0, 80), 10);
@@ -263,6 +335,7 @@ function carregarConversas() {
   try {
     const raw = localStorage.getItem(CONVERSATIONS_KEY);
     if (!raw) return [];
+
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -383,6 +456,7 @@ function getActiveConversation() {
 
 function formatarHorario(dataIso) {
   const d = new Date(dataIso);
+
   return d.toLocaleTimeString("pt-BR", {
     hour: "2-digit",
     minute: "2-digit"
@@ -590,7 +664,15 @@ function renderChat() {
 
   conv.messages.forEach(msg => {
     if (msg.type === "image") {
-      adicionarMidiaNaTela(msg.prompt, msg.url, msg.createdAt, msg.animated, false, msg.logo);
+      adicionarMidiaNaTela(
+        msg.prompt,
+        msg.url,
+        msg.createdAt,
+        msg.animated,
+        false,
+        msg.logo,
+        msg.originalText || msg.prompt
+      );
     } else {
       adicionarMensagem(
         msg.role === "assistant" ? "Maxi" : "Você",
@@ -652,765 +734,4 @@ function criarReacao() {
     span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
   };
 
-  return reaction;
-}
-
-function mostrarCarregando(tipo = "mensagem") {
-  const box = document.getElementById("chat-box");
-  if (!box) return null;
-
-  removerCarregando();
-
-  let texto = "Maxi está pensando";
-  if (tipo === "imagem") texto = "Gerando imagem";
-  if (tipo === "cena") texto = "Criando cena animada";
-  if (tipo === "logo") texto = "Criando logo profissional";
-
-  const wrapper = document.createElement("div");
-  wrapper.className = "typing-wrapper";
-  wrapper.id = "maxi-loading";
-
-  wrapper.innerHTML = `
-    <div class="typing-bubble">
-      <span class="typing-label">${texto}</span>
-      <div class="typing-dot"></div>
-      <div class="typing-dot"></div>
-      <div class="typing-dot"></div>
-    </div>
-  `;
-
-  box.appendChild(wrapper);
-  rolarParaBaixo();
-
-  return wrapper;
-}
-
-function removerCarregando() {
-  const el = document.getElementById("maxi-loading");
-  if (el) el.remove();
-}
-
-async function escreverTextoAnimado(remetente, texto, createdAt) {
-  const box = document.getElementById("chat-box");
-  if (!box) return;
-
-  const data = new Date(createdAt);
-
-  const hora =
-    data.getHours().toString().padStart(2, "0") +
-    ":" +
-    data.getMinutes().toString().padStart(2, "0");
-
-  const div = document.createElement("div");
-  div.className = "msg msg-maxi";
-
-  const strong = document.createElement("strong");
-  strong.textContent = remetente;
-
-  const span = document.createElement("span");
-
-  const time = document.createElement("div");
-  time.className = "msg-time";
-  time.textContent = hora;
-
-  div.appendChild(strong);
-  div.appendChild(span);
-  div.appendChild(time);
-  div.appendChild(criarReacao());
-
-  box.appendChild(div);
-
-  let i = 0;
-
-  return new Promise(resolve => {
-    const intervalo = setInterval(() => {
-      span.textContent = texto.slice(0, i + 1);
-      i++;
-      rolarParaBaixo();
-
-      if (i >= texto.length) {
-        clearInterval(intervalo);
-        resolve();
-      }
-    }, 16);
-  });
-}
-
-function abrirChat() {
-  const inicio = document.getElementById("inicio-container");
-  const chat = document.getElementById("chat-container");
-
-  if (inicio) inicio.classList.add("hidden");
-  if (chat) chat.classList.remove("hidden");
-}
-
-/* ===== IMAGEM / LOGO / CENA ===== */
-
-function detectarTipoVisual(texto) {
-  const t = normalizarTexto(texto);
-
-  const logo =
-    t.includes("logo") ||
-    t.includes("logotipo") ||
-    t.includes("marca") ||
-    t.includes("banner com texto") ||
-    t.includes("cartaz com texto") ||
-    t.includes("coloque a frase") ||
-    t.includes("adicione a frase");
-
-  if (logo) return "logo";
-
-  const cena =
-    t.includes("cena animada") ||
-    t.includes("mini video") ||
-    t.includes("video fake") ||
-    t.includes("visual animado") ||
-    t.includes("imagem animada");
-
-  if (cena) return "cena";
-
-  const imagem =
-    t.includes("crie uma imagem") ||
-    t.includes("criar uma imagem") ||
-    t.includes("gere uma imagem") ||
-    t.includes("gerar uma imagem") ||
-    t.includes("faca uma imagem") ||
-    t.includes("fazer uma imagem") ||
-    t.includes("imagem de") ||
-    t.includes("desenhe") ||
-    t.includes("desenhar");
-
-  if (imagem) return "imagem";
-
-  const edicao =
-    t.includes("adicione") ||
-    t.includes("coloque") ||
-    t.includes("mude") ||
-    t.includes("troque") ||
-    t.includes("deixe") ||
-    t.includes("remove") ||
-    t.includes("remova") ||
-    t.includes("melhore");
-
-  if (edicao && obterUltimaImagem()) return "imagem";
-
-  return null;
-}
-
-function obterUltimaImagem() {
-  const conv = getActiveConversation();
-  if (!conv) return null;
-
-  for (let i = conv.messages.length - 1; i >= 0; i--) {
-    if (conv.messages[i].type === "image") return conv.messages[i];
-  }
-
-  return null;
-}
-
-function limparPromptVisual(texto) {
-  return texto
-    .replace(/crie uma cena animada de/gi, "")
-    .replace(/crie uma cena animada/gi, "")
-    .replace(/criar uma cena animada de/gi, "")
-    .replace(/criar uma cena animada/gi, "")
-    .replace(/gerar cena animada de/gi, "")
-    .replace(/gerar cena animada/gi, "")
-    .replace(/gere uma cena animada de/gi, "")
-    .replace(/gere uma cena animada/gi, "")
-    .replace(/mini vídeo de/gi, "")
-    .replace(/mini video de/gi, "")
-    .replace(/visual animado de/gi, "")
-    .replace(/imagem animada de/gi, "")
-    .replace(/crie uma imagem de/gi, "")
-    .replace(/crie uma imagem/gi, "")
-    .replace(/criar uma imagem de/gi, "")
-    .replace(/criar uma imagem/gi, "")
-    .replace(/gere uma imagem de/gi, "")
-    .replace(/gere uma imagem/gi, "")
-    .replace(/gerar uma imagem de/gi, "")
-    .replace(/gerar uma imagem/gi, "")
-    .replace(/faça uma imagem de/gi, "")
-    .replace(/faça uma imagem/gi, "")
-    .replace(/fazer uma imagem de/gi, "")
-    .replace(/fazer uma imagem/gi, "")
-    .replace(/imagem de/gi, "")
-    .replace(/desenhe/gi, "")
-    .replace(/desenhar/gi, "")
-    .replace(/crie uma logo de/gi, "")
-    .replace(/crie uma logo/gi, "")
-    .replace(/criar uma logo de/gi, "")
-    .replace(/criar uma logo/gi, "")
-    .replace(/logo de/gi, "")
-    .trim();
-}
-
-function extrairNomeLogo(texto) {
-  const original = texto.trim();
-
-  const aspas = original.match(/["“”']([^"“”']+)["“”']/);
-  if (aspas && aspas[1]) return aspas[1].trim();
-
-  const chamada = original.match(/chamada\s+([a-zA-ZÀ-ÿ0-9\s]+)/i);
-  if (chamada && chamada[1]) return chamada[1].trim().slice(0, 28);
-
-  const nome = original.match(/nome\s+([a-zA-ZÀ-ÿ0-9\s]+)/i);
-  if (nome && nome[1]) return nome[1].trim().slice(0, 28);
-
-  if (normalizarTexto(original).includes("restaurante")) return "Sabor Real";
-  if (normalizarTexto(original).includes("makeup") || normalizarTexto(original).includes("maquiagem")) return "Makeup Store";
-
-  return "Minha Marca";
-}
-
-function detectarIconeLogo(texto) {
-  const t = normalizarTexto(texto);
-
-  if (t.includes("restaurante") || t.includes("prato") || t.includes("garfo") || t.includes("comida")) return "🍽️";
-  if (t.includes("maquiagem") || t.includes("makeup") || t.includes("beleza")) return "💄";
-  if (t.includes("jogo") || t.includes("game")) return "🎮";
-  if (t.includes("tecnologia") || t.includes("ia") || t.includes("tech")) return "⚡";
-  if (t.includes("pet") || t.includes("cachorro") || t.includes("gato")) return "🐾";
-  if (t.includes("loja")) return "🛍️";
-
-  return "✨";
-}
-
-function criarLogoSvgUrl(textoUsuario) {
-  const nome = extrairNomeLogo(textoUsuario);
-  const icone = detectarIconeLogo(textoUsuario);
-  const t = normalizarTexto(textoUsuario);
-
-  let cor1 = "#f28bb8";
-  let cor2 = "#d97db4";
-  let fundo = "#fff5fa";
-  let texto = "#4e3d46";
-
-  if (t.includes("restaurante") || t.includes("comida") || t.includes("garfo")) {
-    cor1 = "#ff9f43";
-    cor2 = "#d35400";
-    fundo = "#fff7ec";
-    texto = "#3d2a1a";
-  }
-
-  if (t.includes("azul")) {
-    cor1 = "#7bb4f2";
-    cor2 = "#4e83c7";
-    fundo = "#eef7ff";
-    texto = "#23384f";
-  }
-
-  if (t.includes("preto") || t.includes("luxo")) {
-    cor1 = "#2b2b2b";
-    cor2 = "#000000";
-    fundo = "#f5f0e8";
-    texto = "#1f1f1f";
-  }
-
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 1024 768">
-    <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="${cor1}"/>
-        <stop offset="100%" stop-color="${cor2}"/>
-      </linearGradient>
-      <filter id="shadow">
-        <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#000" flood-opacity="0.18"/>
-      </filter>
-    </defs>
-
-    <rect width="1024" height="768" rx="70" fill="${fundo}"/>
-    <circle cx="512" cy="285" r="155" fill="url(#g)" filter="url(#shadow)"/>
-    <text x="512" y="325" text-anchor="middle" font-size="120" font-family="Arial, sans-serif">${icone}</text>
-
-    <text x="512" y="520" text-anchor="middle"
-      font-size="72" font-weight="800"
-      font-family="Inter, Segoe UI, Arial, sans-serif"
-      fill="${texto}">${escapeSvg(nome)}</text>
-
-    <text x="512" y="585" text-anchor="middle"
-      font-size="30" font-weight="500"
-      font-family="Inter, Segoe UI, Arial, sans-serif"
-      fill="${texto}" opacity="0.72">criado com Maxi</text>
-  </svg>`;
-
-  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-}
-
-function escapeSvg(texto) {
-  return String(texto)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function detectarEstiloImagem(texto) {
-  const t = normalizarTexto(texto);
-
-  if (t.includes("anime")) return "anime style, clean line art, vibrant colors, expressive lighting";
-  if (t.includes("realista") || t.includes("realismo") || t.includes("fotorealista")) return "photorealistic, realistic lighting, detailed textures";
-  if (t.includes("3d") || t.includes("render")) return "3D render, soft studio lighting, detailed 3D style";
-  if (t.includes("cartoon") || t.includes("desenho animado")) return "cartoon style, friendly shapes, colorful, clean illustration";
-  if (t.includes("pixel art") || t.includes("pixel")) return "pixel art style, retro game aesthetic";
-  if (t.includes("fofo") || t.includes("cute") || t.includes("kawaii")) return "cute kawaii style, soft colors, adorable design";
-  if (t.includes("logo")) return "modern logo design, clean vector style, minimal, centered composition";
-
-  return "beautiful digital art, polished composition, soft lighting, high quality";
-}
-
-function melhorarPromptImagem(promptOriginal, animated = false) {
-  const estilo = detectarEstiloImagem(promptOriginal);
-
-  const base = [
-    promptOriginal,
-    estilo,
-    "high quality",
-    "sharp details",
-    "balanced composition",
-    "beautiful lighting",
-    "harmonious colors",
-    "visually appealing",
-    "safe for all audiences",
-    "no text",
-    "no watermark"
-  ];
-
-  if (animated) {
-    base.push(
-      "cinematic animated scene",
-      "soft camera movement feeling",
-      "dynamic atmosphere",
-      "gentle motion impression"
-    );
-  }
-
-  return base.join(", ");
-}
-
-function criarUrlImagem(prompt, animated = false, tentativa = 0) {
-  const promptFinal = melhorarPromptImagem(prompt, animated);
-  const seed = Math.floor(Math.random() * 999999) + tentativa;
-  const width = tentativa >= 2 ? 768 : 1024;
-  const height = tentativa >= 2 ? 512 : 768;
-
-  return (
-    "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(promptFinal) +
-    "?width=" +
-    width +
-    "&height=" +
-    height +
-    "&seed=" +
-    seed +
-    "&nologo=true&model=flux"
-  );
-}
-
-function adicionarMidiaNaTela(prompt, url, createdAt = null, animated = false, salvar = true, logo = false) {
-  const box = document.getElementById("chat-box");
-  if (!box) return;
-
-  const agora = createdAt ? new Date(createdAt) : new Date();
-
-  const hora =
-    agora.getHours().toString().padStart(2, "0") +
-    ":" +
-    agora.getMinutes().toString().padStart(2, "0");
-
-  const card = document.createElement("div");
-  card.className = "media-card";
-
-  const strong = document.createElement("strong");
-  strong.textContent = "Maxi";
-
-  const texto = document.createElement("span");
-  texto.textContent = logo
-    ? `Logo criada para: ${prompt} ✨`
-    : animated
-      ? `Cena animada criada para: ${prompt} 🎬`
-      : `Imagem criada para: ${prompt} 🎨`;
-
-  const frame = document.createElement("div");
-  frame.className = "media-frame";
-
-  const img = document.createElement("img");
-  img.alt = logo ? "Logo gerada pela Maxi" : animated ? "Cena animada gerada pela Maxi" : "Imagem gerada pela Maxi";
-  img.className = animated ? "animated-scene-img" : "generated-image";
-
-  if (logo) {
-    img.src = url;
-    img.onload = () => rolarParaBaixo();
-  } else {
-    let tentativa = 0;
-    const maxTentativas = 4;
-
-    function tentarCarregar() {
-      const novaUrl = criarUrlImagem(prompt, animated, tentativa);
-      img.src = novaUrl;
-
-      texto.textContent =
-        tentativa === 0
-          ? animated
-            ? `Cena animada criada para: ${prompt} 🎬`
-            : `Imagem criada para: ${prompt} 🎨`
-          : `Tentando carregar novamente... (${tentativa + 1}/${maxTentativas}) 🔄`;
-    }
-
-    img.onload = () => {
-      texto.textContent = animated
-        ? `Cena animada criada para: ${prompt} 🎬`
-        : `Imagem criada para: ${prompt} 🎨`;
-
-      rolarParaBaixo();
-
-      if (salvar) {
-        const conv = getActiveConversation();
-        if (conv) {
-          for (let i = conv.messages.length - 1; i >= 0; i--) {
-            if (conv.messages[i].type === "image" && conv.messages[i].prompt === prompt) {
-              conv.messages[i].url = img.src;
-              salvarConversas();
-              break;
-            }
-          }
-        }
-      }
-    };
-
-    img.onerror = () => {
-      tentativa++;
-
-      if (tentativa < maxTentativas) {
-        setTimeout(tentarCarregar, 800);
-      } else {
-        texto.textContent =
-          "Não consegui carregar a imagem agora. O servidor de imagem pode estar instável ⚠️ Tente novamente em alguns instantes.";
-      }
-    };
-
-    tentarCarregar();
-  }
-
-  frame.appendChild(img);
-
-  const time = document.createElement("div");
-  time.className = "msg-time";
-  time.textContent = hora;
-
-  card.appendChild(strong);
-  card.appendChild(texto);
-  card.appendChild(frame);
-  card.appendChild(time);
-  card.appendChild(criarReacao());
-
-  box.appendChild(card);
-  rolarParaBaixo();
-}
-
-async function gerarVisualMaxi(textoUsuario, tipo) {
-  const conv = getActiveConversation();
-  if (!conv) return;
-
-  if (verificarSegurancaVisual(textoUsuario)) {
-    responderBloqueioVisual(textoUsuario);
-    return;
-  }
-
-  atualizarMemoriaComTexto(textoUsuario);
-
-  let promptVisual = limparPromptVisual(textoUsuario) || textoUsuario;
-  const ultimaImagem = obterUltimaImagem();
-
-  if (ultimaImagem && tipo !== "logo") {
-    const t = normalizarTexto(textoUsuario);
-    const ehEdicao =
-      t.includes("adicione") ||
-      t.includes("coloque") ||
-      t.includes("mude") ||
-      t.includes("troque") ||
-      t.includes("deixe") ||
-      t.includes("melhore") ||
-      t.includes("remova") ||
-      t.includes("remove");
-
-    if (ehEdicao) {
-      promptVisual = `${ultimaImagem.prompt}, edição solicitada: ${textoUsuario}`;
-    }
-  }
-
-  const animated = tipo === "cena";
-  const logo = tipo === "logo";
-  const createdAtUser = new Date().toISOString();
-
-  if (conv.messages.length === 0) {
-    conv.title = gerarTituloConversa((logo ? "Logo: " : animated ? "Cena: " : "Imagem: ") + promptVisual);
-  }
-
-  conv.messages.push({
-    role: "user",
-    content: textoUsuario,
-    createdAt: createdAtUser
-  });
-
-  conv.updatedAt = createdAtUser;
-
-  salvarConversas();
-  salvarConversaAtiva();
-
-  adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
-
-  const createdAtMaxi = new Date().toISOString();
-
-  const respostaTexto = logo
-    ? "Claro! Vou criar uma logo com texto mais correto para você ✨"
-    : animated
-      ? "Certo! Vou criar uma cena animada visual para você 🎬"
-      : "Claro! Vou criar essa imagem para você 🎨";
-
-  conv.messages.push({
-    role: "assistant",
-    content: respostaTexto,
-    createdAt: createdAtMaxi
-  });
-
-  adicionarMensagem("Maxi", respostaTexto, "maxi", createdAtMaxi);
-  renderConversationList();
-
-  mostrarCarregando(logo ? "logo" : animated ? "cena" : "imagem");
-
-  setTimeout(() => {
-    removerCarregando();
-
-    const createdAtImage = new Date().toISOString();
-    const url = logo ? criarLogoSvgUrl(textoUsuario) : criarUrlImagem(promptVisual, animated, 0);
-
-    conv.messages.push({
-      role: "assistant",
-      type: "image",
-      content: logo ? "Logo gerada" : animated ? "Cena animada gerada" : "Imagem gerada",
-      prompt: logo ? extrairNomeLogo(textoUsuario) : promptVisual,
-      url,
-      animated,
-      logo,
-      createdAt: createdAtImage
-    });
-
-    conv.updatedAt = createdAtImage;
-
-    if (conv.messages.length > 40) {
-      conv.messages = conv.messages.slice(-40);
-    }
-
-    salvarConversas();
-    renderConversationList();
-
-    adicionarMidiaNaTela(logo ? extrairNomeLogo(textoUsuario) : promptVisual, url, createdAtImage, animated, true, logo);
-  }, 1200);
-}
-
-/* ===== ENVIO NORMAL ===== */
-
-async function enviarMensagem() {
-  const input = document.getElementById("user-input");
-  if (!input) return;
-
-  const texto = input.value.trim();
-  if (!texto) return;
-
-  input.value = "";
-
-  const tipoVisual = detectarTipoVisual(texto);
-
-  if (tipoVisual) {
-    await gerarVisualMaxi(texto, tipoVisual);
-    return;
-  }
-
-  atualizarMemoriaComTexto(texto);
-
-  const conv = getActiveConversation();
-  if (!conv) return;
-
-  const createdAtUser = new Date().toISOString();
-
-  if (conv.messages.length === 0) {
-    conv.title = gerarTituloConversa(texto);
-  }
-
-  conv.messages.push({
-    role: "user",
-    content: texto,
-    createdAt: createdAtUser
-  });
-
-  conv.updatedAt = createdAtUser;
-
-  salvarConversas();
-  salvarConversaAtiva();
-  renderConversationList();
-
-  adicionarMensagem("Você", texto, "user", createdAtUser);
-
-  const mensagensParaEnviar = [
-    SYSTEM_PROMPT,
-    criarPromptEstilo(),
-    criarPromptMemoria(),
-    ...conv.messages
-      .filter(m => !m.type)
-      .map(m => ({
-        role: m.role,
-        content: m.content
-      }))
-  ];
-
-  mostrarCarregando("mensagem");
-
-  try {
-    const resposta = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messages: mensagensParaEnviar
-      })
-    });
-
-    const raw = await resposta.text();
-    console.log("RAW /api/chat:", raw);
-
-    let dados;
-
-    try {
-      dados = JSON.parse(raw);
-    } catch {
-      removerCarregando();
-      adicionarMensagem("Maxi", "A resposta da IA veio inválida.");
-      console.error("Resposta do backend não é JSON:", raw);
-      return;
-    }
-
-    if (!resposta.ok) {
-      removerCarregando();
-
-      if (resposta.status === 402) {
-        adicionarMensagem("Maxi", "Esse modelo está sem créditos no momento.");
-      } else if (resposta.status === 429) {
-        adicionarMensagem("Maxi", "Estou recebendo muitas mensagens agora. Tente de novo em instantes.");
-      } else {
-        adicionarMensagem("Maxi", `Erro da API (${resposta.status}).`);
-      }
-
-      console.error("Erro HTTP:", resposta.status, dados);
-      return;
-    }
-
-    const respostaIA = dados.reply;
-
-    if (!respostaIA) {
-      removerCarregando();
-      adicionarMensagem("Maxi", "A IA não retornou texto.");
-      console.error("Sem reply:", dados);
-      return;
-    }
-
-    const createdAtMaxi = new Date().toISOString();
-
-    conv.messages.push({
-      role: "assistant",
-      content: respostaIA,
-      createdAt: createdAtMaxi
-    });
-
-    if (conv.messages.length > 40) {
-      conv.messages = conv.messages.slice(-40);
-    }
-
-    conv.updatedAt = createdAtMaxi;
-
-    salvarConversas();
-    renderConversationList();
-
-    removerCarregando();
-    await escreverTextoAnimado("Maxi", respostaIA, createdAtMaxi);
-  } catch (erro) {
-    removerCarregando();
-    console.error("Erro ao se comunicar com a IA:", erro);
-    adicionarMensagem("Maxi", "Ocorreu um erro ao se comunicar com a IA.");
-  }
-}
-
-/* ===== DOM ===== */
-
-window.addEventListener("DOMContentLoaded", () => {
-  aplicarTemaSalvo();
-  garantirConversaInicial();
-  renderConversationList();
-  atualizarTextoModoAtual();
-  atualizarBotoesEstilo();
-
-  const btnAbrir = document.getElementById("btn-abrir-chat");
-  const btnEnviar = document.getElementById("btn-enviar");
-  const btnNova = document.getElementById("btn-nova-conversa");
-  const btnExcluir = document.getElementById("btn-excluir-conversa");
-  const btnConfig = document.getElementById("btn-config");
-  const btnFecharConfig = document.getElementById("btn-fechar-config");
-  const btnEstilo = document.getElementById("btn-estilo");
-  const btnFecharEstilo = document.getElementById("btn-fechar-estilo");
-  const input = document.getElementById("user-input");
-  const themeButtons = document.querySelectorAll(".theme-btn");
-  const styleButtons = document.querySelectorAll(".style-btn");
-  const modal = document.getElementById("config-modal");
-  const estiloModal = document.getElementById("estilo-modal");
-  const chatBox = document.getElementById("chat-box");
-
-  if (btnAbrir) btnAbrir.addEventListener("click", abrirChat);
-  if (btnEnviar) btnEnviar.addEventListener("click", enviarMensagem);
-  if (btnNova) btnNova.addEventListener("click", criarNovaConversa);
-  if (btnExcluir) btnExcluir.addEventListener("click", excluirConversaAtual);
-  if (btnConfig) btnConfig.addEventListener("click", abrirConfig);
-  if (btnFecharConfig) btnFecharConfig.addEventListener("click", fecharConfig);
-  if (btnEstilo) btnEstilo.addEventListener("click", abrirEstilo);
-  if (btnFecharEstilo) btnFecharEstilo.addEventListener("click", fecharEstilo);
-
-  if (modal) {
-    modal.addEventListener("click", e => {
-      if (e.target === modal) fecharConfig();
-    });
-  }
-
-  if (estiloModal) {
-    estiloModal.addEventListener("click", e => {
-      if (e.target === estiloModal) fecharEstilo();
-    });
-  }
-
-  themeButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const theme = btn.getAttribute("data-theme-choice");
-      aplicarTema(theme);
-    });
-  });
-
-  styleButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const style = btn.getAttribute("data-style-choice");
-      salvarEstilo(style);
-    });
-  });
-
-  if (input) {
-    input.addEventListener("keydown", e => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        enviarMensagem();
-      }
-    });
-  }
-
-  if (chatBox) {
-    chatBox.addEventListener("wheel", e => {
-      e.stopPropagation();
-    });
-  }
-});
+  return
