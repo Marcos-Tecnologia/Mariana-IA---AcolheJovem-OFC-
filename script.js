@@ -6,6 +6,17 @@ const THEME_KEY = "maxi_theme_v1";
 const MEMORY_KEY = "maxi_memory_profile_v1";
 const STYLE_KEY = "maxi_style_mode_v1";
 
+const OLD_CONVERSATION_KEYS = [
+  "maxi_conversations_v1",
+  "maxi_history",
+  "maxi_messages",
+  "aurora_history_v1_5",
+  "aurora_history",
+  "aurora_conversations_v1",
+  "conversations",
+  "history"
+];
+
 const SYSTEM_PROMPT = {
   role: "system",
   content:
@@ -18,88 +29,181 @@ const SYSTEM_PROMPT = {
     "Nunca dê diagnósticos médicos. Em situações graves, recomende ajuda profissional."
 };
 
-/* ===== MODOS PROFISSIONAIS DA MAXI ===== */
-
 const STYLE_PROMPTS = {
   rapido: {
     label: "⚡ Rápido",
     prompt:
-      "MODO RÁPIDO ATIVADO. " +
-      "Responda com velocidade, clareza e objetividade. " +
-      "Use respostas curtas, diretas e fáceis de entender. " +
-      "Evite explicações longas, listas grandes e detalhes desnecessários. " +
-      "Use no máximo 4 linhas na maioria das respostas. " +
+      "MODO RÁPIDO ATIVADO. Responda com velocidade, clareza e objetividade. " +
+      "Use respostas curtas, diretas e fáceis de entender. Use no máximo 4 linhas na maioria das respostas. " +
       "Se o usuário pedir código, documento, atividade ou algo completo, entregue completo mesmo assim."
   },
-
   avancado: {
     label: "🧠 Avançado",
     prompt:
-      "MODO AVANÇADO ATIVADO. " +
-      "Responda com mais profundidade, organização e qualidade. " +
-      "Analise o pedido antes de responder. " +
-      "Explique alternativas, vantagens, desvantagens e recomendações quando fizer sentido. " +
-      "Use estrutura clara com tópicos, passos ou seções. " +
-      "Não enrole, mas entregue uma resposta mais completa e bem pensada. " +
-      "Se houver risco de ambiguidade, faça a melhor suposição possível e explique rapidamente."
+      "MODO AVANÇADO ATIVADO. Responda com mais profundidade, organização e qualidade. " +
+      "Explique alternativas, vantagens, desvantagens e recomendações quando fizer sentido."
   },
-
   pesquisa: {
     label: "🌐 Pesquisa",
     prompt:
-      "MODO PESQUISA ATIVADO. " +
-      "Organize a resposta como uma pesquisa clara e confiável. " +
-      "Use formato com resumo, pontos principais, explicação e conclusão quando fizer sentido. " +
-      "Não invente fontes, datas, links ou dados atuais. " +
-      "Se a informação depender de internet atualizada, avise que precisa ser verificada online. " +
-      "Diferencie conhecimento geral de informação recente. " +
-      "Se o usuário pedir uma pesquisa escolar, explique de forma organizada e apropriada para estudo."
+      "MODO PESQUISA ATIVADO. Organize a resposta como pesquisa clara e confiável. " +
+      "Não invente fontes, datas, links ou dados atuais. Avise quando algo precisar ser confirmado online."
   },
-
   estudo: {
     label: "📚 Estudo",
     prompt:
-      "MODO ESTUDO ATIVADO. " +
-      "Aja como uma tutora paciente e didática. " +
-      "O objetivo é ensinar, não apenas responder. " +
-      "Explique passo a passo, com linguagem simples e exemplos. " +
-      "Quando o assunto for difícil, divida em partes pequenas. " +
-      "Use analogias quando ajudar. " +
-      "No final, quando fizer sentido, dê uma dica de memorização ou um mini exercício. " +
-      "Evite entregar só a resposta final se o usuário estiver tentando aprender. " +
-      "Se o usuário pedir explicação curta, respeite e seja breve."
+      "MODO ESTUDO ATIVADO. Aja como tutora paciente e didática. Explique passo a passo, com exemplos simples. " +
+      "Ensine, não apenas responda. Quando fizer sentido, dê dica de memorização ou mini exercício."
   },
-
   professor: {
     label: "👩‍🏫 Professor",
     prompt:
-      "MODO PROFESSOR ATIVADO. " +
-      "Aja como uma assistente para professores. " +
-      "Ajude a criar planos de aula, atividades, dinâmicas, projetos, avaliações, rubricas, jogos educativos e sequências didáticas. " +
-      "Quando o usuário informar assunto, série, disciplina ou tempo de aula, use essas informações. " +
-      "Quando faltar algum detalhe, ainda entregue uma versão útil com suposições razoáveis. " +
-      "Organize materiais com objetivo, materiais necessários, passo a passo, tempo estimado e forma de avaliação quando fizer sentido. " +
-      "Mantenha linguagem profissional e prática."
+      "MODO PROFESSOR ATIVADO. Ajude professores a criar planos de aula, atividades, dinâmicas, projetos, avaliações, jogos educativos e rubricas. " +
+      "Organize com objetivo, materiais, passo a passo, tempo estimado e avaliação quando fizer sentido."
   },
-
   atividade: {
     label: "📝 Atividade",
     prompt:
-      "MODO ATIVIDADE ATIVADO. " +
-      "Ajude o usuário em atividades escolares com foco no aprendizado. " +
-      "Explique o raciocínio e o passo a passo. " +
-      "Não entregue apenas a resposta seca quando for uma questão de estudo. " +
-      "Se for matemática, mostre as etapas. " +
-      "Se for interpretação, explique de onde saiu a resposta. " +
-      "Se for redação ou texto, ajude a estruturar sem fazer de forma desonesta. " +
-      "Se o usuário pedir resposta final, pode dar, mas junto com uma explicação curta."
+      "MODO ATIVIDADE ATIVADO. Ajude em atividades escolares explicando o raciocínio. " +
+      "Não entregue apenas a resposta seca; mostre o caminho."
   }
 };
 
-let conversations = carregarConversas();
-let activeConversationId = carregarConversaAtiva();
-let memoryProfile = carregarMemoria();
-let currentStyle = carregarEstilo();
+let conversations = [];
+let activeConversationId = null;
+let memoryProfile = null;
+let currentStyle = "rapido";
+
+/* ===== INICIALIZAÇÃO SEGURA ===== */
+
+function iniciarMaxiComSeguranca() {
+  try {
+    conversations = carregarConversas();
+    activeConversationId = carregarConversaAtiva();
+    memoryProfile = carregarMemoria();
+    currentStyle = carregarEstilo();
+
+    aplicarTemaSalvo();
+    garantirConversaInicial();
+    renderConversationList();
+    atualizarTextoModoAtual();
+    atualizarBotoesEstilo();
+    conectarBotoes();
+
+    console.log("Maxi iniciada com sucesso.");
+  } catch (erro) {
+    console.error("Erro ao iniciar Maxi:", erro);
+    conectarBotoesBasicos();
+  }
+}
+
+/* ===== RECUPERAÇÃO DE CONVERSAS ===== */
+
+function carregarConversas() {
+  const principal = lerConversasDaChave(CONVERSATIONS_KEY);
+
+  if (principal.length > 0) {
+    return principal;
+  }
+
+  for (const key of OLD_CONVERSATION_KEYS) {
+    const recuperadas = lerConversasDaChave(key);
+
+    if (recuperadas.length > 0) {
+      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(recuperadas));
+      return recuperadas;
+    }
+  }
+
+  return [];
+}
+
+function lerConversasDaChave(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) return [];
+
+      if (parsed[0] && parsed[0].messages) {
+        return parsed.map(normalizarConversa).filter(Boolean);
+      }
+
+      if (parsed[0] && parsed[0].role && parsed[0].content) {
+        return [
+          {
+            id: gerarId(),
+            title: "Conversa recuperada",
+            messages: parsed.map(normalizarMensagem).filter(Boolean),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+      }
+    }
+
+    if (parsed && Array.isArray(parsed.messages)) {
+      return [
+        {
+          id: gerarId(),
+          title: parsed.title || "Conversa recuperada",
+          messages: parsed.messages.map(normalizarMensagem).filter(Boolean),
+          updatedAt: parsed.updatedAt || new Date().toISOString()
+        }
+      ];
+    }
+
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizarConversa(conv) {
+  if (!conv) return null;
+
+  return {
+    id: conv.id || gerarId(),
+    title: conv.title || conv.name || "Conversa recuperada",
+    messages: Array.isArray(conv.messages)
+      ? conv.messages.map(normalizarMensagem).filter(Boolean)
+      : [],
+    updatedAt: conv.updatedAt || conv.createdAt || new Date().toISOString()
+  };
+}
+
+function normalizarMensagem(msg) {
+  if (!msg) return null;
+
+  return {
+    role: msg.role === "assistant" ? "assistant" : msg.role === "user" ? "user" : "assistant",
+    content: msg.content || msg.text || msg.message || "",
+    type: msg.type || undefined,
+    prompt: msg.prompt || "",
+    url: msg.url || "",
+    animated: !!msg.animated,
+    logo: !!msg.logo,
+    logoName: msg.logoName || "",
+    originalText: msg.originalText || "",
+    createdAt: msg.createdAt || new Date().toISOString()
+  };
+}
+
+function salvarConversas() {
+  localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
+}
+
+function carregarConversaAtiva() {
+  return localStorage.getItem(ACTIVE_CONVERSATION_KEY);
+}
+
+function salvarConversaAtiva() {
+  if (activeConversationId) {
+    localStorage.setItem(ACTIVE_CONVERSATION_KEY, activeConversationId);
+  }
+}
 
 /* ===== ESTILO ===== */
 
@@ -121,12 +225,7 @@ function salvarEstilo(style) {
   const estaAberto = chatAberto && !chatAberto.classList.contains("hidden");
 
   if (estaAberto) {
-    adicionarMensagem(
-      "Maxi",
-      `Modo ${STYLE_PROMPTS[style].label} ativado ✨`,
-      "maxi",
-      new Date().toISOString()
-    );
+    adicionarMensagem("Maxi", `Modo ${STYLE_PROMPTS[style].label} ativado ✨`, "maxi", new Date().toISOString());
   }
 }
 
@@ -136,9 +235,7 @@ function atualizarTextoModoAtual() {
 }
 
 function atualizarBotoesEstilo() {
-  const buttons = document.querySelectorAll(".style-btn");
-
-  buttons.forEach(btn => {
+  document.querySelectorAll(".style-btn").forEach(btn => {
     const style = btn.getAttribute("data-style-choice");
     btn.classList.toggle("active-style", style === currentStyle);
   });
@@ -201,12 +298,10 @@ function salvarMemoria() {
 
 function adicionarUnico(lista, valor, limite = 12) {
   if (!valor) return;
-
   const limpo = valor.trim();
   if (!limpo) return;
 
   const existe = lista.some(item => item.toLowerCase() === limpo.toLowerCase());
-
   if (!existe) lista.unshift(limpo);
   if (lista.length > limite) lista.length = limite;
 }
@@ -219,7 +314,6 @@ function atualizarMemoriaComTexto(texto) {
     ["makeup", "maquiagem"],
     ["loja", "loja / negócio"],
     ["anuncio", "anúncios"],
-    ["anúncio", "anúncios"],
     ["marketing", "marketing"],
     ["logo", "logo / identidade visual"],
     ["site", "criação de site"],
@@ -227,13 +321,10 @@ function atualizarMemoriaComTexto(texto) {
     ["github", "GitHub"],
     ["vercel", "Vercel"],
     ["estudo", "estudos"],
-    ["prova", "estudos"],
-    ["trabalho escolar", "trabalhos escolares"],
     ["atividade escolar", "atividades escolares"],
     ["imagem", "criação de imagens"],
     ["cena animada", "cenas animadas"],
     ["video", "vídeos / cenas animadas"],
-    ["vídeo", "vídeos / cenas animadas"],
     ["python", "programação em Python"],
     ["html", "HTML/CSS/JS"],
     ["css", "HTML/CSS/JS"],
@@ -248,33 +339,12 @@ function atualizarMemoriaComTexto(texto) {
   ];
 
   interesses.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) {
-      adicionarUnico(memoryProfile.interests, valor);
-    }
-  });
-
-  const projetos = [
-    ["maxi", "IA Maxi"],
-    ["aurora", "antigo projeto Aurora"],
-    ["minha loja", "loja do usuário"],
-    ["loja makeup", "loja de maquiagem"],
-    ["meu site", "site do usuário"],
-    ["meu app", "app do usuário"],
-    ["meu jogo", "jogo do usuário"],
-    ["minha ia", "IA do usuário"],
-    ["meu restaurante", "restaurante do usuário"]
-  ];
-
-  projetos.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) {
-      adicionarUnico(memoryProfile.projects, valor);
-    }
+    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.interests, valor);
   });
 
   const preferencias = [
     ["resumido", "prefere respostas resumidas"],
     ["curto", "prefere respostas curtas"],
-    ["completo", "prefere código completo"],
     ["codigo completo", "prefere código completo"],
     ["código completo", "prefere código completo"],
     ["sem mudar", "prefere manter o visual/função principal"],
@@ -285,9 +355,7 @@ function atualizarMemoriaComTexto(texto) {
   ];
 
   preferencias.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) {
-      adicionarUnico(memoryProfile.preferences, valor);
-    }
+    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.preferences, valor);
   });
 
   adicionarUnico(memoryProfile.recentTopics, texto.slice(0, 80), 10);
@@ -313,49 +381,17 @@ function criarPromptMemoria() {
     partes.push("Assuntos recentes: " + memoryProfile.recentTopics.slice(0, 5).join(" | ") + ".");
   }
 
-  if (!partes.length) {
-    return {
-      role: "system",
-      content: "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
-    };
-  }
-
   return {
     role: "system",
     content:
-      "Memória local da Maxi sobre o usuário. Use apenas para personalizar respostas e recomendações curtas, sem ser invasiva. " +
-      partes.join(" ") +
-      " Se fizer sentido, no final da resposta dê uma recomendação curta baseada nesses interesses."
+      partes.length === 0
+        ? "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
+        : "Memória local da Maxi sobre o usuário. Use apenas para personalizar respostas e recomendações curtas, sem ser invasiva. " +
+          partes.join(" ")
   };
 }
 
-/* ===== BASE ===== */
-
-function carregarConversas() {
-  try {
-    const raw = localStorage.getItem(CONVERSATIONS_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function salvarConversas() {
-  localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
-}
-
-function carregarConversaAtiva() {
-  return localStorage.getItem(ACTIVE_CONVERSATION_KEY);
-}
-
-function salvarConversaAtiva() {
-  if (activeConversationId) {
-    localStorage.setItem(ACTIVE_CONVERSATION_KEY, activeConversationId);
-  }
-}
+/* ===== TEMA ===== */
 
 function aplicarTema(theme) {
   document.body.setAttribute("data-theme", theme);
@@ -363,19 +399,11 @@ function aplicarTema(theme) {
 }
 
 function aplicarTemaSalvo() {
-  const theme = localStorage.getItem(THEME_KEY) || "rosa";
+  const theme = localStorage.getItem(THEME_KEY) || document.body.getAttribute("data-theme") || "rosa";
   document.body.setAttribute("data-theme", theme);
 }
 
-function abrirConfig() {
-  const modal = document.getElementById("config-modal");
-  if (modal) modal.classList.remove("hidden");
-}
-
-function fecharConfig() {
-  const modal = document.getElementById("config-modal");
-  if (modal) modal.classList.add("hidden");
-}
+/* ===== CONVERSAS ===== */
 
 function gerarId() {
   return "conv_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
@@ -414,19 +442,11 @@ function excluirConversaAtual() {
   conversations = conversations.filter(c => c.id !== activeConversationId);
 
   if (conversations.length === 0) {
-    const id = gerarId();
-
-    conversations.unshift({
-      id,
-      title: "Nova conversa",
-      messages: [],
-      updatedAt: new Date().toISOString()
-    });
-
-    activeConversationId = id;
-  } else {
-    activeConversationId = conversations[0].id;
+    criarNovaConversa();
+    return;
   }
+
+  activeConversationId = conversations[0].id;
 
   salvarConversas();
   salvarConversaAtiva();
@@ -436,7 +456,16 @@ function excluirConversaAtual() {
 
 function garantirConversaInicial() {
   if (conversations.length === 0) {
-    criarNovaConversa();
+    conversations.push({
+      id: gerarId(),
+      title: "Nova conversa",
+      messages: [],
+      updatedAt: new Date().toISOString()
+    });
+
+    activeConversationId = conversations[0].id;
+    salvarConversas();
+    salvarConversaAtiva();
     return;
   }
 
@@ -453,165 +482,6 @@ function garantirConversaInicial() {
 function getActiveConversation() {
   return conversations.find(c => c.id === activeConversationId) || null;
 }
-
-function formatarHorario(dataIso) {
-  const d = new Date(dataIso);
-
-  return d.toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
-function gerarTituloConversa(texto) {
-  const limpo = texto.trim();
-  if (!limpo) return "Nova conversa";
-  return limpo.length > 30 ? limpo.slice(0, 30) + "..." : limpo;
-}
-
-function escapeHtml(texto) {
-  return String(texto)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function rolarParaBaixo() {
-  const box = document.getElementById("chat-box");
-  if (!box) return;
-  box.scrollTop = box.scrollHeight;
-}
-
-/* ===== SEGURANÇA VISUAL ===== */
-
-function normalizarTexto(texto) {
-  return String(texto)
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function verificarSegurancaVisual(texto) {
-  const t = normalizarTexto(texto);
-
-  const bloqueados = [
-    "nudez",
-    "nua",
-    "nu ",
-    "pelada",
-    "pelado",
-    "sem roupa",
-    "calcinha",
-    "sutia",
-    "lingerie",
-    "roupa intima",
-    "bikini sensual",
-    "biquini sensual",
-    "sexy",
-    "sensual",
-    "erotico",
-    "erotica",
-    "porn",
-    "porno",
-    "pornografia",
-    "adulto",
-    "18+",
-    "onlyfans",
-    "strip",
-    "stripper",
-    "orgia",
-    "sexo",
-    "sexual",
-    "peitos",
-    "seios",
-    "bunda",
-    "genital",
-    "genitais",
-    "vagina",
-    "penis",
-    "estupr",
-    "abuso sexual",
-    "menor pelada",
-    "crianca nua",
-    "adolescente nua",
-    "menina nua",
-    "menino nu",
-    "matando",
-    "matar",
-    "morreu",
-    "morrendo",
-    "morto",
-    "morta",
-    "assassinato",
-    "assassinar",
-    "assassino",
-    "executando",
-    "execucao",
-    "esfaqueando",
-    "facada",
-    "tiroteio",
-    "sangue extremo",
-    "muito sangue",
-    "gore",
-    "mutilacao",
-    "decapitacao",
-    "cadaver",
-    "tortura",
-    "suicidio",
-    "autoagressao",
-    "massacre"
-  ];
-
-  return bloqueados.some(palavra => t.includes(palavra));
-}
-
-function responderBloqueioVisual(textoUsuario) {
-  const conv = getActiveConversation();
-  if (!conv) return;
-
-  const createdAtUser = new Date().toISOString();
-
-  if (conv.messages.length === 0) {
-    conv.title = gerarTituloConversa(textoUsuario);
-  }
-
-  atualizarMemoriaComTexto(textoUsuario);
-
-  conv.messages.push({
-    role: "user",
-    content: textoUsuario,
-    createdAt: createdAtUser
-  });
-
-  conv.updatedAt = createdAtUser;
-
-  salvarConversas();
-  salvarConversaAtiva();
-  renderConversationList();
-
-  adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
-
-  const resposta =
-    "Não posso criar imagem ou cena com conteúdo adulto, íntimo, violento ou impróprio 😅 Posso fazer uma versão segura, bonita e apropriada.";
-
-  const createdAtMaxi = new Date().toISOString();
-
-  conv.messages.push({
-    role: "assistant",
-    content: resposta,
-    createdAt: createdAtMaxi
-  });
-
-  conv.updatedAt = createdAtMaxi;
-
-  salvarConversas();
-  renderConversationList();
-  adicionarMensagem("Maxi", resposta, "maxi", createdAtMaxi);
-}
-
-/* ===== CONVERSAS ===== */
 
 function renderConversationList() {
   const list = document.getElementById("conversation-list");
@@ -686,6 +556,28 @@ function renderChat() {
   rolarParaBaixo();
 }
 
+/* ===== UI ===== */
+
+function abrirChat() {
+  const inicio = document.getElementById("inicio-container");
+  const chat = document.getElementById("chat-container");
+
+  if (inicio) inicio.classList.add("hidden");
+  if (chat) chat.classList.remove("hidden");
+
+  rolarParaBaixo();
+}
+
+function abrirConfig() {
+  const modal = document.getElementById("config-modal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function fecharConfig() {
+  const modal = document.getElementById("config-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
 function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
   const box = document.getElementById("chat-box");
   if (!box) return null;
@@ -704,7 +596,7 @@ function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
   strong.textContent = remetente;
 
   const span = document.createElement("span");
-  span.textContent = texto;
+  span.textContent = texto || "";
 
   const time = document.createElement("div");
   time.className = "msg-time";
@@ -734,4 +626,117 @@ function criarReacao() {
     span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
   };
 
-  return
+  return reaction;
+}
+
+function mostrarCarregando(tipo = "mensagem") {
+  const box = document.getElementById("chat-box");
+  if (!box) return null;
+
+  removerCarregando();
+
+  let texto = "Maxi está pensando";
+  if (tipo === "imagem") texto = "Gerando imagem";
+  if (tipo === "cena") texto = "Criando cena animada";
+  if (tipo === "logo") texto = "Criando logo profissional";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "typing-wrapper";
+  wrapper.id = "maxi-loading";
+
+  wrapper.innerHTML = `
+    <div class="typing-bubble">
+      <span class="typing-label">${texto}</span>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+
+  box.appendChild(wrapper);
+  rolarParaBaixo();
+
+  return wrapper;
+}
+
+function removerCarregando() {
+  const el = document.getElementById("maxi-loading");
+  if (el) el.remove();
+}
+
+async function escreverTextoAnimado(remetente, texto, createdAt) {
+  const box = document.getElementById("chat-box");
+  if (!box) return;
+
+  const div = adicionarMensagem(remetente, "", "maxi", createdAt);
+  if (!div) return;
+
+  const span = div.querySelector("span");
+  let i = 0;
+
+  return new Promise(resolve => {
+    const intervalo = setInterval(() => {
+      span.textContent = texto.slice(0, i + 1);
+      i++;
+      rolarParaBaixo();
+
+      if (i >= texto.length) {
+        clearInterval(intervalo);
+        resolve();
+      }
+    }, 16);
+  });
+}
+
+/* ===== IMAGEM ===== */
+
+function detectarTipoVisual(texto) {
+  const t = normalizarTexto(texto);
+
+  if (
+    t.includes("logo") ||
+    t.includes("logotipo") ||
+    t.includes("marca") ||
+    t.includes("banner com texto") ||
+    t.includes("cartaz com texto")
+  ) {
+    return "logo";
+  }
+
+  if (
+    t.includes("cena animada") ||
+    t.includes("mini video") ||
+    t.includes("video fake") ||
+    t.includes("visual animado") ||
+    t.includes("imagem animada")
+  ) {
+    return "cena";
+  }
+
+  if (
+    t.includes("crie uma imagem") ||
+    t.includes("criar uma imagem") ||
+    t.includes("gere uma imagem") ||
+    t.includes("gerar uma imagem") ||
+    t.includes("faca uma imagem") ||
+    t.includes("fazer uma imagem") ||
+    t.includes("imagem de") ||
+    t.includes("desenhe") ||
+    t.includes("desenhar")
+  ) {
+    return "imagem";
+  }
+
+  return null;
+}
+
+function limparPromptVisual(texto) {
+  return texto
+    .replace(/crie uma imagem de/gi, "")
+    .replace(/crie uma imagem/gi, "")
+    .replace(/criar uma imagem de/gi, "")
+    .replace(/criar uma imagem/gi, "")
+    .replace(/gere uma imagem de/gi, "")
+    .replace(/gere uma imagem/gi, "")
+    .replace(/gerar uma imagem de/gi, "")
+    .replace(/gerar uma im
