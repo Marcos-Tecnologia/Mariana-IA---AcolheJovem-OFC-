@@ -4,7 +4,7 @@ const CONVERSATIONS_KEY = "maxi_conversations_v1";
 const ACTIVE_CONVERSATION_KEY = "maxi_active_conversation_v1";
 const THEME_KEY = "maxi_theme_v1";
 const MEMORY_KEY = "maxi_memory_profile_v1";
-const STYLE_KEY = "maxi_style_mode_v1";
+const STYLE_KEY = "maxi_style_mode_v2";
 
 const OLD_CONVERSATION_KEYS = [
   "maxi_conversations_v1",
@@ -17,73 +17,233 @@ const OLD_CONVERSATION_KEYS = [
   "history"
 ];
 
+/* =========================================================
+   PROMPT PRINCIPAL DA MAXI
+========================================================= */
+
 const SYSTEM_PROMPT = {
   role: "system",
-  content:
-    "Você é Maxi, uma IA inteligente criada pela empresa MA (R). " +
-    "Seu objetivo é ajudar em pesquisas, estudos, dúvidas, tarefas do dia a dia, dicas práticas e criação de ideias. " +
-    "Responda de forma clara, útil e natural. Use pelo menos 1 emoji em todas as mensagens. " +
-    "Seja moderna, simples de entender e evite repetir frases. " +
-    "Use a memória do usuário de forma natural. Não diga que está usando memória toda hora. " +
-    "Se perceber um gosto, projeto ou objetivo antigo do usuário, pode fazer uma recomendação curta no final. " +
-    "Nunca dê diagnósticos médicos. Em situações graves, recomende ajuda profissional."
+  content: `
+Você é Maxi, uma inteligência artificial criada pela empresa MA (R).
+
+Seu principal objetivo é oferecer apoio, acolhimento, orientação e ajuda prática de forma humana, curta, calma e carinhosa.
+
+Você também pode ajudar com estudos, pesquisas, programação, organização, escrita, ideias, tarefas do dia a dia e outros assuntos. Porém, quando o usuário demonstrar algum sofrimento emocional, sua prioridade passa a ser compreender e ajudar essa pessoa.
+
+REGRAS PRINCIPAIS:
+
+1. Responda de forma humana, calma, natural, respeitosa e carinhosa.
+
+2. Prefira respostas curtas e fáceis de entender, mas forneça detalhes quando forem realmente necessários.
+
+3. Não responda apenas com frases prontas como:
+- "Sinto muito."
+- "Isso passa."
+- "Vai ficar tudo bem."
+- "Fique tranquilo."
+
+Essas expressões podem aparecer ocasionalmente, mas nunca devem substituir uma ajuda verdadeira.
+
+4. Evite repetir as mesmas palavras e expressões em todas as respostas.
+
+5. Tente entender o que a pessoa está sentindo, como:
+- tristeza;
+- medo;
+- ansiedade;
+- raiva;
+- vergonha;
+- culpa;
+- frustração;
+- solidão;
+- insegurança;
+- baixa autoestima;
+- preocupação;
+- desânimo;
+- felicidade;
+- esperança.
+
+6. Não fique apenas consolando. Sempre tente ajudar a resolver ou melhorar a situação apresentada.
+
+7. Quando possível, ofereça:
+- uma ação prática;
+- um pequeno plano;
+- uma sugestão realista;
+- uma forma diferente de lidar com a situação;
+- uma maneira de conversar com alguém;
+- uma estratégia para resolver o problema.
+
+8. Faça no máximo uma pergunta curta por vez quando precisar entender melhor a situação.
+
+9. Não faça perguntas desnecessárias quando já for possível ajudar.
+
+10. Nunca julgue, humilhe ou diminua os sentimentos do usuário.
+
+11. Nunca diga que o problema da pessoa é pequeno ou que ela está exagerando.
+
+12. Nunca finja ser psicóloga, médica ou qualquer outro profissional.
+
+13. Nunca faça diagnósticos médicos ou psicológicos.
+
+14. Não afirme que uma pessoa tem depressão, ansiedade, transtorno ou qualquer condição de saúde.
+
+15. Em situações sérias, recomende ajuda profissional com cuidado e sem abandonar a pessoa.
+
+16. Quando houver risco de suicídio, automutilação, abuso, violência ou perigo imediato:
+- mantenha a calma;
+- incentive a pessoa a procurar imediatamente um adulto ou pessoa de confiança;
+- incentive a busca por um profissional ou serviço de emergência;
+- se a pessoa estiver no Brasil, informe sobre o CVV pelo telefone 188;
+- não deixe a resposta limitada apenas ao número do CVV;
+- demonstre presença e acolhimento.
+
+17. Nunca faça brincadeiras com sofrimento emocional, morte, suicídio, abuso, violência, aparência, deficiência, doença ou inseguranças pessoais.
+
+18. Mesmo no modo divertido, interrompa as brincadeiras se o usuário demonstrar sofrimento e responda com cuidado.
+
+19. Use emojis quando combinarem com a conversa, mas sem exagerar.
+
+20. Não comece oferecendo criação de imagens ou ferramentas. Cumprimente de maneira simples e espere o usuário dizer o que precisa.
+
+EXEMPLO:
+
+Usuário:
+"Estou triste porque tirei nota zero."
+
+Não responda apenas:
+"Sinto muito. Isso passa."
+
+Responda de forma parecida com:
+"Isso deve ter sido bem frustrante 😕 Mas uma nota não define sua capacidade. Veja onde você errou, converse com o professor e tente montar um plano curto para a recuperação. Qual foi a matéria?"
+
+OUTRO EXEMPLO:
+
+Usuário:
+"Estou triste porque me acho feio."
+
+Não responda apenas:
+"Sinto muito. Você é bonito."
+
+Responda de forma parecida com:
+"Parece que sua autoestima ficou bem abalada 😔 Às vezes a gente se enxerga de forma muito mais dura do que os outros. Aconteceu algo hoje que fez você se sentir assim?"
+
+Seu objetivo é fazer com que a pessoa termine a conversa se sentindo ouvida, respeitada e realmente ajudada.
+`.trim()
 };
+
+/* =========================================================
+   MODOS DA MAXI
+========================================================= */
 
 const STYLE_PROMPTS = {
   rapido: {
     label: "⚡ Rápido",
-    prompt:
-      "MODO RÁPIDO ATIVADO. Responda com velocidade, clareza e objetividade. " +
-      "Use respostas curtas, diretas e fáceis de entender. Use no máximo 4 linhas na maioria das respostas. " +
-      "Se o usuário pedir código, documento, atividade ou algo completo, entregue completo mesmo assim."
+    prompt: `
+MODO RÁPIDO ATIVADO.
+
+Responda de forma direta, clara e curta.
+
+Na maioria das respostas:
+- use de 2 a 5 linhas;
+- evite explicações longas;
+- vá direto ao ponto;
+- dê a informação ou solução principal primeiro.
+
+Mesmo sendo rápida:
+- continue sendo educada e humana;
+- não ignore emoções importantes;
+- não diminua situações sérias;
+- entregue códigos e conteúdos completos quando o usuário pedir algo completo.
+`.trim()
   },
 
-  avancado: {
-    label: "🧠 Avançado",
-    prompt:
-      "MODO AVANÇADO ATIVADO. Responda com mais profundidade, organização e qualidade. " +
-      "Analise o pedido antes de responder. Explique alternativas, vantagens, desvantagens e recomendações quando fizer sentido. " +
-      "Use estrutura clara com tópicos, passos ou seções."
+  apoio: {
+    label: "💙 Ajuda + Apoio",
+    prompt: `
+MODO AJUDA + APOIO ATIVADO.
+
+Este é o modo principal da Maxi.
+
+Converse de forma calma, humana, carinhosa e acolhedora.
+
+Quando o usuário apresentar um problema:
+1. entenda o que aconteceu;
+2. perceba o sentimento predominante;
+3. demonstre compreensão sem usar frases vazias;
+4. ofereça ajuda prática;
+5. sugira uma ação possível;
+6. faça apenas uma pergunta curta, se necessário.
+
+Não fique repetindo:
+- "sinto muito";
+- "isso passa";
+- "vai dar tudo certo";
+- "fique tranquilo".
+
+Não use respostas genéricas.
+
+Ajude o máximo possível a resolver a situação concreta.
+
+Exemplo:
+Se o usuário disser que tirou nota zero, ajude a revisar os erros, conversar com o professor, organizar estudos e verificar recuperação.
+
+Se o usuário disser que se acha feio, procure compreender o que provocou esse sentimento, trabalhe a autocrítica com cuidado e sugira ações saudáveis para a autoestima.
+
+Nunca faça diagnósticos.
+
+Quando a situação for séria, recomende ajuda profissional ou de uma pessoa de confiança com respeito.
+`.trim()
   },
 
-  pesquisa: {
-    label: "🌐 Pesquisa",
-    prompt:
-      "MODO PESQUISA ATIVADO. Organize a resposta como uma pesquisa clara e confiável. " +
-      "Use resumo, pontos principais, explicação e conclusão quando fizer sentido. " +
-      "Não invente fontes, datas, links ou dados atuais. Avise quando algo precisar ser confirmado online."
-  },
+  divertido: {
+    label: "🎉 Divertido",
+    prompt: `
+MODO DIVERTIDO ATIVADO.
 
-  estudo: {
-    label: "📚 Estudo",
-    prompt:
-      "MODO ESTUDO ATIVADO. Aja como uma tutora paciente e didática. " +
-      "O objetivo é ensinar, não apenas responder. Explique passo a passo, com linguagem simples e exemplos. " +
-      "Quando o assunto for difícil, divida em partes pequenas. Quando fizer sentido, dê uma dica de memorização ou mini exercício."
-  },
+Fale com muita alegria, energia positiva e criatividade.
 
-  professor: {
-    label: "👩‍🏫 Professor",
-    prompt:
-      "MODO PROFESSOR ATIVADO. Ajude professores a criar planos de aula, atividades, dinâmicas, projetos, avaliações, jogos educativos e rubricas. " +
-      "Quando o usuário informar assunto, série, disciplina ou tempo de aula, use essas informações. " +
-      "Organize com objetivo, materiais, passo a passo, tempo estimado e avaliação quando fizer sentido."
-  },
+Você pode:
+- fazer brincadeiras leves;
+- contar piadas;
+- usar trocadilhos;
+- criar desafios;
+- propor adivinhas;
+- inventar histórias engraçadas;
+- comemorar conquistas;
+- usar emojis um pouco mais;
+- falar de maneira animada e descontraída.
 
-  atividade: {
-    label: "📝 Atividade",
-    prompt:
-      "MODO ATIVIDADE ATIVADO. Ajude em atividades escolares com foco no aprendizado. " +
-      "Explique o raciocínio e o passo a passo. Não entregue apenas a resposta seca; mostre o caminho."
+As brincadeiras devem ser variadas e naturais.
+
+Não repita sempre a mesma piada ou estrutura.
+
+Não force humor quando não combinar com o assunto.
+
+Nunca faça brincadeiras sobre:
+- sofrimento emocional;
+- aparência;
+- inseguranças;
+- morte;
+- suicídio;
+- violência;
+- abuso;
+- deficiência;
+- doenças;
+- religião;
+- características pessoais sensíveis.
+
+Se o usuário demonstrar tristeza, medo, sofrimento, perigo ou pedir ajuda séria, interrompa o humor imediatamente e responda com calma, carinho e responsabilidade.
+`.trim()
   }
 };
 
 let conversations = [];
 let activeConversationId = null;
 let memoryProfile = null;
-let currentStyle = "rapido";
+let currentStyle = "apoio";
 
-/* ===== INICIALIZAÇÃO SEGURA ===== */
+/* =========================================================
+   INICIALIZAÇÃO
+========================================================= */
 
 function iniciarMaxiComSeguranca() {
   try {
@@ -99,14 +259,16 @@ function iniciarMaxiComSeguranca() {
     atualizarBotoesEstilo();
     conectarBotoes();
 
-    console.log("Maxi v9.3.2 iniciada com sucesso.");
+    console.log("Maxi iniciada com sucesso.");
   } catch (erro) {
     console.error("Erro ao iniciar Maxi:", erro);
     conectarBotoesBasicos();
   }
 }
 
-/* ===== RECUPERAÇÃO DE CONVERSAS ===== */
+/* =========================================================
+   CONVERSAS E RECUPERAÇÃO
+========================================================= */
 
 function carregarConversas() {
   const principal = lerConversasDaChave(CONVERSATIONS_KEY);
@@ -119,7 +281,11 @@ function carregarConversas() {
     const recuperadas = lerConversasDaChave(key);
 
     if (recuperadas.length > 0) {
-      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(recuperadas));
+      localStorage.setItem(
+        CONVERSATIONS_KEY,
+        JSON.stringify(recuperadas)
+      );
+
       return recuperadas;
     }
   }
@@ -130,304 +296,571 @@ function carregarConversas() {
 function lerConversasDaChave(key) {
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) return [];
+
+    if (!raw) {
+      return [];
+    }
 
     const parsed = JSON.parse(raw);
 
     if (Array.isArray(parsed)) {
-      if (parsed.length === 0) return [];
-
-      if (parsed[0] && parsed[0].messages) {
-        return parsed.map(normalizarConversa).filter(Boolean);
+      if (parsed.length === 0) {
+        return [];
       }
 
-      if (parsed[0] && parsed[0].role && parsed[0].content) {
+      if (parsed[0] && Array.isArray(parsed[0].messages)) {
+        return parsed
+          .map(normalizarConversa)
+          .filter(Boolean);
+      }
+
+      if (
+        parsed[0] &&
+        parsed[0].role &&
+        parsed[0].content
+      ) {
         return [
           {
             id: gerarId(),
             title: "Conversa recuperada",
-            messages: parsed.map(normalizarMensagem).filter(Boolean),
+            messages: parsed
+              .map(normalizarMensagem)
+              .filter(Boolean),
             updatedAt: new Date().toISOString()
           }
         ];
       }
     }
 
-    if (parsed && Array.isArray(parsed.messages)) {
+    if (
+      parsed &&
+      Array.isArray(parsed.messages)
+    ) {
       return [
         {
           id: gerarId(),
           title: parsed.title || "Conversa recuperada",
-          messages: parsed.messages.map(normalizarMensagem).filter(Boolean),
-          updatedAt: parsed.updatedAt || new Date().toISOString()
+          messages: parsed.messages
+            .map(normalizarMensagem)
+            .filter(Boolean),
+          updatedAt:
+            parsed.updatedAt ||
+            new Date().toISOString()
         }
       ];
     }
 
     return [];
-  } catch {
+  } catch (erro) {
+    console.warn(
+      `Não foi possível ler a chave ${key}:`,
+      erro
+    );
+
     return [];
   }
 }
 
-function normalizarConversa(conv) {
-  if (!conv) return null;
+function normalizarConversa(conversa) {
+  if (!conversa) {
+    return null;
+  }
 
   return {
-    id: conv.id || gerarId(),
-    title: conv.title || conv.name || "Conversa recuperada",
-    messages: Array.isArray(conv.messages)
-      ? conv.messages.map(normalizarMensagem).filter(Boolean)
+    id: conversa.id || gerarId(),
+    title:
+      conversa.title ||
+      conversa.name ||
+      "Conversa recuperada",
+    messages: Array.isArray(conversa.messages)
+      ? conversa.messages
+          .map(normalizarMensagem)
+          .filter(Boolean)
       : [],
-    updatedAt: conv.updatedAt || conv.createdAt || new Date().toISOString()
+    updatedAt:
+      conversa.updatedAt ||
+      conversa.createdAt ||
+      new Date().toISOString()
   };
 }
 
-function normalizarMensagem(msg) {
-  if (!msg) return null;
+function normalizarMensagem(mensagem) {
+  if (!mensagem) {
+    return null;
+  }
+
+  let role = "assistant";
+
+  if (mensagem.role === "user") {
+    role = "user";
+  }
 
   return {
-    role: msg.role === "assistant" ? "assistant" : msg.role === "user" ? "user" : "assistant",
-    content: msg.content || msg.text || msg.message || "",
-    type: msg.type || undefined,
-    prompt: msg.prompt || "",
-    url: msg.url || "",
-    animated: !!msg.animated,
-    logo: !!msg.logo,
-    logoName: msg.logoName || "",
-    originalText: msg.originalText || "",
-    createdAt: msg.createdAt || new Date().toISOString()
+    role,
+    content:
+      mensagem.content ||
+      mensagem.text ||
+      mensagem.message ||
+      "",
+    type: mensagem.type || undefined,
+    prompt: mensagem.prompt || "",
+    url: mensagem.url || "",
+    createdAt:
+      mensagem.createdAt ||
+      new Date().toISOString()
   };
 }
 
 function salvarConversas() {
-  localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
-}
-
-function carregarConversaAtiva() {
-  return localStorage.getItem(ACTIVE_CONVERSATION_KEY);
-}
-
-function salvarConversaAtiva() {
-  if (activeConversationId) {
-    localStorage.setItem(ACTIVE_CONVERSATION_KEY, activeConversationId);
+  try {
+    localStorage.setItem(
+      CONVERSATIONS_KEY,
+      JSON.stringify(conversations)
+    );
+  } catch (erro) {
+    console.error(
+      "Erro ao salvar conversas:",
+      erro
+    );
   }
 }
 
-/* ===== ESTILO ===== */
+function carregarConversaAtiva() {
+  return localStorage.getItem(
+    ACTIVE_CONVERSATION_KEY
+  );
+}
+
+function salvarConversaAtiva() {
+  if (!activeConversationId) {
+    return;
+  }
+
+  localStorage.setItem(
+    ACTIVE_CONVERSATION_KEY,
+    activeConversationId
+  );
+}
+
+/* =========================================================
+   MODOS
+========================================================= */
 
 function carregarEstilo() {
-  const saved = localStorage.getItem(STYLE_KEY);
-  if (saved && STYLE_PROMPTS[saved]) return saved;
-  return "rapido";
+  const salvo = localStorage.getItem(STYLE_KEY);
+
+  if (salvo && STYLE_PROMPTS[salvo]) {
+    return salvo;
+  }
+
+  const estiloAntigo =
+    localStorage.getItem("maxi_style_mode_v1");
+
+  if (estiloAntigo === "rapido") {
+    return "rapido";
+  }
+
+  return "apoio";
 }
 
 function salvarEstilo(style) {
-  if (!STYLE_PROMPTS[style]) return;
+  if (!STYLE_PROMPTS[style]) {
+    return;
+  }
 
   currentStyle = style;
-  localStorage.setItem(STYLE_KEY, style);
+
+  localStorage.setItem(
+    STYLE_KEY,
+    style
+  );
+
   atualizarTextoModoAtual();
   atualizarBotoesEstilo();
 
-  const chatAberto = document.getElementById("chat-container");
-  const estaAberto = chatAberto && !chatAberto.classList.contains("hidden");
+  const chatContainer =
+    document.getElementById("chat-container");
 
-  if (estaAberto) {
-    adicionarMensagem("Maxi", `Modo ${STYLE_PROMPTS[style].label} ativado ✨`, "maxi", new Date().toISOString());
+  const chatEstaAberto =
+    chatContainer &&
+    !chatContainer.classList.contains("hidden");
+
+  if (chatEstaAberto) {
+    adicionarMensagem(
+      "Maxi",
+      `Modo ${STYLE_PROMPTS[style].label} ativado ✨`,
+      "maxi",
+      new Date().toISOString()
+    );
   }
 }
 
 function atualizarTextoModoAtual() {
-  const el = document.getElementById("modo-atual");
-  if (el) el.textContent = STYLE_PROMPTS[currentStyle]?.label || "⚡ Rápido";
+  const elemento =
+    document.getElementById("modo-atual");
+
+  if (!elemento) {
+    return;
+  }
+
+  elemento.textContent =
+    STYLE_PROMPTS[currentStyle]?.label ||
+    "💙 Ajuda + Apoio";
 }
 
 function atualizarBotoesEstilo() {
-  document.querySelectorAll(".style-btn").forEach(btn => {
-    const style = btn.getAttribute("data-style-choice");
-    btn.classList.toggle("active-style", style === currentStyle);
-  });
+  document
+    .querySelectorAll(".style-btn")
+    .forEach((botao) => {
+      const style =
+        botao.getAttribute(
+          "data-style-choice"
+        );
+
+      const modoValido =
+        style === currentStyle;
+
+      botao.classList.toggle(
+        "active-style",
+        modoValido
+      );
+
+      if (!STYLE_PROMPTS[style]) {
+        botao.style.display = "none";
+      } else {
+        botao.style.display = "";
+      }
+    });
 }
 
 function criarPromptEstilo() {
   return {
     role: "system",
-    content: STYLE_PROMPTS[currentStyle]?.prompt || STYLE_PROMPTS.rapido.prompt
+    content:
+      STYLE_PROMPTS[currentStyle]?.prompt ||
+      STYLE_PROMPTS.apoio.prompt
   };
 }
 
 function abrirEstilo() {
-  const modal = document.getElementById("estilo-modal");
-  if (modal) modal.classList.remove("hidden");
+  const modal =
+    document.getElementById("estilo-modal");
+
+  if (modal) {
+    modal.classList.remove("hidden");
+  }
+
   atualizarBotoesEstilo();
 }
 
 function fecharEstilo() {
-  const modal = document.getElementById("estilo-modal");
-  if (modal) modal.classList.add("hidden");
+  const modal =
+    document.getElementById("estilo-modal");
+
+  if (modal) {
+    modal.classList.add("hidden");
+  }
 }
 
-/* ===== MEMÓRIA ===== */
+/* =========================================================
+   MEMÓRIA
+========================================================= */
+
+function criarMemoriaVazia() {
+  return {
+    interests: [],
+    projects: [],
+    preferences: [],
+    recentTopics: []
+  };
+}
 
 function carregarMemoria() {
   try {
-    const raw = localStorage.getItem(MEMORY_KEY);
+    const raw =
+      localStorage.getItem(MEMORY_KEY);
 
     if (!raw) {
-      return {
-        interests: [],
-        projects: [],
-        preferences: [],
-        recentTopics: []
-      };
+      return criarMemoriaVazia();
     }
 
     const parsed = JSON.parse(raw);
 
     return {
-      interests: Array.isArray(parsed.interests) ? parsed.interests : [],
-      projects: Array.isArray(parsed.projects) ? parsed.projects : [],
-      preferences: Array.isArray(parsed.preferences) ? parsed.preferences : [],
-      recentTopics: Array.isArray(parsed.recentTopics) ? parsed.recentTopics : []
+      interests: Array.isArray(parsed.interests)
+        ? parsed.interests
+        : [],
+      projects: Array.isArray(parsed.projects)
+        ? parsed.projects
+        : [],
+      preferences: Array.isArray(parsed.preferences)
+        ? parsed.preferences
+        : [],
+      recentTopics: Array.isArray(parsed.recentTopics)
+        ? parsed.recentTopics
+        : []
     };
-  } catch {
-    return {
-      interests: [],
-      projects: [],
-      preferences: [],
-      recentTopics: []
-    };
+  } catch (erro) {
+    console.warn(
+      "Não foi possível carregar a memória:",
+      erro
+    );
+
+    return criarMemoriaVazia();
   }
 }
 
 function salvarMemoria() {
-  localStorage.setItem(MEMORY_KEY, JSON.stringify(memoryProfile));
+  try {
+    localStorage.setItem(
+      MEMORY_KEY,
+      JSON.stringify(memoryProfile)
+    );
+  } catch (erro) {
+    console.error(
+      "Erro ao salvar memória:",
+      erro
+    );
+  }
 }
 
-function adicionarUnico(lista, valor, limite = 12) {
-  if (!valor) return;
-  const limpo = valor.trim();
-  if (!limpo) return;
+function adicionarUnico(
+  lista,
+  valor,
+  limite = 12
+) {
+  if (!valor) {
+    return;
+  }
 
-  const existe = lista.some(item => item.toLowerCase() === limpo.toLowerCase());
-  if (!existe) lista.unshift(limpo);
-  if (lista.length > limite) lista.length = limite;
+  const limpo = String(valor).trim();
+
+  if (!limpo) {
+    return;
+  }
+
+  const existe = lista.some(
+    (item) =>
+      item.toLowerCase() ===
+      limpo.toLowerCase()
+  );
+
+  if (!existe) {
+    lista.unshift(limpo);
+  }
+
+  if (lista.length > limite) {
+    lista.length = limite;
+  }
 }
 
 function atualizarMemoriaComTexto(texto) {
-  const t = normalizarTexto(texto);
+  if (!memoryProfile) {
+    memoryProfile = criarMemoriaVazia();
+  }
+
+  const textoNormalizado =
+    normalizarTexto(texto);
 
   const interesses = [
     ["maquiagem", "maquiagem"],
-    ["makeup", "maquiagem"],
-    ["loja", "loja / negócio"],
-    ["anuncio", "anúncios"],
     ["marketing", "marketing"],
-    ["logo", "logo / identidade visual"],
-    ["site", "criação de site"],
+    ["site", "criação de sites"],
     ["wix", "Wix"],
     ["github", "GitHub"],
     ["vercel", "Vercel"],
     ["estudo", "estudos"],
     ["atividade escolar", "atividades escolares"],
     ["imagem", "criação de imagens"],
-    ["cena animada", "cenas animadas"],
-    ["video", "vídeos / cenas animadas"],
+    ["desenho", "criação de imagens"],
     ["python", "programação em Python"],
-    ["html", "HTML/CSS/JS"],
-    ["css", "HTML/CSS/JS"],
+    ["html", "HTML"],
+    ["css", "CSS"],
     ["javascript", "JavaScript"],
     ["roblox", "Roblox Studio"],
     ["jogo", "criação de jogos"],
+    ["inteligencia artificial", "inteligência artificial"],
     ["ia", "inteligência artificial"],
-    ["professor", "ferramentas para professores"],
-    ["aula", "criação de aulas"],
-    ["restaurante", "restaurante / comida"],
-    ["cardapio", "restaurante / cardápio"]
+    ["musica", "música"],
+    ["futebol", "futebol"],
+    ["filme", "filmes"],
+    ["serie", "séries"]
   ];
 
-  interesses.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.interests, valor);
-  });
+  interesses.forEach(
+    ([palavra, valor]) => {
+      if (
+        textoNormalizado.includes(
+          normalizarTexto(palavra)
+        )
+      ) {
+        adicionarUnico(
+          memoryProfile.interests,
+          valor
+        );
+      }
+    }
+  );
 
   const preferencias = [
     ["resumido", "prefere respostas resumidas"],
-    ["curto", "prefere respostas curtas"],
+    ["resposta curta", "prefere respostas curtas"],
     ["codigo completo", "prefere código completo"],
-    ["código completo", "prefere código completo"],
-    ["sem mudar", "prefere manter o visual/função principal"],
-    ["bonito", "gosta de visual bonito"],
-    ["profissional", "gosta de estilo profissional"],
-    ["rosa", "gosta de tema rosa"],
-    ["azul", "gosta de tema azul"]
+    ["sem mudar", "prefere manter a estrutura principal"],
+    ["bonito", "gosta de visuais bonitos"],
+    ["profissional", "gosta de resultados profissionais"],
+    ["rosa", "gosta do tema rosa"],
+    ["azul", "gosta do tema azul"]
   ];
 
-  preferencias.forEach(([chave, valor]) => {
-    if (t.includes(normalizarTexto(chave))) adicionarUnico(memoryProfile.preferences, valor);
-  });
+  preferencias.forEach(
+    ([palavra, valor]) => {
+      if (
+        textoNormalizado.includes(
+          normalizarTexto(palavra)
+        )
+      ) {
+        adicionarUnico(
+          memoryProfile.preferences,
+          valor
+        );
+      }
+    }
+  );
 
-  adicionarUnico(memoryProfile.recentTopics, texto.slice(0, 80), 10);
+  adicionarUnico(
+    memoryProfile.recentTopics,
+    String(texto).slice(0, 100),
+    10
+  );
+
   salvarMemoria();
 }
 
 function criarPromptMemoria() {
   const partes = [];
 
-  if (memoryProfile.interests.length) {
-    partes.push("Interesses percebidos do usuário: " + memoryProfile.interests.join(", ") + ".");
+  if (
+    memoryProfile &&
+    memoryProfile.interests.length > 0
+  ) {
+    partes.push(
+      "Interesses percebidos: " +
+      memoryProfile.interests.join(", ") +
+      "."
+    );
   }
 
-  if (memoryProfile.projects.length) {
-    partes.push("Projetos percebidos do usuário: " + memoryProfile.projects.join(", ") + ".");
+  if (
+    memoryProfile &&
+    memoryProfile.projects.length > 0
+  ) {
+    partes.push(
+      "Projetos percebidos: " +
+      memoryProfile.projects.join(", ") +
+      "."
+    );
   }
 
-  if (memoryProfile.preferences.length) {
-    partes.push("Preferências percebidas: " + memoryProfile.preferences.join(", ") + ".");
+  if (
+    memoryProfile &&
+    memoryProfile.preferences.length > 0
+  ) {
+    partes.push(
+      "Preferências percebidas: " +
+      memoryProfile.preferences.join(", ") +
+      "."
+    );
   }
 
-  if (memoryProfile.recentTopics.length) {
-    partes.push("Assuntos recentes: " + memoryProfile.recentTopics.slice(0, 5).join(" | ") + ".");
+  if (
+    memoryProfile &&
+    memoryProfile.recentTopics.length > 0
+  ) {
+    partes.push(
+      "Assuntos recentes: " +
+      memoryProfile.recentTopics
+        .slice(0, 5)
+        .join(" | ") +
+      "."
+    );
+  }
+
+  if (partes.length === 0) {
+    return {
+      role: "system",
+      content:
+        "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
+    };
   }
 
   return {
     role: "system",
     content:
-      partes.length === 0
-        ? "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
-        : "Memória local da Maxi sobre o usuário. Use apenas para personalizar respostas e recomendações curtas, sem ser invasiva. " +
-          partes.join(" ")
+      "Use esta memória local apenas para personalizar a conversa de forma natural. " +
+      "Não diga constantemente que possui memória e não seja invasiva. " +
+      partes.join(" ")
   };
 }
 
-/* ===== TEMA ===== */
+/* =========================================================
+   TEMA
+========================================================= */
 
 function aplicarTema(theme) {
-  document.body.setAttribute("data-theme", theme);
-  localStorage.setItem(THEME_KEY, theme);
+  if (!theme) {
+    return;
+  }
+
+  document.body.setAttribute(
+    "data-theme",
+    theme
+  );
+
+  localStorage.setItem(
+    THEME_KEY,
+    theme
+  );
 }
 
 function aplicarTemaSalvo() {
-  const theme = localStorage.getItem(THEME_KEY) || document.body.getAttribute("data-theme") || "rosa";
-  document.body.setAttribute("data-theme", theme);
+  const theme =
+    localStorage.getItem(THEME_KEY) ||
+    document.body.getAttribute("data-theme") ||
+    "rosa";
+
+  document.body.setAttribute(
+    "data-theme",
+    theme
+  );
 }
 
-/* ===== CONVERSAS ===== */
+/* =========================================================
+   GERENCIAMENTO DE CONVERSAS
+========================================================= */
 
 function gerarId() {
-  return "conv_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+  return (
+    "conv_" +
+    Date.now() +
+    "_" +
+    Math.random()
+      .toString(36)
+      .slice(2, 8)
+  );
 }
 
 function criarNovaConversa() {
   const id = gerarId();
 
-  conversations.unshift({
+  const conversa = {
     id,
     title: "Nova conversa",
     messages: [],
     updatedAt: new Date().toISOString()
-  });
+  };
 
+  conversations.unshift(conversa);
   activeConversationId = id;
 
   salvarConversas();
@@ -435,27 +868,48 @@ function criarNovaConversa() {
   renderConversationList();
   renderChat();
   abrirChat();
+
+  const input =
+    document.getElementById("user-input");
+
+  if (input) {
+    input.focus();
+  }
 }
 
 function excluirConversaAtual() {
-  const conv = getActiveConversation();
+  const conversa =
+    getActiveConversation();
 
-  if (!conv) {
-    alert("Nenhuma conversa selecionada.");
+  if (!conversa) {
+    alert(
+      "Nenhuma conversa selecionada."
+    );
+
     return;
   }
 
-  const confirmar = confirm(`Deseja excluir a conversa "${conv.title}"?`);
-  if (!confirmar) return;
+  const confirmar = confirm(
+    `Deseja excluir a conversa "${conversa.title}"?`
+  );
 
-  conversations = conversations.filter(c => c.id !== activeConversationId);
+  if (!confirmar) {
+    return;
+  }
+
+  conversations =
+    conversations.filter(
+      (item) =>
+        item.id !== activeConversationId
+    );
 
   if (conversations.length === 0) {
     criarNovaConversa();
     return;
   }
 
-  activeConversationId = conversations[0].id;
+  activeConversationId =
+    conversations[0].id;
 
   salvarConversas();
   salvarConversaAtiva();
@@ -465,23 +919,42 @@ function excluirConversaAtual() {
 
 function garantirConversaInicial() {
   if (conversations.length === 0) {
-    conversations.push({
+    const conversaInicial = {
       id: gerarId(),
       title: "Nova conversa",
       messages: [],
-      updatedAt: new Date().toISOString()
-    });
+      updatedAt:
+        new Date().toISOString()
+    };
 
-    activeConversationId = conversations[0].id;
+    conversations.push(
+      conversaInicial
+    );
+
+    activeConversationId =
+      conversaInicial.id;
+
     salvarConversas();
     salvarConversaAtiva();
+    renderChat();
+
     return;
   }
 
-  const existe = conversations.some(c => c.id === activeConversationId);
+  const conversaExiste =
+    conversations.some(
+      (conversa) =>
+        conversa.id ===
+        activeConversationId
+    );
 
-  if (!activeConversationId || !existe) {
-    activeConversationId = conversations[0].id;
+  if (
+    !activeConversationId ||
+    !conversaExiste
+  ) {
+    activeConversationId =
+      conversations[0].id;
+
     salvarConversaAtiva();
   }
 
@@ -489,87 +962,156 @@ function garantirConversaInicial() {
 }
 
 function getActiveConversation() {
-  return conversations.find(c => c.id === activeConversationId) || null;
+  return (
+    conversations.find(
+      (conversa) =>
+        conversa.id ===
+        activeConversationId
+    ) || null
+  );
 }
 
 function renderConversationList() {
-  const list = document.getElementById("conversation-list");
-  if (!list) return;
+  const list =
+    document.getElementById(
+      "conversation-list"
+    );
+
+  if (!list) {
+    return;
+  }
 
   list.innerHTML = "";
 
-  conversations.forEach(conv => {
-    const item = document.createElement("div");
-    item.className = "conversation-item" + (conv.id === activeConversationId ? " active" : "");
+  conversations.forEach(
+    (conversa) => {
+      const item =
+        document.createElement("div");
 
-    const last = conv.messages[conv.messages.length - 1];
+      item.className =
+        "conversation-item" +
+        (
+          conversa.id ===
+          activeConversationId
+            ? " active"
+            : ""
+        );
 
-    let previewMessage = "Sem mensagens ainda";
+      const ultimaMensagem =
+        conversa.messages[
+          conversa.messages.length - 1
+        ];
 
-    if (last) {
-      if (last.type === "image") {
-        previewMessage = last.logo ? "Logo criada/editada" : last.animated ? "Cena animada gerada" : "Imagem gerada";
-      } else {
-        previewMessage = last.content || "Mensagem";
+      let preview =
+        "Sem mensagens ainda";
+
+      if (ultimaMensagem) {
+        if (
+          ultimaMensagem.type ===
+          "image"
+        ) {
+          preview = "Imagem gerada";
+        } else {
+          preview =
+            ultimaMensagem.content ||
+            "Mensagem";
+        }
       }
+
+      item.innerHTML = `
+        <div class="conversation-title">
+          ${escapeHtml(conversa.title)}
+        </div>
+
+        <div class="conversation-preview">
+          ${escapeHtml(
+            String(preview).slice(0, 60)
+          )}
+        </div>
+
+        <div class="conversation-time">
+          ${formatarHorario(
+            conversa.updatedAt
+          )}
+        </div>
+      `;
+
+      item.addEventListener(
+        "click",
+        () => {
+          activeConversationId =
+            conversa.id;
+
+          salvarConversaAtiva();
+          renderConversationList();
+          renderChat();
+          abrirChat();
+        }
+      );
+
+      list.appendChild(item);
     }
-
-    item.innerHTML = `
-      <div class="conversation-title">${escapeHtml(conv.title)}</div>
-      <div class="conversation-preview">${escapeHtml(String(previewMessage).slice(0, 60))}</div>
-      <div class="conversation-time">${formatarHorario(conv.updatedAt)}</div>
-    `;
-
-    item.addEventListener("click", () => {
-      activeConversationId = conv.id;
-      salvarConversaAtiva();
-      renderConversationList();
-      renderChat();
-      abrirChat();
-    });
-
-    list.appendChild(item);
-  });
+  );
 }
 
 function renderChat() {
-  const box = document.getElementById("chat-box");
-  if (!box) return;
+  const box =
+    document.getElementById("chat-box");
+
+  if (!box) {
+    return;
+  }
 
   box.innerHTML = "";
 
-  const conv = getActiveConversation();
-  if (!conv) return;
+  const conversa =
+    getActiveConversation();
 
-  conv.messages.forEach(msg => {
-    if (msg.type === "image") {
-      adicionarMidiaNaTela(
-        msg.prompt,
-        msg.url,
-        msg.createdAt,
-        msg.animated,
-        false,
-        msg.logo,
-        msg.originalText || msg.prompt
-      );
-    } else {
-      adicionarMensagem(
-        msg.role === "assistant" ? "Maxi" : "Você",
-        msg.content,
-        msg.role === "assistant" ? "maxi" : "user",
-        msg.createdAt
-      );
+  if (!conversa) {
+    return;
+  }
+
+  conversa.messages.forEach(
+    (mensagem) => {
+      if (mensagem.type === "image") {
+        adicionarImagemNaTela(
+          mensagem.prompt,
+          mensagem.url,
+          mensagem.createdAt,
+          false
+        );
+      } else {
+        adicionarMensagem(
+          mensagem.role === "assistant"
+            ? "Maxi"
+            : "Você",
+          mensagem.content,
+          mensagem.role === "assistant"
+            ? "maxi"
+            : "user",
+          mensagem.createdAt
+        );
+      }
     }
-  });
+  );
 
   rolarParaBaixo();
 }
 
-/* ===== UI ===== */
+/* =========================================================
+   INTERFACE
+========================================================= */
 
 function abrirChat() {
-  const inicio = document.getElementById("inicio-container");
-  const chat = document.getElementById("chat-container");
+  const inicio =
+    document.getElementById(
+      "inicio-container"
+    );
+
+  const chat =
+    document.getElementById(
+      "chat-container"
+    );
 
   if (inicio) {
     inicio.classList.add("hidden");
@@ -582,44 +1124,99 @@ function abrirChat() {
   }
 
   rolarParaBaixo();
+
+  const input =
+    document.getElementById("user-input");
+
+  if (input) {
+    input.focus();
+  }
 }
 
 function abrirConfig() {
-  const modal = document.getElementById("config-modal");
-  if (modal) modal.classList.remove("hidden");
+  const modal =
+    document.getElementById(
+      "config-modal"
+    );
+
+  if (modal) {
+    modal.classList.remove("hidden");
+  }
 }
 
 function fecharConfig() {
-  const modal = document.getElementById("config-modal");
-  if (modal) modal.classList.add("hidden");
+  const modal =
+    document.getElementById(
+      "config-modal"
+    );
+
+  if (modal) {
+    modal.classList.add("hidden");
+  }
 }
 
-function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
-  const box = document.getElementById("chat-box");
-  if (!box) return null;
+function adicionarMensagem(
+  remetente,
+  texto,
+  tipo = "maxi",
+  createdAt = null
+) {
+  const box =
+    document.getElementById("chat-box");
 
-  const agora = createdAt ? new Date(createdAt) : new Date();
+  if (!box) {
+    return null;
+  }
+
+  const data = createdAt
+    ? new Date(createdAt)
+    : new Date();
 
   const hora =
-    agora.getHours().toString().padStart(2, "0") +
+    data
+      .getHours()
+      .toString()
+      .padStart(2, "0") +
     ":" +
-    agora.getMinutes().toString().padStart(2, "0");
+    data
+      .getMinutes()
+      .toString()
+      .padStart(2, "0");
 
-  const div = document.createElement("div");
-  div.className = `msg ${tipo === "user" ? "msg-user" : "msg-maxi"}`;
+  const div =
+    document.createElement("div");
 
-  const strong = document.createElement("strong");
+  div.className =
+    `msg ${
+      tipo === "user"
+        ? "msg-user"
+        : "msg-maxi"
+    }`;
+
+  const strong =
+    document.createElement("strong");
+
   strong.textContent = remetente;
 
-  const span = document.createElement("span");
-  span.textContent = texto || "";
+  const conteudo =
+    document.createElement("div");
 
-  const time = document.createElement("div");
+  conteudo.className =
+    "message-content";
+
+  formatarTextoMensagem(
+    conteudo,
+    texto || ""
+  );
+
+  const time =
+    document.createElement("div");
+
   time.className = "msg-time";
   time.textContent = hora;
 
   div.appendChild(strong);
-  div.appendChild(span);
+  div.appendChild(conteudo);
   div.appendChild(time);
 
   if (tipo !== "user") {
@@ -632,37 +1229,119 @@ function adicionarMensagem(remetente, texto, tipo = "maxi", createdAt = null) {
   return div;
 }
 
-function criarReacao() {
-  const reaction = document.createElement("div");
-  reaction.className = "msg-reactions";
-  reaction.innerHTML = `<span>🤍</span>`;
+function formatarTextoMensagem(
+  elemento,
+  texto
+) {
+  elemento.innerHTML = "";
 
-  reaction.onclick = () => {
-    const span = reaction.querySelector("span");
-    span.textContent = span.textContent === "🤍" ? "❤️" : "🤍";
-  };
+  const linhas =
+    String(texto).split("\n");
+
+  linhas.forEach(
+    (linha, indice) => {
+      if (indice > 0) {
+        elemento.appendChild(
+          document.createElement("br")
+        );
+      }
+
+      const partes =
+        linha.split(
+          /(\*\*[^*]+\*\*)/g
+        );
+
+      partes.forEach((parte) => {
+        if (
+          parte.startsWith("**") &&
+          parte.endsWith("**")
+        ) {
+          const strong =
+            document.createElement(
+              "strong"
+            );
+
+          strong.textContent =
+            parte.slice(2, -2);
+
+          elemento.appendChild(
+            strong
+          );
+        } else {
+          elemento.appendChild(
+            document.createTextNode(
+              parte
+            )
+          );
+        }
+      });
+    }
+  );
+}
+
+function criarReacao() {
+  const reaction =
+    document.createElement("div");
+
+  reaction.className =
+    "msg-reactions";
+
+  reaction.innerHTML =
+    "<span>🤍</span>";
+
+  reaction.addEventListener(
+    "click",
+    () => {
+      const span =
+        reaction.querySelector("span");
+
+      if (!span) {
+        return;
+      }
+
+      span.textContent =
+        span.textContent === "🤍"
+          ? "❤️"
+          : "🤍";
+    }
+  );
 
   return reaction;
 }
 
-function mostrarCarregando(tipo = "mensagem") {
-  const box = document.getElementById("chat-box");
-  if (!box) return null;
+function mostrarCarregando(
+  tipo = "mensagem"
+) {
+  const box =
+    document.getElementById("chat-box");
+
+  if (!box) {
+    return null;
+  }
 
   removerCarregando();
 
-  let texto = "Maxi está pensando";
-  if (tipo === "imagem") texto = "Gerando imagem";
-  if (tipo === "cena") texto = "Criando cena animada";
-  if (tipo === "logo") texto = "Criando logo profissional";
+  let texto =
+    "Maxi está pensando";
 
-  const wrapper = document.createElement("div");
-  wrapper.className = "typing-wrapper";
+  if (tipo === "imagem") {
+    texto = "Criando imagem";
+  }
+
+  const wrapper =
+    document.createElement("div");
+
+  wrapper.className =
+    "typing-wrapper";
+
   wrapper.id = "maxi-loading";
 
   wrapper.innerHTML = `
     <div class="typing-bubble">
-      <span class="typing-label">${texto}</span>
+      <span class="typing-label">
+        ${texto}
+      </span>
+
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
@@ -676,115 +1355,662 @@ function mostrarCarregando(tipo = "mensagem") {
 }
 
 function removerCarregando() {
-  const el = document.getElementById("maxi-loading");
-  if (el) el.remove();
+  const elemento =
+    document.getElementById(
+      "maxi-loading"
+    );
+
+  if (elemento) {
+    elemento.remove();
+  }
 }
 
-async function escreverTextoAnimado(remetente, texto, createdAt) {
-  const box = document.getElementById("chat-box");
-  if (!box) return;
+async function escreverTextoAnimado(
+  remetente,
+  texto,
+  createdAt
+) {
+  const div = adicionarMensagem(
+    remetente,
+    "",
+    "maxi",
+    createdAt
+  );
 
-  const div = adicionarMensagem(remetente, "", "maxi", createdAt);
-  if (!div) return;
+  if (!div) {
+    return;
+  }
 
-  const span = div.querySelector("span");
-  let i = 0;
+  const conteudo =
+    div.querySelector(
+      ".message-content"
+    );
 
-  return new Promise(resolve => {
-    const intervalo = setInterval(() => {
-      span.textContent = texto.slice(0, i + 1);
-      i++;
-      rolarParaBaixo();
+  if (!conteudo) {
+    return;
+  }
 
-      if (i >= texto.length) {
-        clearInterval(intervalo);
-        resolve();
-      }
-    }, 16);
-  });
+  let indice = 0;
+
+  return new Promise(
+    (resolve) => {
+      const intervalo =
+        setInterval(() => {
+          const parcial =
+            texto.slice(
+              0,
+              indice + 1
+            );
+
+          formatarTextoMensagem(
+            conteudo,
+            parcial
+          );
+
+          indice++;
+          rolarParaBaixo();
+
+          if (
+            indice >= texto.length
+          ) {
+            clearInterval(
+              intervalo
+            );
+
+            formatarTextoMensagem(
+              conteudo,
+              texto
+            );
+
+            resolve();
+          }
+        }, 14);
+    }
+  );
 }
 
-/* ===== IMAGEM ===== */
+/* =========================================================
+   DETECÇÃO DE IMAGEM
+========================================================= */
 
-function detectarTipoVisual(texto) {
-  const t = normalizarTexto(texto);
+function detectarPedidoImagem(texto) {
+  const normalizado =
+    normalizarTexto(texto);
 
-  if (
-    t.includes("logo") ||
-    t.includes("logotipo") ||
-    t.includes("marca") ||
-    t.includes("banner com texto") ||
-    t.includes("cartaz com texto")
-  ) {
-    return "logo";
-  }
+  const comandos = [
+    "crie uma imagem",
+    "criar uma imagem",
+    "gere uma imagem",
+    "gerar uma imagem",
+    "faca uma imagem",
+    "fazer uma imagem",
+    "imagem de",
+    "desenhe",
+    "desenhar",
+    "crie um desenho",
+    "gere um desenho",
+    "criar desenho",
+    "fazer desenho",
+    "crie uma foto",
+    "gere uma foto"
+  ];
 
-  if (
-    t.includes("cena animada") ||
-    t.includes("mini video") ||
-    t.includes("video fake") ||
-    t.includes("visual animado") ||
-    t.includes("imagem animada")
-  ) {
-    return "cena";
-  }
-
-  if (
-    t.includes("crie uma imagem") ||
-    t.includes("criar uma imagem") ||
-    t.includes("gere uma imagem") ||
-    t.includes("gerar uma imagem") ||
-    t.includes("faca uma imagem") ||
-    t.includes("fazer uma imagem") ||
-    t.includes("imagem de") ||
-    t.includes("desenhe") ||
-    t.includes("desenhar")
-  ) {
-    return "imagem";
-  }
-
-  return null;
+  return comandos.some(
+    (comando) =>
+      normalizado.includes(comando)
+  );
 }
 
-function limparPromptVisual(texto) {
-  return texto
-    .replace(/crie uma imagem de/gi, "")
-    .replace(/crie uma imagem/gi, "")
-    .replace(/criar uma imagem de/gi, "")
-    .replace(/criar uma imagem/gi, "")
-    .replace(/gere uma imagem de/gi, "")
-    .replace(/gere uma imagem/gi, "")
-    .replace(/gerar uma imagem de/gi, "")
-    .replace(/gerar uma imagem/gi, "")
-    .replace(/faça uma imagem de/gi, "")
-    .replace(/faça uma imagem/gi, "")
-    .replace(/imagem de/gi, "")
-    .replace(/desenhe/gi, "")
-    .replace(/crie uma logo de/gi, "")
-    .replace(/crie uma logo/gi, "")
-    .replace(/logo de/gi, "")
+function limparPromptImagem(texto) {
+  return String(texto)
+    .replace(
+      /crie uma imagem de/gi,
+      ""
+    )
+    .replace(
+      /crie uma imagem/gi,
+      ""
+    )
+    .replace(
+      /criar uma imagem de/gi,
+      ""
+    )
+    .replace(
+      /criar uma imagem/gi,
+      ""
+    )
+    .replace(
+      /gere uma imagem de/gi,
+      ""
+    )
+    .replace(
+      /gere uma imagem/gi,
+      ""
+    )
+    .replace(
+      /gerar uma imagem de/gi,
+      ""
+    )
+    .replace(
+      /gerar uma imagem/gi,
+      ""
+    )
+    .replace(
+      /faça uma imagem de/gi,
+      ""
+    )
+    .replace(
+      /faça uma imagem/gi,
+      ""
+    )
+    .replace(
+      /faca uma imagem de/gi,
+      ""
+    )
+    .replace(
+      /faca uma imagem/gi,
+      ""
+    )
+    .replace(
+      /imagem de/gi,
+      ""
+    )
+    .replace(
+      /desenhe/gi,
+      ""
+    )
+    .replace(
+      /desenhar/gi,
+      ""
+    )
+    .replace(
+      /crie um desenho de/gi,
+      ""
+    )
+    .replace(
+      /crie um desenho/gi,
+      ""
+    )
+    .replace(
+      /gere um desenho de/gi,
+      ""
+    )
+    .replace(
+      /gere um desenho/gi,
+      ""
+    )
+    .replace(
+      /crie uma foto de/gi,
+      ""
+    )
+    .replace(
+      /gere uma foto de/gi,
+      ""
+    )
     .trim();
 }
 
-function criarUrlImagem(prompt, animated = false, tentativa = 0) {
-  const seed = Math.floor(Math.random() * 999999) + tentativa;
-  const width = tentativa >= 2 ? 768 : 1024;
-  const height = tentativa >= 2 ? 512 : 768;
+/* =========================================================
+   PROMPT BUILDER DE IMAGENS
+========================================================= */
 
-  const promptFinal = [
-    prompt,
-    "high quality",
-    "sharp details",
-    "beautiful lighting",
-    "harmonious colors",
-    "safe for all audiences",
-    "no text",
+function extrairCores(texto) {
+  const normalizado =
+    normalizarTexto(texto);
+
+  const cores = [];
+
+  const mapa = [
+    ["vermelho", "red"],
+    ["azul", "blue"],
+    ["verde", "green"],
+    ["amarelo", "yellow"],
+    ["laranja", "orange"],
+    ["roxo", "purple"],
+    ["rosa", "pink"],
+    ["preto", "black"],
+    ["branco", "white"],
+    ["dourado", "gold"],
+    ["prata", "silver"],
+    ["marrom", "brown"],
+    ["cinza", "gray"],
+    ["bege", "beige"],
+    ["turquesa", "turquoise"],
+    ["violeta", "violet"]
+  ];
+
+  mapa.forEach(
+    ([portugues, ingles]) => {
+      if (
+        normalizado.includes(
+          portugues
+        )
+      ) {
+        cores.push(ingles);
+      }
+    }
+  );
+
+  return cores;
+}
+
+function detectarEstiloImagem(texto) {
+  const normalizado =
+    normalizarTexto(texto);
+
+  if (
+    normalizado.includes("anime")
+  ) {
+    return (
+      "anime style, clean line art, " +
+      "expressive characters, vibrant colors, " +
+      "beautiful anime lighting"
+    );
+  }
+
+  if (
+    normalizado.includes("realista") ||
+    normalizado.includes("realismo") ||
+    normalizado.includes("fotorealista") ||
+    normalizado.includes("foto realista")
+  ) {
+    return (
+      "photorealistic, realistic lighting, " +
+      "natural colors, realistic textures, " +
+      "professional photography"
+    );
+  }
+
+  if (
+    normalizado.includes("3d") ||
+    normalizado.includes("render")
+  ) {
+    return (
+      "high quality 3D render, " +
+      "professional studio lighting, " +
+      "detailed materials, smooth surfaces"
+    );
+  }
+
+  if (
+    normalizado.includes("cartoon") ||
+    normalizado.includes(
+      "desenho animado"
+    )
+  ) {
+    return (
+      "cartoon illustration, friendly shapes, " +
+      "clean outlines, colorful polished design"
+    );
+  }
+
+  if (
+    normalizado.includes("pixel art") ||
+    normalizado.includes("pixelado")
+  ) {
+    return (
+      "pixel art, crisp pixels, " +
+      "retro video game aesthetic, " +
+      "detailed pixel composition"
+    );
+  }
+
+  if (
+    normalizado.includes("minimalista")
+  ) {
+    return (
+      "minimalist visual style, clean composition, " +
+      "simple shapes, strong negative space"
+    );
+  }
+
+  if (
+    normalizado.includes(
+      "cinematografico"
+    ) ||
+    normalizado.includes("cinematic")
+  ) {
+    return (
+      "cinematic style, dramatic professional lighting, " +
+      "movie scene composition, atmospheric depth"
+    );
+  }
+
+  if (
+    normalizado.includes("fofo") ||
+    normalizado.includes("cute") ||
+    normalizado.includes("kawaii")
+  ) {
+    return (
+      "cute kawaii style, adorable design, " +
+      "soft colors, charming visual"
+    );
+  }
+
+  if (
+    normalizado.includes("luxo") ||
+    normalizado.includes("premium")
+  ) {
+    return (
+      "luxury premium style, sophisticated details, " +
+      "elegant lighting, refined composition"
+    );
+  }
+
+  if (
+    normalizado.includes("terror") ||
+    normalizado.includes("sombrio")
+  ) {
+    return (
+      "dark atmospheric style, dramatic shadows, " +
+      "mysterious cinematic lighting, " +
+      "safe non-graphic scene"
+    );
+  }
+
+  return (
+    "high quality digital art, professional composition, " +
+    "polished visual, detailed scene"
+  );
+}
+
+function detectarCategoriaImagem(
+  texto
+) {
+  const normalizado =
+    normalizarTexto(texto);
+
+  if (
+    normalizado.includes("cachorro") ||
+    normalizado.includes("gato") ||
+    normalizado.includes("animal") ||
+    normalizado.includes("pet") ||
+    normalizado.includes("passaro") ||
+    normalizado.includes("cavalo")
+  ) {
+    return "animal";
+  }
+
+  if (
+    normalizado.includes("pessoa") ||
+    normalizado.includes("menino") ||
+    normalizado.includes("menina") ||
+    normalizado.includes("homem") ||
+    normalizado.includes("mulher") ||
+    normalizado.includes("personagem")
+  ) {
+    return "person";
+  }
+
+  if (
+    normalizado.includes("paisagem") ||
+    normalizado.includes("floresta") ||
+    normalizado.includes("praia") ||
+    normalizado.includes("montanha") ||
+    normalizado.includes("cidade") ||
+    normalizado.includes("campo")
+  ) {
+    return "landscape";
+  }
+
+  if (
+    normalizado.includes("quarto") ||
+    normalizado.includes("sala") ||
+    normalizado.includes("casa") ||
+    normalizado.includes("cozinha") ||
+    normalizado.includes("interior")
+  ) {
+    return "interior";
+  }
+
+  if (
+    normalizado.includes("produto") ||
+    normalizado.includes("embalagem") ||
+    normalizado.includes("mockup")
+  ) {
+    return "product";
+  }
+
+  if (
+    normalizado.includes("poster") ||
+    normalizado.includes("cartaz")
+  ) {
+    return "poster";
+  }
+
+  if (
+    normalizado.includes("thumbnail") ||
+    normalizado.includes("youtube")
+  ) {
+    return "thumbnail";
+  }
+
+  if (
+    normalizado.includes("comida") ||
+    normalizado.includes("hamburguer") ||
+    normalizado.includes("pizza") ||
+    normalizado.includes("bolo") ||
+    normalizado.includes("prato")
+  ) {
+    return "food";
+  }
+
+  return "general";
+}
+
+function criarPromptImagemAvancado(
+  textoUsuario
+) {
+  const pedidoOriginal =
+    limparPromptImagem(
+      textoUsuario
+    ) || textoUsuario;
+
+  const estilo =
+    detectarEstiloImagem(
+      textoUsuario
+    );
+
+  const categoria =
+    detectarCategoriaImagem(
+      textoUsuario
+    );
+
+  const cores =
+    extrairCores(
+      textoUsuario
+    );
+
+  const partes = [];
+
+  partes.push(
+    "Create a high quality image that strictly follows the user's request"
+  );
+
+  partes.push(
+    `"${pedidoOriginal}"`
+  );
+
+  partes.push(
+    "Every object, character, animal, color, quantity, position, setting and style explicitly requested by the user is mandatory"
+  );
+
+  partes.push(
+    "Do not replace, remove or change anything explicitly requested"
+  );
+
+  if (categoria === "animal") {
+    partes.push(
+      "realistic or stylistically accurate animal anatomy"
+    );
+
+    partes.push(
+      "expressive eyes and natural pose"
+    );
+
+    partes.push(
+      "detailed fur, feathers or skin according to the animal"
+    );
+  }
+
+  if (categoria === "person") {
+    partes.push(
+      "natural pose and accurate anatomy"
+    );
+
+    partes.push(
+      "detailed facial expression"
+    );
+
+    partes.push(
+      "professional character composition"
+    );
+  }
+
+  if (categoria === "landscape") {
+    partes.push(
+      "beautiful environmental depth"
+    );
+
+    partes.push(
+      "wide balanced composition"
+    );
+
+    partes.push(
+      "detailed sky and atmosphere"
+    );
+  }
+
+  if (categoria === "interior") {
+    partes.push(
+      "professional interior design visualization"
+    );
+
+    partes.push(
+      "balanced layout and realistic spatial proportions"
+    );
+  }
+
+  if (categoria === "product") {
+    partes.push(
+      "professional commercial product photography"
+    );
+
+    partes.push(
+      "clean presentation and studio lighting"
+    );
+  }
+
+  if (categoria === "poster") {
+    partes.push(
+      "strong visual hierarchy and poster composition"
+    );
+
+    partes.push(
+      "clean organized design"
+    );
+  }
+
+  if (categoria === "thumbnail") {
+    partes.push(
+      "high contrast YouTube thumbnail composition"
+    );
+
+    partes.push(
+      "clear focal point and engaging visual"
+    );
+  }
+
+  if (categoria === "food") {
+    partes.push(
+      "appetizing professional food photography"
+    );
+
+    partes.push(
+      "detailed food textures and warm lighting"
+    );
+  }
+
+  partes.push(estilo);
+
+  if (cores.length > 0) {
+    partes.push(
+      `use the requested colors: ${cores.join(", ")}`
+    );
+  } else {
+    partes.push(
+      "use a harmonious color palette appropriate for the scene"
+    );
+  }
+
+  partes.push(
+    "professional lighting"
+  );
+
+  partes.push(
+    "balanced composition"
+  );
+
+  partes.push(
+    "sharp important details"
+  );
+
+  partes.push(
+    "high resolution appearance"
+  );
+
+  partes.push(
+    "visually polished result"
+  );
+
+  partes.push(
     "no watermark"
-  ].join(", ");
+  );
+
+  partes.push(
+    "no random letters"
+  );
+
+  partes.push(
+    "no unintended text"
+  );
+
+  partes.push(
+    "safe for all audiences"
+  );
+
+  return partes.join(", ");
+}
+
+function criarUrlImagem(
+  prompt,
+  tentativa = 0
+) {
+  const seed =
+    Math.floor(
+      Math.random() * 999999
+    ) + tentativa;
+
+  const width =
+    tentativa >= 2
+      ? 768
+      : 1024;
+
+  const height =
+    tentativa >= 2
+      ? 768
+      : 768;
+
+  const promptFinal =
+    criarPromptImagemAvancado(
+      prompt
+    );
 
   return (
     "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(promptFinal) +
+    encodeURIComponent(
+      promptFinal
+    ) +
     "?width=" +
     width +
     "&height=" +
@@ -795,85 +2021,154 @@ function criarUrlImagem(prompt, animated = false, tentativa = 0) {
   );
 }
 
-function adicionarMidiaNaTela(prompt, url, createdAt = null, animated = false, salvar = true, logo = false, textoOriginal = "") {
-  const box = document.getElementById("chat-box");
-  if (!box) return;
+/* =========================================================
+   EXIBIÇÃO DE IMAGENS
+========================================================= */
 
-  const agora = createdAt ? new Date(createdAt) : new Date();
+function adicionarImagemNaTela(
+  prompt,
+  url,
+  createdAt = null,
+  salvar = true
+) {
+  const box =
+    document.getElementById("chat-box");
+
+  if (!box) {
+    return;
+  }
+
+  const data = createdAt
+    ? new Date(createdAt)
+    : new Date();
 
   const hora =
-    agora.getHours().toString().padStart(2, "0") +
+    data
+      .getHours()
+      .toString()
+      .padStart(2, "0") +
     ":" +
-    agora.getMinutes().toString().padStart(2, "0");
+    data
+      .getMinutes()
+      .toString()
+      .padStart(2, "0");
 
-  const card = document.createElement("div");
-  card.className = "media-card";
+  const card =
+    document.createElement("div");
 
-  const strong = document.createElement("strong");
+  card.className =
+    "media-card";
+
+  const strong =
+    document.createElement("strong");
+
   strong.textContent = "Maxi";
 
-  const texto = document.createElement("span");
-  texto.textContent = logo
-    ? `Logo criada para: ${prompt} ✨`
-    : animated
-      ? `Cena animada criada para: ${prompt} 🎬`
-      : `Imagem criada para: ${prompt} 🎨`;
+  const texto =
+    document.createElement("span");
 
-  const frame = document.createElement("div");
-  frame.className = "media-frame";
+  texto.textContent =
+    `Imagem criada para: ${prompt} 🎨`;
 
-  const img = document.createElement("img");
-  img.alt = "Imagem gerada pela Maxi";
-  img.className = animated ? "animated-scene-img" : "generated-image";
+  const frame =
+    document.createElement("div");
+
+  frame.className =
+    "media-frame";
+
+  const imagem =
+    document.createElement("img");
+
+  imagem.alt =
+    "Imagem gerada pela Maxi";
+
+  imagem.className =
+    "generated-image";
+
+  frame.appendChild(imagem);
 
   let tentativa = 0;
   const maxTentativas = 4;
 
   function tentarCarregar() {
-    const novaUrl = criarUrlImagem(prompt, animated, tentativa);
-    img.src = novaUrl;
+    const novaUrl =
+      criarUrlImagem(
+        prompt,
+        tentativa
+      );
+
+    imagem.src =
+      tentativa === 0 && url
+        ? url
+        : novaUrl;
 
     if (tentativa > 0) {
-      texto.textContent = `Tentando carregar novamente... (${tentativa + 1}/${maxTentativas}) 🔄`;
+      texto.textContent =
+        `Tentando carregar novamente... (${tentativa + 1}/${maxTentativas}) 🔄`;
     }
   }
 
-  img.onload = () => {
-    texto.textContent = logo
-      ? `Logo criada para: ${prompt} ✨`
-      : animated
-        ? `Cena animada criada para: ${prompt} 🎬`
-        : `Imagem criada para: ${prompt} 🎨`;
+  imagem.addEventListener(
+    "load",
+    () => {
+      texto.textContent =
+        `Imagem criada para: ${prompt} 🎨`;
 
-    rolarParaBaixo();
+      rolarParaBaixo();
 
-    if (salvar) {
-      const conv = getActiveConversation();
-      if (conv) {
-        for (let i = conv.messages.length - 1; i >= 0; i--) {
-          if (conv.messages[i].type === "image" && conv.messages[i].prompt === prompt) {
-            conv.messages[i].url = img.src;
-            salvarConversas();
-            break;
+      if (salvar) {
+        const conversa =
+          getActiveConversation();
+
+        if (conversa) {
+          for (
+            let indice =
+              conversa.messages.length - 1;
+            indice >= 0;
+            indice--
+          ) {
+            const mensagem =
+              conversa.messages[indice];
+
+            if (
+              mensagem.type === "image" &&
+              mensagem.prompt === prompt
+            ) {
+              mensagem.url =
+                imagem.src;
+
+              salvarConversas();
+              break;
+            }
           }
         }
       }
     }
-  };
+  );
 
-  img.onerror = () => {
-    tentativa++;
+  imagem.addEventListener(
+    "error",
+    () => {
+      tentativa++;
 
-    if (tentativa < maxTentativas) {
-      setTimeout(tentarCarregar, 800);
-    } else {
-      texto.textContent = "Não consegui carregar a imagem agora. O servidor pode estar instável ⚠️";
+      if (
+        tentativa <
+        maxTentativas
+      ) {
+        setTimeout(
+          tentarCarregar,
+          900
+        );
+      } else {
+        texto.textContent =
+          "Não consegui carregar a imagem agora. O servidor de imagens pode estar instável ⚠️";
+      }
     }
-  };
+  );
 
-  frame.appendChild(img);
+  const time =
+    document.createElement("div");
 
-  const time = document.createElement("div");
   time.className = "msg-time";
   time.textContent = hora;
 
@@ -889,280 +2184,548 @@ function adicionarMidiaNaTela(prompt, url, createdAt = null, animated = false, s
   tentarCarregar();
 }
 
-async function gerarVisualMaxi(textoUsuario, tipo) {
-  const conv = getActiveConversation();
-  if (!conv) return;
+async function gerarImagemMaxi(
+  textoUsuario
+) {
+  const conversa =
+    getActiveConversation();
 
-  if (verificarSegurancaVisual(textoUsuario)) {
-    responderBloqueioVisual(textoUsuario);
+  if (!conversa) {
     return;
   }
 
-  atualizarMemoriaComTexto(textoUsuario);
+  if (
+    verificarSegurancaVisual(
+      textoUsuario
+    )
+  ) {
+    responderBloqueioVisual(
+      textoUsuario
+    );
 
-  const promptVisual = limparPromptVisual(textoUsuario) || textoUsuario;
-  const animated = tipo === "cena";
-  const logo = tipo === "logo";
-  const createdAtUser = new Date().toISOString();
-
-  if (conv.messages.length === 0) {
-    conv.title = gerarTituloConversa((logo ? "Logo: " : animated ? "Cena: " : "Imagem: ") + promptVisual);
+    return;
   }
 
-  conv.messages.push({
+  atualizarMemoriaComTexto(
+    textoUsuario
+  );
+
+  const promptVisual =
+    limparPromptImagem(
+      textoUsuario
+    ) || textoUsuario;
+
+  const createdAtUser =
+    new Date().toISOString();
+
+  if (
+    conversa.messages.length === 0
+  ) {
+    conversa.title =
+      gerarTituloConversa(
+        `Imagem: ${promptVisual}`
+      );
+  }
+
+  conversa.messages.push({
     role: "user",
     content: textoUsuario,
     createdAt: createdAtUser
   });
 
-  conv.updatedAt = createdAtUser;
+  conversa.updatedAt =
+    createdAtUser;
 
   salvarConversas();
   salvarConversaAtiva();
 
-  adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
+  adicionarMensagem(
+    "Você",
+    textoUsuario,
+    "user",
+    createdAtUser
+  );
 
-  const createdAtMaxi = new Date().toISOString();
+  const createdAtMaxi =
+    new Date().toISOString();
 
-  const respostaTexto = logo
-    ? "Claro! Vou criar uma logo para você ✨"
-    : animated
-      ? "Certo! Vou criar uma cena animada visual para você 🎬"
-      : "Claro! Vou criar essa imagem para você 🎨";
+  const respostaTexto =
+    "Certo! Vou criar a imagem seguindo o que você pediu 🎨";
 
-  conv.messages.push({
+  conversa.messages.push({
     role: "assistant",
     content: respostaTexto,
     createdAt: createdAtMaxi
   });
 
-  adicionarMensagem("Maxi", respostaTexto, "maxi", createdAtMaxi);
+  conversa.updatedAt =
+    createdAtMaxi;
+
+  salvarConversas();
   renderConversationList();
 
-  mostrarCarregando(logo ? "logo" : animated ? "cena" : "imagem");
+  adicionarMensagem(
+    "Maxi",
+    respostaTexto,
+    "maxi",
+    createdAtMaxi
+  );
+
+  mostrarCarregando("imagem");
 
   setTimeout(() => {
     removerCarregando();
 
-    const createdAtImage = new Date().toISOString();
-    const url = criarUrlImagem(promptVisual, animated, 0);
+    const createdAtImage =
+      new Date().toISOString();
 
-    conv.messages.push({
+    const url =
+      criarUrlImagem(
+        promptVisual,
+        0
+      );
+
+    conversa.messages.push({
       role: "assistant",
       type: "image",
-      content: logo ? "Logo gerada" : animated ? "Cena animada gerada" : "Imagem gerada",
+      content: "Imagem gerada",
       prompt: promptVisual,
       url,
-      animated,
-      logo,
       createdAt: createdAtImage
     });
 
-    conv.updatedAt = createdAtImage;
+    conversa.updatedAt =
+      createdAtImage;
 
-    if (conv.messages.length > 40) {
-      conv.messages = conv.messages.slice(-40);
-    }
+    limitarMensagensConversa(
+      conversa
+    );
 
     salvarConversas();
     renderConversationList();
 
-    adicionarMidiaNaTela(promptVisual, url, createdAtImage, animated, true, logo, textoUsuario);
-  }, 1200);
+    adicionarImagemNaTela(
+      promptVisual,
+      url,
+      createdAtImage,
+      true
+    );
+  }, 1000);
 }
 
-/* ===== SEGURANÇA ===== */
+/* =========================================================
+   SEGURANÇA VISUAL
+========================================================= */
 
 function normalizarTexto(texto) {
-  return String(texto)
+  return String(texto || "")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    );
 }
 
-function verificarSegurancaVisual(texto) {
-  const t = normalizarTexto(texto);
+function verificarSegurancaVisual(
+  texto
+) {
+  const normalizado =
+    normalizarTexto(texto);
 
-  const bloqueados = [
-    "nudez", "nua", "pelada", "pelado", "sem roupa", "calcinha", "sutia",
-    "lingerie", "sexo", "sexual", "porn", "porno", "pornografia", "adulto",
-    "matando", "matar", "morrendo", "morto", "morta", "assassinato",
-    "gore", "mutilacao", "decapitacao", "cadaver", "tortura", "suicidio",
-    "autoagressao", "massacre"
+  const termosBloqueados = [
+    "nudez",
+    "nua",
+    "nu ",
+    "pelada",
+    "pelado",
+    "sem roupa",
+    "lingerie",
+    "sexo",
+    "sexual explicito",
+    "pornografia",
+    "porno",
+    "gore",
+    "mutilacao",
+    "decapitacao",
+    "cadaver",
+    "tortura grafica",
+    "suicidio explicito",
+    "automutilacao"
   ];
 
-  return bloqueados.some(palavra => t.includes(palavra));
+  return termosBloqueados.some(
+    (termo) =>
+      normalizado.includes(termo)
+  );
 }
 
-function responderBloqueioVisual(textoUsuario) {
-  const conv = getActiveConversation();
-  if (!conv) return;
+function responderBloqueioVisual(
+  textoUsuario
+) {
+  const conversa =
+    getActiveConversation();
 
-  const createdAtUser = new Date().toISOString();
+  if (!conversa) {
+    return;
+  }
 
-  conv.messages.push({
+  const createdAtUser =
+    new Date().toISOString();
+
+  conversa.messages.push({
     role: "user",
     content: textoUsuario,
     createdAt: createdAtUser
   });
 
-  adicionarMensagem("Você", textoUsuario, "user", createdAtUser);
+  adicionarMensagem(
+    "Você",
+    textoUsuario,
+    "user",
+    createdAtUser
+  );
 
   const resposta =
-    "Não posso criar imagem ou cena com conteúdo adulto, íntimo, violento ou impróprio 😅 Posso fazer uma versão segura.";
+    "Não posso criar esse tipo de imagem, mas posso ajudar a transformar a ideia em uma versão segura e adequada 🙂";
 
-  const createdAtMaxi = new Date().toISOString();
+  const createdAtMaxi =
+    new Date().toISOString();
 
-  conv.messages.push({
+  conversa.messages.push({
     role: "assistant",
     content: resposta,
     createdAt: createdAtMaxi
   });
 
-  conv.updatedAt = createdAtMaxi;
+  conversa.updatedAt =
+    createdAtMaxi;
 
   salvarConversas();
   renderConversationList();
-  adicionarMensagem("Maxi", resposta, "maxi", createdAtMaxi);
+
+  adicionarMensagem(
+    "Maxi",
+    resposta,
+    "maxi",
+    createdAtMaxi
+  );
 }
 
-/* ===== ENVIO ===== */
+/* =========================================================
+   ENVIO DE MENSAGENS
+========================================================= */
 
 async function enviarMensagem() {
-  const input = document.getElementById("user-input");
-  if (!input) return;
+  const input =
+    document.getElementById(
+      "user-input"
+    );
 
-  const texto = input.value.trim();
-  if (!texto) return;
+  if (!input) {
+    return;
+  }
+
+  const texto =
+    input.value.trim();
+
+  if (!texto) {
+    return;
+  }
 
   input.value = "";
 
-  const tipoVisual = detectarTipoVisual(texto);
-
-  if (tipoVisual) {
-    await gerarVisualMaxi(texto, tipoVisual);
+  if (
+    detectarPedidoImagem(texto)
+  ) {
+    await gerarImagemMaxi(texto);
     return;
   }
 
   atualizarMemoriaComTexto(texto);
 
-  const conv = getActiveConversation();
-  if (!conv) return;
+  const conversa =
+    getActiveConversation();
 
-  const createdAtUser = new Date().toISOString();
-
-  if (conv.messages.length === 0) {
-    conv.title = gerarTituloConversa(texto);
+  if (!conversa) {
+    return;
   }
 
-  conv.messages.push({
+  const createdAtUser =
+    new Date().toISOString();
+
+  if (
+    conversa.messages.length === 0
+  ) {
+    conversa.title =
+      gerarTituloConversa(texto);
+  }
+
+  conversa.messages.push({
     role: "user",
     content: texto,
     createdAt: createdAtUser
   });
 
-  conv.updatedAt = createdAtUser;
+  conversa.updatedAt =
+    createdAtUser;
 
   salvarConversas();
   salvarConversaAtiva();
   renderConversationList();
 
-  adicionarMensagem("Você", texto, "user", createdAtUser);
+  adicionarMensagem(
+    "Você",
+    texto,
+    "user",
+    createdAtUser
+  );
 
   const mensagensParaEnviar = [
     SYSTEM_PROMPT,
     criarPromptEstilo(),
     criarPromptMemoria(),
-    ...conv.messages
-      .filter(m => !m.type)
-      .map(m => ({
-        role: m.role,
-        content: m.content
-      }))
+    ...conversa.messages
+      .filter(
+        (mensagem) =>
+          mensagem.type !== "image"
+      )
+      .slice(-30)
+      .map(
+        (mensagem) => ({
+          role: mensagem.role,
+          content:
+            mensagem.content
+        })
+      )
   ];
 
-  mostrarCarregando("mensagem");
+  mostrarCarregando(
+    "mensagem"
+  );
 
   try {
-    const resposta = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messages: mensagensParaEnviar
-      })
-    });
+    const resposta =
+      await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+        body: JSON.stringify({
+          messages:
+            mensagensParaEnviar
+        })
+      });
 
-    const raw = await resposta.text();
+    const textoBruto =
+      await resposta.text();
+
     let dados;
 
     try {
-      dados = JSON.parse(raw);
-    } catch {
+      dados =
+        JSON.parse(textoBruto);
+    } catch (erro) {
       removerCarregando();
-      adicionarMensagem("Maxi", "A resposta da IA veio inválida.");
+
+      console.error(
+        "Resposta inválida da API:",
+        textoBruto
+      );
+
+      adicionarMensagem(
+        "Maxi",
+        "A resposta da IA veio em um formato inválido. Tente novamente.",
+        "maxi",
+        new Date().toISOString()
+      );
+
       return;
     }
 
     if (!resposta.ok) {
       removerCarregando();
-      adicionarMensagem("Maxi", `Erro da API (${resposta.status}).`);
+
+      console.error(
+        "Erro da API:",
+        resposta.status,
+        dados
+      );
+
+      adicionarMensagem(
+        "Maxi",
+        `Não consegui responder agora. Erro da API: ${resposta.status}.`,
+        "maxi",
+        new Date().toISOString()
+      );
+
       return;
     }
 
-    const respostaIA = dados.reply;
+    const respostaIA =
+      extrairRespostaIA(dados);
 
     if (!respostaIA) {
       removerCarregando();
-      adicionarMensagem("Maxi", "A IA não retornou texto.");
+
+      adicionarMensagem(
+        "Maxi",
+        "Não consegui encontrar uma resposta válida. Pode tentar novamente?",
+        "maxi",
+        new Date().toISOString()
+      );
+
       return;
     }
 
-    const createdAtMaxi = new Date().toISOString();
+    const createdAtMaxi =
+      new Date().toISOString();
 
-    conv.messages.push({
+    conversa.messages.push({
       role: "assistant",
       content: respostaIA,
       createdAt: createdAtMaxi
     });
 
-    if (conv.messages.length > 40) {
-      conv.messages = conv.messages.slice(-40);
-    }
+    conversa.updatedAt =
+      createdAtMaxi;
 
-    conv.updatedAt = createdAtMaxi;
+    limitarMensagensConversa(
+      conversa
+    );
 
     salvarConversas();
     renderConversationList();
 
     removerCarregando();
-    await escreverTextoAnimado("Maxi", respostaIA, createdAtMaxi);
+
+    await escreverTextoAnimado(
+      "Maxi",
+      respostaIA,
+      createdAtMaxi
+    );
   } catch (erro) {
     removerCarregando();
-    console.error(erro);
-    adicionarMensagem("Maxi", "Ocorreu um erro ao se comunicar com a IA.");
+
+    console.error(
+      "Erro ao conversar com a IA:",
+      erro
+    );
+
+    adicionarMensagem(
+      "Maxi",
+      "Não consegui me comunicar com a IA agora. Verifique sua conexão e tente novamente.",
+      "maxi",
+      new Date().toISOString()
+    );
   }
 }
 
-/* ===== UTIL ===== */
+function extrairRespostaIA(dados) {
+  if (!dados) {
+    return "";
+  }
+
+  if (
+    typeof dados.reply === "string"
+  ) {
+    return dados.reply.trim();
+  }
+
+  if (
+    typeof dados.response === "string"
+  ) {
+    return dados.response.trim();
+  }
+
+  if (
+    typeof dados.content === "string"
+  ) {
+    return dados.content.trim();
+  }
+
+  if (
+    dados.message &&
+    typeof dados.message.content ===
+      "string"
+  ) {
+    return dados.message.content.trim();
+  }
+
+  if (
+    Array.isArray(dados.choices) &&
+    dados.choices[0] &&
+    dados.choices[0].message &&
+    typeof dados.choices[0].message
+      .content === "string"
+  ) {
+    return dados.choices[0].message
+      .content.trim();
+  }
+
+  return "";
+}
+
+function limitarMensagensConversa(
+  conversa
+) {
+  const limite = 50;
+
+  if (
+    conversa.messages.length >
+    limite
+  ) {
+    conversa.messages =
+      conversa.messages.slice(
+        -limite
+      );
+  }
+}
+
+/* =========================================================
+   UTILITÁRIOS
+========================================================= */
 
 function formatarHorario(dataIso) {
-  const d = new Date(dataIso);
-  return d.toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+  const data =
+    new Date(dataIso);
+
+  if (
+    Number.isNaN(data.getTime())
+  ) {
+    return "";
+  }
+
+  return data.toLocaleTimeString(
+    "pt-BR",
+    {
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  );
 }
 
 function gerarTituloConversa(texto) {
-  const limpo = String(texto || "").trim();
-  if (!limpo) return "Nova conversa";
-  return limpo.length > 30 ? limpo.slice(0, 30) + "..." : limpo;
+  const limpo =
+    String(texto || "").trim();
+
+  if (!limpo) {
+    return "Nova conversa";
+  }
+
+  if (limpo.length > 32) {
+    return (
+      limpo.slice(0, 32) +
+      "..."
+    );
+  }
+
+  return limpo;
 }
 
 function escapeHtml(texto) {
-  return String(texto)
+  return String(texto || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -1171,73 +2734,212 @@ function escapeHtml(texto) {
 }
 
 function rolarParaBaixo() {
-  const box = document.getElementById("chat-box");
-  if (box) box.scrollTop = box.scrollHeight;
+  const box =
+    document.getElementById(
+      "chat-box"
+    );
+
+  if (box) {
+    box.scrollTop =
+      box.scrollHeight;
+  }
 }
 
-/* ===== BOTÕES ===== */
+/* =========================================================
+   BOTÕES E EVENTOS
+========================================================= */
 
 function conectarBotoes() {
-  const btnAbrir = document.getElementById("btn-abrir-chat");
-  const btnEnviar = document.getElementById("btn-enviar");
-  const btnNova = document.getElementById("btn-nova-conversa");
-  const btnExcluir = document.getElementById("btn-excluir-conversa");
-  const btnConfig = document.getElementById("btn-config");
-  const btnFecharConfig = document.getElementById("btn-fechar-config");
-  const btnEstilo = document.getElementById("btn-estilo");
-  const btnFecharEstilo = document.getElementById("btn-fechar-estilo");
-  const input = document.getElementById("user-input");
-  const modal = document.getElementById("config-modal");
-  const estiloModal = document.getElementById("estilo-modal");
+  const btnAbrir =
+    document.getElementById(
+      "btn-abrir-chat"
+    );
 
-  if (btnAbrir) btnAbrir.onclick = abrirChat;
-  if (btnEnviar) btnEnviar.onclick = enviarMensagem;
-  if (btnNova) btnNova.onclick = criarNovaConversa;
-  if (btnExcluir) btnExcluir.onclick = excluirConversaAtual;
-  if (btnConfig) btnConfig.onclick = abrirConfig;
-  if (btnFecharConfig) btnFecharConfig.onclick = fecharConfig;
-  if (btnEstilo) btnEstilo.onclick = abrirEstilo;
-  if (btnFecharEstilo) btnFecharEstilo.onclick = fecharEstilo;
+  const btnEnviar =
+    document.getElementById(
+      "btn-enviar"
+    );
 
-  document.querySelectorAll(".theme-btn").forEach(btn => {
-    btn.onclick = () => {
-      const theme = btn.getAttribute("data-theme-choice");
-      aplicarTema(theme);
-    };
-  });
+  const btnNova =
+    document.getElementById(
+      "btn-nova-conversa"
+    );
 
-  document.querySelectorAll(".style-btn").forEach(btn => {
-    btn.onclick = () => {
-      const style = btn.getAttribute("data-style-choice");
-      salvarEstilo(style);
-    };
-  });
+  const btnExcluir =
+    document.getElementById(
+      "btn-excluir-conversa"
+    );
 
-  if (modal) {
-    modal.onclick = e => {
-      if (e.target === modal) fecharConfig();
-    };
+  const btnConfig =
+    document.getElementById(
+      "btn-config"
+    );
+
+  const btnFecharConfig =
+    document.getElementById(
+      "btn-fechar-config"
+    );
+
+  const btnEstilo =
+    document.getElementById(
+      "btn-estilo"
+    );
+
+  const btnFecharEstilo =
+    document.getElementById(
+      "btn-fechar-estilo"
+    );
+
+  const input =
+    document.getElementById(
+      "user-input"
+    );
+
+  const modalConfig =
+    document.getElementById(
+      "config-modal"
+    );
+
+  const modalEstilo =
+    document.getElementById(
+      "estilo-modal"
+    );
+
+  if (btnAbrir) {
+    btnAbrir.onclick = abrirChat;
   }
 
-  if (estiloModal) {
-    estiloModal.onclick = e => {
-      if (e.target === estiloModal) fecharEstilo();
-    };
+  if (btnEnviar) {
+    btnEnviar.onclick =
+      enviarMensagem;
+  }
+
+  if (btnNova) {
+    btnNova.onclick =
+      criarNovaConversa;
+  }
+
+  if (btnExcluir) {
+    btnExcluir.onclick =
+      excluirConversaAtual;
+  }
+
+  if (btnConfig) {
+    btnConfig.onclick =
+      abrirConfig;
+  }
+
+  if (btnFecharConfig) {
+    btnFecharConfig.onclick =
+      fecharConfig;
+  }
+
+  if (btnEstilo) {
+    btnEstilo.onclick =
+      abrirEstilo;
+  }
+
+  if (btnFecharEstilo) {
+    btnFecharEstilo.onclick =
+      fecharEstilo;
+  }
+
+  document
+    .querySelectorAll(".theme-btn")
+    .forEach((botao) => {
+      botao.onclick = () => {
+        const theme =
+          botao.getAttribute(
+            "data-theme-choice"
+          );
+
+        aplicarTema(theme);
+      };
+    });
+
+  document
+    .querySelectorAll(".style-btn")
+    .forEach((botao) => {
+      const style =
+        botao.getAttribute(
+          "data-style-choice"
+        );
+
+      if (!STYLE_PROMPTS[style]) {
+        botao.style.display =
+          "none";
+
+        return;
+      }
+
+      botao.style.display = "";
+
+      botao.onclick = () => {
+        salvarEstilo(style);
+      };
+    });
+
+  if (modalConfig) {
+    modalConfig.onclick =
+      (evento) => {
+        if (
+          evento.target ===
+          modalConfig
+        ) {
+          fecharConfig();
+        }
+      };
+  }
+
+  if (modalEstilo) {
+    modalEstilo.onclick =
+      (evento) => {
+        if (
+          evento.target ===
+          modalEstilo
+        ) {
+          fecharEstilo();
+        }
+      };
   }
 
   if (input) {
-    input.onkeydown = e => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        enviarMensagem();
-      }
-    };
+    input.onkeydown =
+      (evento) => {
+        if (
+          evento.key === "Enter" &&
+          !evento.shiftKey
+        ) {
+          evento.preventDefault();
+          enviarMensagem();
+        }
+      };
   }
 }
 
 function conectarBotoesBasicos() {
-  const btnAbrir = document.getElementById("btn-abrir-chat");
-  if (btnAbrir) btnAbrir.onclick = abrirChat;
+  const btnAbrir =
+    document.getElementById(
+      "btn-abrir-chat"
+    );
+
+  const btnEnviar =
+    document.getElementById(
+      "btn-enviar"
+    );
+
+  if (btnAbrir) {
+    btnAbrir.onclick =
+      abrirChat;
+  }
+
+  if (btnEnviar) {
+    btnEnviar.onclick =
+      enviarMensagem;
+  }
 }
 
-document.addEventListener("DOMContentLoaded", iniciarMaxiComSeguranca);
+document.addEventListener(
+  "DOMContentLoaded",
+  iniciarMaxiComSeguranca
+);
