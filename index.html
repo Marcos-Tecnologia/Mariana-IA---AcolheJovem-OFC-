@@ -1,117 +1,653 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Maxi - IA Inteligente 💻</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="description"
+    content="Maxi IA — uma inteligência artificial criada pela MA (R) para ajudar, apoiar, conversar e criar imagens."
+  >
+
+  <meta
+    name="theme-color"
+    content="#db5f99"
+  >
+
+  <title>Maxi IA — MA (R)</title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
 
 <body data-theme="rosa">
-  <div id="app">
 
-    <aside id="sidebar">
-      <div class="sidebar-top">
-        <h2>Maxi</h2>
-        <p class="sidebar-slogan">Pergunte, descubra, crie, evolua.</p>
+  <div class="app-container">
 
-        <button id="btn-nova-conversa" type="button">+ Nova conversa</button>
-        <button id="btn-excluir-conversa" type="button">Excluir conversa</button>
-        <button id="btn-config" type="button">⚙️ Configurações</button>
-        <button id="btn-estilo" type="button">🎛️ Estilo</button>
-      </div>
+    <!-- ===================================================
+         SIDEBAR
+    ==================================================== -->
 
-      <div id="conversation-list"></div>
-    </aside>
+    <aside class="sidebar" id="sidebar">
 
-    <main id="main-area">
-      <div id="container">
+      <div class="sidebar-header">
 
-        <div id="inicio-container">
-          <div class="intro-glow"></div>
-          <h1>Maxi 💻</h1>
-          <h3>Pergunte, descubra, crie, evolua.</h3>
-          <button id="btn-abrir-chat" type="button">Conversar com Maxi</button>
-        </div>
+        <div class="logo-area">
 
-        <div id="chat-container" class="hidden">
-          <div id="chat-header">
-            <h1 class="chat-title">Maxi</h1>
-            <p class="chat-subtitle">Modo atual: <span id="modo-atual">Rápido</span></p>
+          <div class="logo-icon">
+            M
           </div>
 
-          <div id="chat-box"></div>
+          <div class="logo-text">
 
-          <textarea
-            id="user-input"
-            rows="3"
-            placeholder="Digite sua pergunta, peça uma imagem ou uma cena animada..."
-          ></textarea>
+            <h1>Maxi IA</h1>
 
-          <button id="btn-enviar" type="button">Enviar</button>
+            <span>
+              Criada pela MA (R)
+            </span>
+
+          </div>
+
         </div>
 
       </div>
+
+      <div class="sidebar-actions">
+
+        <button
+          id="btn-nova-conversa"
+          class="new-chat-btn"
+          type="button"
+        >
+          <span>＋</span>
+          <span>Nova conversa</span>
+        </button>
+
+      </div>
+
+      <div class="sidebar-section-title">
+        Conversas
+      </div>
+
+      <div
+        id="conversation-list"
+        class="conversation-list"
+        aria-label="Lista de conversas"
+      >
+      </div>
+
+      <div class="sidebar-footer">
+
+        <button
+          id="btn-estilo"
+          class="sidebar-button"
+          type="button"
+        >
+          <span>✨</span>
+
+          <span id="modo-atual">
+            💙 Ajuda + Apoio
+          </span>
+        </button>
+
+        <button
+          id="btn-config"
+          class="sidebar-button"
+          type="button"
+        >
+          <span>⚙️</span>
+          <span>Configurações</span>
+        </button>
+
+        <button
+          id="btn-excluir-conversa"
+          class="sidebar-button"
+          type="button"
+        >
+          <span>🗑️</span>
+          <span>Excluir conversa</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+    <!-- ===================================================
+         ÁREA PRINCIPAL
+    ==================================================== -->
+
+    <main class="main-container">
+
+      <!-- ===============================================
+           TELA INICIAL
+      ================================================ -->
+
+      <section
+        id="inicio-container"
+        class="inicio-container"
+      >
+
+        <div class="inicio-content">
+
+          <div
+            class="inicio-avatar"
+            aria-hidden="true"
+          >
+            🌸
+          </div>
+
+          <h1>Olá, eu sou a Maxi</h1>
+
+          <p>
+            Estou aqui para conversar, ajudar, apoiar e
+            pensar em soluções junto com você.
+          </p>
+
+          <p>
+            Também posso responder perguntas, ajudar em
+            tarefas, programação, estudos e criar imagens.
+          </p>
+
+          <button
+            id="btn-abrir-chat"
+            class="start-chat-btn"
+            type="button"
+          >
+            <span>💬</span>
+            <span>Conversar com a Maxi</span>
+          </button>
+
+        </div>
+
+      </section>
+
+      <!-- ===============================================
+           CHAT
+      ================================================ -->
+
+      <section
+        id="chat-container"
+        class="chat-container hidden"
+      >
+
+        <div class="chat-layout">
+
+          <header class="chat-header">
+
+            <div class="chat-header-left">
+
+              <button
+                id="btn-menu-mobile"
+                class="icon-btn mobile-menu-btn"
+                type="button"
+                aria-label="Abrir menu"
+                title="Abrir menu"
+              >
+                ☰
+              </button>
+
+              <div
+                class="chat-avatar"
+                aria-hidden="true"
+              >
+                M
+              </div>
+
+              <div class="chat-header-info">
+
+                <h2>Maxi</h2>
+
+                <div class="chat-status">
+                  Online e pronta para ajudar
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="chat-header-actions">
+
+              <button
+                id="btn-header-estilo"
+                class="icon-btn"
+                type="button"
+                aria-label="Escolher modo"
+                title="Escolher modo"
+              >
+                ✨
+              </button>
+
+              <button
+                id="btn-header-config"
+                class="icon-btn"
+                type="button"
+                aria-label="Abrir configurações"
+                title="Configurações"
+              >
+                ⚙️
+              </button>
+
+            </div>
+
+          </header>
+
+          <div
+            id="chat-box"
+            class="chat-box"
+            aria-live="polite"
+            aria-label="Mensagens da conversa"
+          >
+          </div>
+
+          <div class="chat-input-area">
+
+            <div class="input-wrapper">
+
+              <textarea
+                id="user-input"
+                rows="1"
+                maxlength="5000"
+                placeholder="Digite sua mensagem..."
+                aria-label="Digite sua mensagem"
+              ></textarea>
+
+              <button
+                id="btn-enviar"
+                class="send-btn"
+                type="button"
+                aria-label="Enviar mensagem"
+                title="Enviar mensagem"
+              >
+                ➤
+              </button>
+
+            </div>
+
+            <div class="input-hint">
+              Pressione Enter para enviar e Shift + Enter para quebrar linha
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
     </main>
+
   </div>
 
-  <div id="config-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2>⚙️Configurações</h2>
-      <p>Escolha um tema:</p>
+  <!-- =====================================================
+       FUNDO DA SIDEBAR NO CELULAR
+  ====================================================== -->
 
-      <div class="theme-options">
-        <button class="theme-btn" data-theme-choice="rosa">Rosa</button>
-        <button class="theme-btn" data-theme-choice="azul">Azul</button>
-        <button class="theme-btn" data-theme-choice="branco">Branco</button>
-        <button class="theme-btn" data-theme-choice="preto">Preto</button>
+  <div
+    id="sidebar-overlay"
+    class="sidebar-overlay hidden"
+  >
+  </div>
+
+  <!-- =====================================================
+       MODAL DE CONFIGURAÇÕES
+  ====================================================== -->
+
+  <div
+    id="config-modal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="config-title"
+  >
+
+    <div class="modal-content config-content">
+
+      <div class="modal-header config-header">
+
+        <div>
+
+          <h2 id="config-title">
+            Configurações
+          </h2>
+
+          <p>
+            Personalize a aparência da Maxi.
+          </p>
+
+        </div>
+
+        <button
+          id="btn-fechar-config"
+          class="close-btn"
+          type="button"
+          aria-label="Fechar configurações"
+        >
+          ×
+        </button>
+
       </div>
 
-      <button id="btn-fechar-config" type="button">Fechar</button>
-    </div>
-  </div>
+      <div class="config-section">
 
-  <div id="estilo-modal" class="modal hidden">
-    <div class="modal-content estilo-modal-content">
-      <h2>Estilo da Maxi</h2>
-      <p>Escolha como ela deve responder:</p>
+        <h3>Tema da interface</h3>
 
-      <div class="style-options">
-        <button class="style-btn" data-style-choice="rapido">
-          <strong>⚡ Rápido</strong>
-          <span>Responde rápido, curto e direto.</span>
-        </button>
+        <p>
+          Escolha a aparência que você prefere.
+        </p>
 
-        <button class="style-btn" data-style-choice="avancado">
-          <strong>🧠 Avançado</strong>
-          <span>Pensa melhor e entrega respostas mais completas.</span>
-        </button>
+        <div class="theme-grid">
 
-        <button class="style-btn" data-style-choice="pesquisa">
-          <strong>🌐 Pesquisa</strong>
-          <span>Responde com foco em pesquisa e organização de informações.</span>
-        </button>
+          <button
+            class="theme-btn"
+            data-theme-choice="rosa"
+            type="button"
+          >
 
-        <button class="style-btn" data-style-choice="estudo">
-          <strong>📚 Estudo</strong>
-          <span>Ensina passo a passo para ajudar no aprendizado.</span>
-        </button>
+            <span class="theme-color rosa"></span>
 
-        <button class="style-btn" data-style-choice="professor">
-          <strong>👩‍🏫 Professor</strong>
-          <span>Cria atividades, dinâmicas e ideias para aulas.</span>
-        </button>
+            <span>Rosa</span>
 
-        <button class="style-btn" data-style-choice="atividade">
-          <strong>📝 Atividade</strong>
-          <span>Ajuda em atividades escolares explicando o raciocínio.</span>
-        </button>
+          </button>
+
+          <button
+            class="theme-btn"
+            data-theme-choice="azul"
+            type="button"
+          >
+
+            <span class="theme-color azul"></span>
+
+            <span>Azul</span>
+
+          </button>
+
+          <button
+            class="theme-btn"
+            data-theme-choice="branco"
+            type="button"
+          >
+
+            <span class="theme-color branco"></span>
+
+            <span>Branco</span>
+
+          </button>
+
+          <button
+            class="theme-btn"
+            data-theme-choice="preto"
+            type="button"
+          >
+
+            <span class="theme-color preto"></span>
+
+            <span>Preto</span>
+
+          </button>
+
+        </div>
+
       </div>
 
-      <button id="btn-fechar-estilo" type="button">Fechar</button>
+      <div class="config-section">
+
+        <h3>Sobre a Maxi</h3>
+
+        <p>
+          A Maxi IA foi criada pela empresa MA (R) para
+          oferecer ajuda, apoio, conversas úteis e criação
+          de imagens.
+        </p>
+
+      </div>
+
     </div>
+
   </div>
+
+  <!-- =====================================================
+       MODAL DOS MODOS
+  ====================================================== -->
+
+  <div
+    id="estilo-modal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="estilo-title"
+  >
+
+    <div class="modal-content estilo-content">
+
+      <div class="modal-header estilo-header">
+
+        <div>
+
+          <h2 id="estilo-title">
+            Escolha um modo
+          </h2>
+
+          <p>
+            A Maxi adapta a forma de responder.
+          </p>
+
+        </div>
+
+        <button
+          id="btn-fechar-estilo"
+          class="close-btn"
+          type="button"
+          aria-label="Fechar seleção de modo"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div class="style-list">
+
+        <!-- MODO RÁPIDO -->
+
+        <button
+          class="style-btn"
+          data-style-choice="rapido"
+          type="button"
+        >
+
+          <span class="style-icon">
+            ⚡
+          </span>
+
+          <span class="style-info">
+
+            <strong>
+              Rápido
+            </strong>
+
+            <span>
+              Respostas curtas, objetivas e diretas.
+            </span>
+
+          </span>
+
+        </button>
+
+        <!-- MODO AJUDA + APOIO -->
+
+        <button
+          class="style-btn"
+          data-style-choice="apoio"
+          type="button"
+        >
+
+          <span class="style-icon">
+            💙
+          </span>
+
+          <span class="style-info">
+
+            <strong>
+              Ajuda + Apoio
+            </strong>
+
+            <span>
+              Conversa com calma, acolhe e ajuda a encontrar soluções.
+            </span>
+
+          </span>
+
+        </button>
+
+        <!-- MODO DIVERTIDO -->
+
+        <button
+          class="style-btn"
+          data-style-choice="divertido"
+          type="button"
+        >
+
+          <span class="style-icon">
+            🎉
+          </span>
+
+          <span class="style-info">
+
+            <strong>
+              Divertido
+            </strong>
+
+            <span>
+              Fala com alegria, faz brincadeiras, desafios e piadas leves.
+            </span>
+
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+       JAVASCRIPT PRINCIPAL
+  ====================================================== -->
 
   <script src="script.js"></script>
+
+  <!-- =====================================================
+       AJUSTES EXTRAS DA INTERFACE
+  ====================================================== -->
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebar-overlay");
+
+      const botaoMenu = document.getElementById("btn-menu-mobile");
+      const botaoEstiloHeader = document.getElementById("btn-header-estilo");
+      const botaoConfigHeader = document.getElementById("btn-header-config");
+
+      const botaoEstiloPrincipal = document.getElementById("btn-estilo");
+      const botaoConfigPrincipal = document.getElementById("btn-config");
+
+      function abrirSidebar() {
+        if (!sidebar || !overlay) {
+          return;
+        }
+
+        sidebar.classList.add("open");
+        overlay.classList.remove("hidden");
+        document.body.classList.add("sidebar-open");
+      }
+
+      function fecharSidebar() {
+        if (!sidebar || !overlay) {
+          return;
+        }
+
+        sidebar.classList.remove("open");
+        overlay.classList.add("hidden");
+        document.body.classList.remove("sidebar-open");
+      }
+
+      if (botaoMenu) {
+        botaoMenu.addEventListener("click", abrirSidebar);
+      }
+
+      if (overlay) {
+        overlay.addEventListener("click", fecharSidebar);
+      }
+
+      if (botaoEstiloHeader && botaoEstiloPrincipal) {
+        botaoEstiloHeader.addEventListener("click", function () {
+          botaoEstiloPrincipal.click();
+        });
+      }
+
+      if (botaoConfigHeader && botaoConfigPrincipal) {
+        botaoConfigHeader.addEventListener("click", function () {
+          botaoConfigPrincipal.click();
+        });
+      }
+
+      document.addEventListener("keydown", function (evento) {
+        if (evento.key === "Escape") {
+          fecharSidebar();
+
+          const configModal = document.getElementById("config-modal");
+          const estiloModal = document.getElementById("estilo-modal");
+
+          if (configModal) {
+            configModal.classList.add("hidden");
+          }
+
+          if (estiloModal) {
+            estiloModal.classList.add("hidden");
+          }
+        }
+      });
+
+      window.addEventListener("resize", function () {
+        if (window.innerWidth > 700) {
+          fecharSidebar();
+        }
+      });
+
+      const textarea = document.getElementById("user-input");
+
+      if (textarea) {
+        textarea.addEventListener("input", function () {
+          this.style.height = "auto";
+
+          this.style.height =
+            Math.min(this.scrollHeight, 145) + "px";
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>
