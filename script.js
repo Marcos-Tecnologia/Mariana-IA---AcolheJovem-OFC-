@@ -5,6 +5,9 @@ const ACTIVE_CONVERSATION_KEY = "maxi_active_conversation_v1";
 const THEME_KEY = "maxi_theme_v1";
 const MEMORY_KEY = "maxi_memory_profile_v1";
 const STYLE_KEY = "maxi_style_mode_v2";
+const MAXI_VERSION = "9.5.0";
+const MAX_CONTEXT_MESSAGES = 36;
+const MAX_STORED_MESSAGES = 120;
 
 const OLD_CONVERSATION_KEYS = [
   "maxi_conversations_v1",
@@ -103,6 +106,18 @@ Essas expressões podem aparecer ocasionalmente, mas nunca devem substituir uma 
 19. Use emojis quando combinarem com a conversa, mas sem exagerar.
 
 20. Não comece oferecendo criação de imagens ou ferramentas. Cumprimente de maneira simples e espere o usuário dizer o que precisa.
+
+21. Mantenha continuidade real: considere o que aconteceu antes, o sentimento predominante, pessoas citadas, problemas ainda não resolvidos e ações já combinadas.
+
+22. Não faça o usuário repetir informações que ele já forneceu na mesma conversa.
+
+23. Ao retomar um fato antigo, faça isso de forma natural e apenas quando ele for útil para a resposta atual.
+
+24. Diferencie fatos confirmados de suposições. Nunca invente lembranças, sentimentos, nomes ou acontecimentos.
+
+25. Se o usuário mudar de assunto, acompanhe a mudança sem forçar o tema emocional anterior. Porém, se houver risco grave ainda não resolvido, mantenha o cuidado necessário.
+
+26. Em conversas emocionais, evite responder como se cada mensagem fosse isolada. Acompanhe a evolução do problema e reconheça o que mudou desde as mensagens anteriores.
 
 EXEMPLO:
 
@@ -259,7 +274,7 @@ function iniciarMaxiComSeguranca() {
     atualizarBotoesEstilo();
     conectarBotoes();
 
-    console.log("Maxi iniciada com sucesso.");
+    console.log(`Maxi v${MAXI_VERSION} iniciada com sucesso.`);
   } catch (erro) {
     console.error("Erro ao iniciar Maxi:", erro);
     conectarBotoesBasicos();
@@ -377,9 +392,62 @@ function normalizarConversa(conversa) {
           .map(normalizarMensagem)
           .filter(Boolean)
       : [],
+    summary:
+      typeof conversa.summary === "string"
+        ? conversa.summary
+        : "",
+    context: normalizarContextoConversa(
+      conversa.context
+    ),
     updatedAt:
       conversa.updatedAt ||
       conversa.createdAt ||
+      new Date().toISOString()
+  };
+}
+
+function normalizarContextoConversa(contexto) {
+  const base = criarContextoConversaVazio();
+
+  if (!contexto || typeof contexto !== "object") {
+    return base;
+  }
+
+  return {
+    emotionalState:
+      typeof contexto.emotionalState === "string"
+        ? contexto.emotionalState
+        : "",
+    emotionalIntensity:
+      Number.isFinite(contexto.emotionalIntensity)
+        ? Math.max(0, Math.min(3, contexto.emotionalIntensity))
+        : 0,
+    keyFacts:
+      Array.isArray(contexto.keyFacts)
+        ? contexto.keyFacts.slice(0, 20)
+        : [],
+    importantPeople:
+      Array.isArray(contexto.importantPeople)
+        ? contexto.importantPeople.slice(0, 12)
+        : [],
+    goals:
+      Array.isArray(contexto.goals)
+        ? contexto.goals.slice(0, 12)
+        : [],
+    openLoops:
+      Array.isArray(contexto.openLoops)
+        ? contexto.openLoops.slice(0, 12)
+        : [],
+    recentTopics:
+      Array.isArray(contexto.recentTopics)
+        ? contexto.recentTopics.slice(0, 12)
+        : [],
+    lastUserMessage:
+      typeof contexto.lastUserMessage === "string"
+        ? contexto.lastUserMessage
+        : "",
+    updatedAt:
+      contexto.updatedAt ||
       new Date().toISOString()
   };
 }
@@ -563,15 +631,34 @@ function fecharEstilo() {
 }
 
 /* =========================================================
-   MEMÓRIA
+   MEMÓRIA E CONTINUIDADE
 ========================================================= */
 
 function criarMemoriaVazia() {
   return {
+    name: "",
     interests: [],
     projects: [],
     preferences: [],
-    recentTopics: []
+    goals: [],
+    importantPeople: [],
+    stableFacts: [],
+    recentTopics: [],
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function criarContextoConversaVazio() {
+  return {
+    emotionalState: "",
+    emotionalIntensity: 0,
+    keyFacts: [],
+    importantPeople: [],
+    goals: [],
+    openLoops: [],
+    recentTopics: [],
+    lastUserMessage: "",
+    updatedAt: new Date().toISOString()
   };
 }
 
@@ -585,20 +672,37 @@ function carregarMemoria() {
     }
 
     const parsed = JSON.parse(raw);
+    const base = criarMemoriaVazia();
 
     return {
+      name:
+        typeof parsed.name === "string"
+          ? parsed.name
+          : "",
       interests: Array.isArray(parsed.interests)
-        ? parsed.interests
-        : [],
+        ? parsed.interests.slice(0, 20)
+        : base.interests,
       projects: Array.isArray(parsed.projects)
-        ? parsed.projects
-        : [],
+        ? parsed.projects.slice(0, 20)
+        : base.projects,
       preferences: Array.isArray(parsed.preferences)
-        ? parsed.preferences
-        : [],
+        ? parsed.preferences.slice(0, 20)
+        : base.preferences,
+      goals: Array.isArray(parsed.goals)
+        ? parsed.goals.slice(0, 20)
+        : base.goals,
+      importantPeople: Array.isArray(parsed.importantPeople)
+        ? parsed.importantPeople.slice(0, 20)
+        : base.importantPeople,
+      stableFacts: Array.isArray(parsed.stableFacts)
+        ? parsed.stableFacts.slice(0, 24)
+        : base.stableFacts,
       recentTopics: Array.isArray(parsed.recentTopics)
-        ? parsed.recentTopics
-        : []
+        ? parsed.recentTopics.slice(0, 12)
+        : base.recentTopics,
+      updatedAt:
+        parsed.updatedAt ||
+        new Date().toISOString()
     };
   } catch (erro) {
     console.warn(
@@ -612,6 +716,9 @@ function carregarMemoria() {
 
 function salvarMemoria() {
   try {
+    memoryProfile.updatedAt =
+      new Date().toISOString();
+
     localStorage.setItem(
       MEMORY_KEY,
       JSON.stringify(memoryProfile)
@@ -629,23 +736,32 @@ function adicionarUnico(
   valor,
   limite = 12
 ) {
-  if (!valor) {
+  if (!Array.isArray(lista) || !valor) {
     return;
   }
 
-  const limpo = String(valor).trim();
+  const limpo = limparTrechoMemoria(valor);
 
   if (!limpo) {
     return;
   }
 
-  const existe = lista.some(
-    (item) =>
-      item.toLowerCase() ===
-      limpo.toLowerCase()
-  );
+  const normalizado =
+    normalizarTexto(limpo);
 
-  if (!existe) {
+  const indiceExistente =
+    lista.findIndex(
+      (item) =>
+        normalizarTexto(item) ===
+        normalizado
+    );
+
+  if (indiceExistente >= 0) {
+    const [existente] =
+      lista.splice(indiceExistente, 1);
+
+    lista.unshift(existente);
+  } else {
     lista.unshift(limpo);
   }
 
@@ -654,13 +770,271 @@ function adicionarUnico(
   }
 }
 
-function atualizarMemoriaComTexto(texto) {
+function limparTrechoMemoria(valor) {
+  return String(valor || "")
+    .replace(/\s+/g, " ")
+    .replace(/^[,;:.\-\s]+|[,;:.\-\s]+$/g, "")
+    .trim()
+    .slice(0, 180);
+}
+
+function extrairPrimeiraCorrespondencia(
+  texto,
+  expressoes
+) {
+  for (const expressao of expressoes) {
+    const resultado =
+      String(texto).match(expressao);
+
+    if (
+      resultado &&
+      resultado[1]
+    ) {
+      return limparTrechoMemoria(
+        resultado[1]
+      );
+    }
+  }
+
+  return "";
+}
+
+function frasePareceInformacaoEstavel(
+  texto
+) {
+  const normalizado =
+    normalizarTexto(texto);
+
+  const marcadores = [
+    "meu nome e",
+    "pode me chamar de",
+    "eu gosto de",
+    "eu prefiro",
+    "estou criando",
+    "estou fazendo",
+    "meu projeto",
+    "meu objetivo",
+    "quero aprender",
+    "sempre quero",
+    "daqui para frente"
+  ];
+
+  return marcadores.some(
+    (marcador) =>
+      normalizado.includes(marcador)
+  );
+}
+
+function detectarEstadoEmocional(texto) {
+  const normalizado =
+    normalizarTexto(texto);
+
+  const grupos = [
+    {
+      estado: "risco ou desespero",
+      intensidade: 3,
+      palavras: [
+        "quero morrer",
+        "vou me matar",
+        "nao quero viver",
+        "me machucar",
+        "automutilacao",
+        "sem motivo para viver",
+        "acabar com tudo"
+      ]
+    },
+    {
+      estado: "muito triste",
+      intensidade: 2,
+      palavras: [
+        "muito triste",
+        "arrasado",
+        "devastado",
+        "desesperado",
+        "nao aguento mais",
+        "estou chorando",
+        "me sinto vazio"
+      ]
+    },
+    {
+      estado: "ansioso ou preocupado",
+      intensidade: 2,
+      palavras: [
+        "ansioso",
+        "ansiedade",
+        "preocupado",
+        "nervoso",
+        "panico",
+        "com medo",
+        "apreensivo"
+      ]
+    },
+    {
+      estado: "triste",
+      intensidade: 1,
+      palavras: [
+        "triste",
+        "chateado",
+        "desanimado",
+        "frustrado",
+        "decepcionado",
+        "solitario",
+        "sozinho"
+      ]
+    },
+    {
+      estado: "com raiva",
+      intensidade: 1,
+      palavras: [
+        "com raiva",
+        "irritado",
+        "furioso",
+        "odio",
+        "estressado"
+      ]
+    },
+    {
+      estado: "inseguro ou envergonhado",
+      intensidade: 1,
+      palavras: [
+        "inseguro",
+        "vergonha",
+        "culpa",
+        "me acho feio",
+        "nao sou bom",
+        "baixa autoestima"
+      ]
+    },
+    {
+      estado: "feliz ou esperançoso",
+      intensidade: 1,
+      palavras: [
+        "feliz",
+        "animado",
+        "orgulhoso",
+        "aliviado",
+        "esperancoso",
+        "deu certo"
+      ]
+    }
+  ];
+
+  for (const grupo of grupos) {
+    if (
+      grupo.palavras.some(
+        (palavra) =>
+          normalizado.includes(palavra)
+      )
+    ) {
+      return {
+        state: grupo.estado,
+        intensity: grupo.intensidade
+      };
+    }
+  }
+
+  return {
+    state: "",
+    intensity: 0
+  };
+}
+
+function extrairPessoasImportantes(texto) {
+  const normalizado =
+    normalizarTexto(texto);
+
+  const mapa = [
+    ["minha mae", "mãe"],
+    ["meu pai", "pai"],
+    ["meus pais", "pais"],
+    ["meu irmao", "irmão"],
+    ["minha irma", "irmã"],
+    ["meu namorado", "namorado"],
+    ["minha namorada", "namorada"],
+    ["meu amigo", "amigo"],
+    ["minha amiga", "amiga"],
+    ["meu professor", "professor"],
+    ["minha professora", "professora"],
+    ["meu chefe", "chefe"],
+    ["minha familia", "família"]
+  ];
+
+  return mapa
+    .filter(
+      ([termo]) =>
+        normalizado.includes(termo)
+    )
+    .map(([, pessoa]) => pessoa);
+}
+
+function extrairObjetivo(texto) {
+  return extrairPrimeiraCorrespondencia(
+    texto,
+    [
+      /\bmeu objetivo (?:é|e)\s+(.+?)(?:[.!?]|$)/i,
+      /\beu quero\s+(.+?)(?:[.!?]|$)/i,
+      /\bquero aprender\s+(.+?)(?:[.!?]|$)/i,
+      /\bpreciso conseguir\s+(.+?)(?:[.!?]|$)/i
+    ]
+  );
+}
+
+function extrairProjeto(texto) {
+  return extrairPrimeiraCorrespondencia(
+    texto,
+    [
+      /\bestou (?:criando|fazendo|desenvolvendo)\s+(.+?)(?:[.!?]|$)/i,
+      /\bmeu projeto (?:é|e|se chama)\s+(.+?)(?:[.!?]|$)/i,
+      /\btrabalho em\s+(.+?)(?:[.!?]|$)/i
+    ]
+  );
+}
+
+function extrairNome(texto) {
+  const nome =
+    extrairPrimeiraCorrespondencia(
+      texto,
+      [
+        /\bmeu nome (?:é|e)\s+([A-Za-zÀ-ÿ' -]{2,40})(?:[.!?,]|$)/i,
+        /\bpode me chamar de\s+([A-Za-zÀ-ÿ' -]{2,40})(?:[.!?,]|$)/i,
+        /\beu me chamo\s+([A-Za-zÀ-ÿ' -]{2,40})(?:[.!?,]|$)/i
+      ]
+    );
+
+  if (!nome) {
+    return "";
+  }
+
+  return nome
+    .split(" ")
+    .slice(0, 4)
+    .join(" ");
+}
+
+function atualizarMemoriaComTexto(
+  texto,
+  conversa = getActiveConversation()
+) {
   if (!memoryProfile) {
     memoryProfile = criarMemoriaVazia();
   }
 
+  const textoOriginal =
+    String(texto || "").trim();
+
   const textoNormalizado =
-    normalizarTexto(texto);
+    normalizarTexto(textoOriginal);
+
+  if (!textoOriginal) {
+    return;
+  }
+
+  const nome =
+    extrairNome(textoOriginal);
+
+  if (nome) {
+    memoryProfile.name = nome;
+  }
 
   const interesses = [
     ["maquiagem", "maquiagem"],
@@ -680,7 +1054,7 @@ function atualizarMemoriaComTexto(texto) {
     ["roblox", "Roblox Studio"],
     ["jogo", "criação de jogos"],
     ["inteligencia artificial", "inteligência artificial"],
-    ["ia", "inteligência artificial"],
+    [" ia ", "inteligência artificial"],
     ["musica", "música"],
     ["futebol", "futebol"],
     ["filme", "filmes"],
@@ -696,7 +1070,8 @@ function atualizarMemoriaComTexto(texto) {
       ) {
         adicionarUnico(
           memoryProfile.interests,
-          valor
+          valor,
+          20
         );
       }
     }
@@ -706,11 +1081,13 @@ function atualizarMemoriaComTexto(texto) {
     ["resumido", "prefere respostas resumidas"],
     ["resposta curta", "prefere respostas curtas"],
     ["codigo completo", "prefere código completo"],
+    ["arquivo completo", "prefere arquivos completos"],
+    ["sem mudar o visual", "prefere manter o visual"],
     ["sem mudar", "prefere manter a estrutura principal"],
     ["bonito", "gosta de visuais bonitos"],
     ["profissional", "gosta de resultados profissionais"],
-    ["rosa", "gosta do tema rosa"],
-    ["azul", "gosta do tema azul"]
+    ["tema rosa", "gosta do tema rosa"],
+    ["tema azul", "gosta do tema azul"]
   ];
 
   preferencias.forEach(
@@ -722,19 +1099,245 @@ function atualizarMemoriaComTexto(texto) {
       ) {
         adicionarUnico(
           memoryProfile.preferences,
-          valor
+          valor,
+          20
         );
       }
     }
   );
 
+  const projeto =
+    extrairProjeto(textoOriginal);
+
+  if (projeto) {
+    adicionarUnico(
+      memoryProfile.projects,
+      projeto,
+      20
+    );
+  }
+
+  const objetivo =
+    extrairObjetivo(textoOriginal);
+
+  if (objetivo) {
+    adicionarUnico(
+      memoryProfile.goals,
+      objetivo,
+      20
+    );
+  }
+
+  extrairPessoasImportantes(
+    textoOriginal
+  ).forEach((pessoa) => {
+    adicionarUnico(
+      memoryProfile.importantPeople,
+      pessoa,
+      20
+    );
+  });
+
+  if (
+    frasePareceInformacaoEstavel(
+      textoOriginal
+    ) &&
+    textoOriginal.length <= 220
+  ) {
+    adicionarUnico(
+      memoryProfile.stableFacts,
+      textoOriginal,
+      24
+    );
+  }
+
   adicionarUnico(
     memoryProfile.recentTopics,
-    String(texto).slice(0, 100),
-    10
+    textoOriginal.slice(0, 120),
+    12
   );
 
+  if (conversa) {
+    atualizarContextoConversa(
+      conversa,
+      textoOriginal
+    );
+  }
+
   salvarMemoria();
+}
+
+function atualizarContextoConversa(
+  conversa,
+  textoUsuario
+) {
+  if (!conversa.context) {
+    conversa.context =
+      criarContextoConversaVazio();
+  }
+
+  const contexto =
+    conversa.context;
+
+  const emocao =
+    detectarEstadoEmocional(
+      textoUsuario
+    );
+
+  if (emocao.state) {
+    contexto.emotionalState =
+      emocao.state;
+
+    contexto.emotionalIntensity =
+      emocao.intensity;
+  } else if (
+    contexto.emotionalIntensity > 0
+  ) {
+    contexto.emotionalIntensity =
+      Math.max(
+        0,
+        contexto.emotionalIntensity - 0.25
+      );
+  }
+
+  extrairPessoasImportantes(
+    textoUsuario
+  ).forEach((pessoa) => {
+    adicionarUnico(
+      contexto.importantPeople,
+      pessoa,
+      12
+    );
+  });
+
+  const objetivo =
+    extrairObjetivo(textoUsuario);
+
+  if (objetivo) {
+    adicionarUnico(
+      contexto.goals,
+      objetivo,
+      12
+    );
+  }
+
+  if (
+    frasePareceInformacaoEstavel(
+      textoUsuario
+    ) ||
+    detectarEstadoEmocional(
+      textoUsuario
+    ).state
+  ) {
+    adicionarUnico(
+      contexto.keyFacts,
+      textoUsuario,
+      20
+    );
+  }
+
+  const normalizado =
+    normalizarTexto(textoUsuario);
+
+  const marcadoresPendencia = [
+    "amanha",
+    "depois",
+    "ainda nao",
+    "preciso",
+    "tenho que",
+    "vou tentar",
+    "vou conversar",
+    "quando eu",
+    "me lembre",
+    "nao sei o que fazer"
+  ];
+
+  if (
+    marcadoresPendencia.some(
+      (marcador) =>
+        normalizado.includes(marcador)
+    )
+  ) {
+    adicionarUnico(
+      contexto.openLoops,
+      textoUsuario,
+      12
+    );
+  }
+
+  adicionarUnico(
+    contexto.recentTopics,
+    textoUsuario.slice(0, 120),
+    12
+  );
+
+  contexto.lastUserMessage =
+    textoUsuario.slice(0, 300);
+
+  contexto.updatedAt =
+    new Date().toISOString();
+
+  atualizarResumoConversa(
+    conversa
+  );
+}
+
+function atualizarResumoConversa(
+  conversa
+) {
+  if (!conversa.context) {
+    return;
+  }
+
+  const contexto =
+    conversa.context;
+
+  const partes = [];
+
+  if (contexto.emotionalState) {
+    partes.push(
+      `Estado emocional recente: ${contexto.emotionalState}`
+    );
+  }
+
+  if (contexto.keyFacts.length > 0) {
+    partes.push(
+      "Fatos relevantes: " +
+      contexto.keyFacts
+        .slice(0, 6)
+        .join(" | ")
+    );
+  }
+
+  if (contexto.importantPeople.length > 0) {
+    partes.push(
+      "Pessoas citadas: " +
+      contexto.importantPeople
+        .slice(0, 6)
+        .join(", ")
+    );
+  }
+
+  if (contexto.goals.length > 0) {
+    partes.push(
+      "Objetivos: " +
+      contexto.goals
+        .slice(0, 5)
+        .join(" | ")
+    );
+  }
+
+  if (contexto.openLoops.length > 0) {
+    partes.push(
+      "Assuntos ainda em aberto: " +
+      contexto.openLoops
+        .slice(0, 5)
+        .join(" | ")
+    );
+  }
+
+  conversa.summary =
+    partes.join(". ").slice(0, 1800);
 }
 
 function criarPromptMemoria() {
@@ -742,11 +1345,22 @@ function criarPromptMemoria() {
 
   if (
     memoryProfile &&
+    memoryProfile.name
+  ) {
+    partes.push(
+      `Nome informado pelo usuário: ${memoryProfile.name}.`
+    );
+  }
+
+  if (
+    memoryProfile &&
     memoryProfile.interests.length > 0
   ) {
     partes.push(
       "Interesses percebidos: " +
-      memoryProfile.interests.join(", ") +
+      memoryProfile.interests
+        .slice(0, 10)
+        .join(", ") +
       "."
     );
   }
@@ -756,8 +1370,10 @@ function criarPromptMemoria() {
     memoryProfile.projects.length > 0
   ) {
     partes.push(
-      "Projetos percebidos: " +
-      memoryProfile.projects.join(", ") +
+      "Projetos informados: " +
+      memoryProfile.projects
+        .slice(0, 8)
+        .join(" | ") +
       "."
     );
   }
@@ -768,19 +1384,34 @@ function criarPromptMemoria() {
   ) {
     partes.push(
       "Preferências percebidas: " +
-      memoryProfile.preferences.join(", ") +
+      memoryProfile.preferences
+        .slice(0, 10)
+        .join(", ") +
       "."
     );
   }
 
   if (
     memoryProfile &&
-    memoryProfile.recentTopics.length > 0
+    memoryProfile.goals.length > 0
   ) {
     partes.push(
-      "Assuntos recentes: " +
-      memoryProfile.recentTopics
-        .slice(0, 5)
+      "Objetivos informados: " +
+      memoryProfile.goals
+        .slice(0, 8)
+        .join(" | ") +
+      "."
+    );
+  }
+
+  if (
+    memoryProfile &&
+    memoryProfile.stableFacts.length > 0
+  ) {
+    partes.push(
+      "Fatos estáveis informados pelo usuário: " +
+      memoryProfile.stableFacts
+        .slice(0, 8)
         .join(" | ") +
       "."
     );
@@ -790,17 +1421,230 @@ function criarPromptMemoria() {
     return {
       role: "system",
       content:
-        "Ainda não há memória suficiente sobre o usuário. Responda normalmente."
+        "Ainda não há memória persistente suficiente sobre o usuário. Não invente informações."
     };
   }
 
   return {
     role: "system",
     content:
-      "Use esta memória local apenas para personalizar a conversa de forma natural. " +
-      "Não diga constantemente que possui memória e não seja invasiva. " +
+      "MEMÓRIA PERSISTENTE LOCAL: " +
+      "Use somente quando for relevante. " +
+      "Não diga constantemente que possui memória, não seja invasiva e nunca transforme inferências em fatos confirmados. " +
       partes.join(" ")
   };
+}
+
+function criarPromptContextoConversa(
+  conversa
+) {
+  if (!conversa) {
+    return {
+      role: "system",
+      content:
+        "Não há contexto adicional desta conversa."
+    };
+  }
+
+  atualizarResumoConversa(
+    conversa
+  );
+
+  const contexto =
+    conversa.context ||
+    criarContextoConversaVazio();
+
+  const partes = [];
+
+  if (conversa.summary) {
+    partes.push(
+      conversa.summary
+    );
+  }
+
+  if (contexto.lastUserMessage) {
+    partes.push(
+      "Última mensagem do usuário: " +
+      contexto.lastUserMessage
+    );
+  }
+
+  if (partes.length === 0) {
+    return {
+      role: "system",
+      content:
+        "Esta conversa ainda está começando. Responda normalmente."
+    };
+  }
+
+  return {
+    role: "system",
+    content:
+      "CONTEXTO ATUAL DA CONVERSA: " +
+      partes.join(". ") +
+      ". Use isso para manter continuidade, sem repetir mecanicamente o resumo. " +
+      "Não mencione fatos irrelevantes e não faça o usuário repetir o que já explicou."
+  };
+}
+
+function tokenizarParaRelevancia(
+  texto
+) {
+  const ignoradas =
+    new Set([
+      "para", "com", "uma", "uns", "umas",
+      "que", "por", "dos", "das", "isso",
+      "esse", "essa", "como", "mais", "muito",
+      "estou", "esta", "ele", "ela", "eles",
+      "elas", "meu", "minha", "seu", "sua",
+      "voce", "aqui", "agora", "tambem",
+      "porque", "quando", "onde", "qual",
+      "quero", "preciso", "fazer"
+    ]);
+
+  return normalizarTexto(texto)
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(
+      (palavra) =>
+        palavra.length >= 4 &&
+        !ignoradas.has(palavra)
+    );
+}
+
+function calcularRelevanciaMensagem(
+  mensagem,
+  textoAtual,
+  indice,
+  total
+) {
+  const tokensAtuais =
+    new Set(
+      tokenizarParaRelevancia(
+        textoAtual
+      )
+    );
+
+  const tokensMensagem =
+    tokenizarParaRelevancia(
+      mensagem.content
+    );
+
+  let pontuacao = 0;
+
+  tokensMensagem.forEach(
+    (token) => {
+      if (tokensAtuais.has(token)) {
+        pontuacao += 3;
+      }
+    }
+  );
+
+  const distancia =
+    total - 1 - indice;
+
+  pontuacao +=
+    Math.max(0, 10 - distancia) * 0.5;
+
+  if (
+    mensagem.role === "user" &&
+    frasePareceInformacaoEstavel(
+      mensagem.content
+    )
+  ) {
+    pontuacao += 2;
+  }
+
+  if (
+    detectarEstadoEmocional(
+      mensagem.content
+    ).state
+  ) {
+    pontuacao += 2;
+  }
+
+  return pontuacao;
+}
+
+function selecionarMensagensParaContexto(
+  conversa,
+  textoAtual
+) {
+  const mensagens =
+    conversa.messages
+      .filter(
+        (mensagem) =>
+          mensagem.type !== "image" &&
+          mensagem.content
+      );
+
+  if (
+    mensagens.length <=
+    MAX_CONTEXT_MESSAGES
+  ) {
+    return mensagens.map(
+      (mensagem) => ({
+        role: mensagem.role,
+        content: mensagem.content
+      })
+    );
+  }
+
+  const recentes =
+    mensagens.slice(-20);
+
+  const antigas =
+    mensagens.slice(
+      0,
+      -20
+    );
+
+  const relevantes =
+    antigas
+      .map(
+        (mensagem, indice) => ({
+          mensagem,
+          indice,
+          score:
+            calcularRelevanciaMensagem(
+              mensagem,
+              textoAtual,
+              indice,
+              antigas.length
+            )
+        })
+      )
+      .filter(
+        (item) =>
+          item.score > 0
+      )
+      .sort(
+        (a, b) =>
+          b.score - a.score
+      )
+      .slice(
+        0,
+        MAX_CONTEXT_MESSAGES -
+          recentes.length
+      )
+      .sort(
+        (a, b) =>
+          a.indice - b.indice
+      )
+      .map(
+        (item) =>
+          item.mensagem
+      );
+
+  return [
+    ...relevantes,
+    ...recentes
+  ].map(
+    (mensagem) => ({
+      role: mensagem.role,
+      content: mensagem.content
+    })
+  );
 }
 
 /* =========================================================
@@ -857,6 +1701,8 @@ function criarNovaConversa() {
     id,
     title: "Nova conversa",
     messages: [],
+    summary: "",
+    context: criarContextoConversaVazio(),
     updatedAt: new Date().toISOString()
   };
 
@@ -923,6 +1769,8 @@ function garantirConversaInicial() {
       id: gerarId(),
       title: "Nova conversa",
       messages: [],
+      summary: "",
+      context: criarContextoConversaVazio(),
       updatedAt:
         new Date().toISOString()
     };
@@ -2485,19 +3333,13 @@ async function enviarMensagem() {
     SYSTEM_PROMPT,
     criarPromptEstilo(),
     criarPromptMemoria(),
-    ...conversa.messages
-      .filter(
-        (mensagem) =>
-          mensagem.type !== "image"
-      )
-      .slice(-30)
-      .map(
-        (mensagem) => ({
-          role: mensagem.role,
-          content:
-            mensagem.content
-        })
-      )
+    criarPromptContextoConversa(
+      conversa
+    ),
+    ...selecionarMensagensParaContexto(
+      conversa,
+      texto
+    )
   ];
 
   mostrarCarregando(
@@ -2670,17 +3512,19 @@ function extrairRespostaIA(dados) {
 function limitarMensagensConversa(
   conversa
 ) {
-  const limite = 50;
-
   if (
     conversa.messages.length >
-    limite
+    MAX_STORED_MESSAGES
   ) {
     conversa.messages =
       conversa.messages.slice(
-        -limite
+        -MAX_STORED_MESSAGES
       );
   }
+
+  atualizarResumoConversa(
+    conversa
+  );
 }
 
 /* =========================================================
