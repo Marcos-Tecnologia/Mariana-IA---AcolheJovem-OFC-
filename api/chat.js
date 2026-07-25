@@ -1,47 +1,27 @@
 /* =========================================================
    MAXI IA — API CHAT
-   VERSÃO 9.6.0
+   VERSÃO 9.6.1
 
-   Caminho:
-   /api/chat.js
+   Caminho: /api/chat.js
+   Plataforma: Vercel Serverless Function
 
-   Plataforma:
-   Vercel Serverless Function
-
-   Variáveis de ambiente aceitas:
-   OPENROUTER_API_KEY
-   ou
-   KEY
+   Variáveis obrigatórias:
+   - OPENROUTER_API_KEY
+   - OPENROUTER_MODEL
 ========================================================= */
 
-const MAXI_API_VERSION = "9.6.0";
+const MAXI_API_VERSION = "9.6.1";
 
 const OPENROUTER_URL =
   "https://openrouter.ai/api/v1/chat/completions";
 
-/*
-  Modelo principal.
-
-  Você pode trocar pela variável de ambiente
-  OPENROUTER_MODEL sem editar este arquivo.
-*/
-const DEFAULT_MODEL =
-  "meta-llama/llama-3.1-8b-instruct:free";
-
-/*
-  Modelos alternativos usados quando o principal
-  não estiver disponível.
-
-  A disponibilidade de modelos gratuitos pode mudar
-  no OpenRouter.
-*/
-const FALLBACK_MODELS = [
-  "google/gemma-3-12b-it:free",
-  "qwen/qwen3-8b:free",
-  "mistralai/mistral-small-3.1-24b-instruct:free"
-];
+/* =========================================================
+   LIMITES
+========================================================= */
 
 const MAX_MESSAGES = 50;
+
+const MAX_SYSTEM_MESSAGES = 8;
 
 const MAX_MESSAGE_LENGTH = 12000;
 
@@ -49,7 +29,19 @@ const MAX_TOTAL_CHARACTERS = 80000;
 
 const MAX_OUTPUT_TOKENS = 1400;
 
-const REQUEST_TIMEOUT_MS = 50000;
+/*
+  Cada tentativa pode durar até 45 segundos.
+*/
+const REQUEST_TIMEOUT_MS = 45000;
+
+/*
+  Tentativa inicial + 2 novas tentativas.
+*/
+const MAX_OPENROUTER_ATTEMPTS = 3;
+
+const DEFAULT_RETRY_DELAY_MS = 1200;
+
+const MAX_RETRY_DELAY_MS = 5000;
 
 const ALLOWED_ROLES = new Set([
   "system",
@@ -57,8 +49,22 @@ const ALLOWED_ROLES = new Set([
   "assistant"
 ]);
 
+/*
+  Erros temporários que podem ser resolvidos
+  tentando novamente.
+*/
+const RETRYABLE_STATUS = new Set([
+  408,
+  409,
+  429,
+  500,
+  502,
+  503,
+  504
+]);
+
 /* =========================================================
-   CONFIGURAÇÕES DE CORS
+   CORS
 ========================================================= */
 
 function aplicarCors(res) {
@@ -84,7 +90,7 @@ function aplicarCors(res) {
 }
 
 /* =========================================================
-   RESPOSTAS PADRONIZADAS
+   RESPOSTAS JSON
 ========================================================= */
 
 function responderJson(
@@ -92,7 +98,7 @@ function responderJson(
   status,
   dados
 ) {
-  res.status(status).json({
+  return res.status(status).json({
     version: MAXI_API_VERSION,
     ...dados
   });
@@ -103,40 +109,31 @@ function responderErro(
   status,
   mensagem,
   codigo = "UNKNOWN_ERROR",
-  detalhes = undefined
+  detalhes
 ) {
-  const resposta = {
+  const payload = {
     error: {
       code: codigo,
       message: mensagem
     }
   };
 
+  /*
+    Detalhes internos não são mostrados
+    no ambiente de produção.
+  */
   if (
     detalhes &&
     process.env.NODE_ENV !== "production"
   ) {
-    resposta.error.details =
-      detalhes;
+    payload.error.details = detalhes;
   }
 
-  responderJson(
+  return responderJson(
     res,
     status,
-    resposta
+    payload
   );
-}
-
-/* =========================================================
-   LEITURA DA CHAVE
-========================================================= */
-
-function obterChaveOpenRouter() {
-  return (
-    process.env.OPENROUTER_API_KEY ||
-    process.env.KEY ||
-    ""
-  ).trim();
 }
 
 /* =========================================================
@@ -144,7 +141,7 @@ function obterChaveOpenRouter() {
 ========================================================= */
 
 function normalizarTexto(texto) {
-  return String(texto || "")
+  return String(texto ?? "")
     .replace(/\u0000/g, "")
     .replace(/\r\n/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
@@ -153,16 +150,13 @@ function normalizarTexto(texto) {
 }
 
 /* =========================================================
-   LIMPEZA DA RESPOSTA DA IA
+   LIMPEZA DA RESPOSTA
 ========================================================= */
 
 function limparRespostaIA(texto) {
   let resposta =
     normalizarTexto(texto);
 
-  /*
-    Remove blocos internos completos.
-  */
   resposta = resposta
     .replace(
       /<think>[\s\S]*?<\/think>/gi,
@@ -179,12 +173,11 @@ function limparRespostaIA(texto) {
     .replace(
       /<reflection>[\s\S]*?<\/reflection>/gi,
       ""
-    );
-
-  /*
-    Remove tags que ficaram abertas ou isoladas.
-  */
-  resposta = resposta
+    )
+    .replace(
+      /```(?:analysis|reasoning|think)[\s\S]*?```/gi,
+      ""
+    )
     .replace(
       /<\/?(?:think|analysis|reasoning|reflection)>/gi,
       ""
@@ -193,14 +186,6 @@ function limparRespostaIA(texto) {
       /^\s*(?:assistant|assistente|maxi)\s*:\s*/i,
       ""
     );
-
-  /*
-    Alguns modelos colocam raciocínio em blocos Markdown.
-  */
-  resposta = resposta.replace(
-    /```(?:analysis|reasoning|think)[\s\S]*?```/gi,
-    ""
-  );
 
   return normalizarTexto(resposta);
 }
@@ -235,22 +220,30 @@ function validarMensagens(
   }
 
   /*
-    Mantém apenas as mensagens mais recentes,
-    mas preserva as mensagens de sistema iniciais.
+    Mantém as primeiras mensagens de sistema,
+    pois normalmente contêm as regras da Maxi.
   */
   const sistemas =
-    mensagensRecebidas.filter(
-      (mensagem) =>
-        mensagem?.role === "system"
-    );
+    mensagensRecebidas
+      .filter(
+        (mensagem) =>
+          mensagem?.role === "system"
+      )
+      .slice(
+        0,
+        MAX_SYSTEM_MESSAGES
+      );
 
-  const conversacao =
+  /*
+    Mantém a parte mais recente da conversa.
+  */
+  const conversa =
     mensagensRecebidas.filter(
       (mensagem) =>
         mensagem?.role !== "system"
     );
 
-  const quantidadeParaConversacao =
+  const limiteConversa =
     Math.max(
       1,
       MAX_MESSAGES -
@@ -258,13 +251,11 @@ function validarMensagens(
     );
 
   const selecionadas = [
-    ...sistemas.slice(0, 8),
-    ...conversacao.slice(
-      -quantidadeParaConversacao
+    ...sistemas,
+    ...conversa.slice(
+      -limiteConversa
     )
-  ].slice(
-    -MAX_MESSAGES
-  );
+  ];
 
   const mensagens = [];
 
@@ -283,7 +274,7 @@ function validarMensagens(
 
     const role =
       String(
-        mensagem.role || ""
+        mensagem.role ?? ""
       ).trim();
 
     if (
@@ -301,39 +292,35 @@ function validarMensagens(
       continue;
     }
 
+    content =
+      content.slice(
+        0,
+        MAX_MESSAGE_LENGTH
+      );
+
+    const espacoRestante =
+      MAX_TOTAL_CHARACTERS -
+      caracteresTotais;
+
+    if (
+      espacoRestante <= 0
+    ) {
+      break;
+    }
+
     if (
       content.length >
-      MAX_MESSAGE_LENGTH
+      espacoRestante
     ) {
       content =
         content.slice(
           0,
-          MAX_MESSAGE_LENGTH
+          espacoRestante
         );
     }
 
-    /*
-      Impede que a soma das mensagens ultrapasse
-      o limite definido.
-    */
-    if (
-      caracteresTotais +
-        content.length >
-      MAX_TOTAL_CHARACTERS
-    ) {
-      const restante =
-        MAX_TOTAL_CHARACTERS -
-        caracteresTotais;
-
-      if (restante < 20) {
-        break;
-      }
-
-      content =
-        content.slice(
-          0,
-          restante
-        );
+    if (!content) {
+      break;
     }
 
     mensagens.push({
@@ -343,13 +330,6 @@ function validarMensagens(
 
     caracteresTotais +=
       content.length;
-
-    if (
-      caracteresTotais >=
-      MAX_TOTAL_CHARACTERS
-    ) {
-      break;
-    }
   }
 
   if (
@@ -383,16 +363,12 @@ function validarMensagens(
 }
 
 /* =========================================================
-   EXTRAÇÃO DA RESPOSTA DO OPENROUTER
+   EXTRAÇÃO DA RESPOSTA
 ========================================================= */
 
 function extrairConteudoOpenRouter(
   dados
 ) {
-  if (!dados) {
-    return "";
-  }
-
   const conteudo =
     dados?.choices?.[0]
       ?.message?.content;
@@ -406,34 +382,38 @@ function extrairConteudoOpenRouter(
   }
 
   /*
-    Compatibilidade com APIs que retornam
-    conteúdo como uma lista de partes.
+    Alguns modelos podem retornar
+    o conteúdo dividido em partes.
   */
   if (
     Array.isArray(conteudo)
   ) {
-    const texto = conteudo
-      .map((parte) => {
-        if (
-          typeof parte === "string"
-        ) {
-          return parte;
-        }
+    const texto =
+      conteudo
+        .map((parte) => {
+          if (
+            typeof parte === "string"
+          ) {
+            return parte;
+          }
 
-        return (
-          parte?.text ||
-          parte?.content ||
-          ""
-        );
-      })
-      .filter(Boolean)
-      .join("\n");
+          return (
+            parte?.text ||
+            parte?.content ||
+            ""
+          );
+        })
+        .filter(Boolean)
+        .join("\n");
 
     return limparRespostaIA(
       texto
     );
   }
 
+  /*
+    Compatibilidade com outros formatos.
+  */
   const textoAlternativo =
     dados?.choices?.[0]?.text;
 
@@ -450,77 +430,236 @@ function extrairConteudoOpenRouter(
 }
 
 /* =========================================================
-   ERRO RETORNADO PELO OPENROUTER
+   EXTRAÇÃO DE ERROS
 ========================================================= */
 
 function extrairErroOpenRouter(
   dados,
   status
 ) {
-  const mensagem =
-    dados?.error?.message ||
-    dados?.error?.metadata?.raw ||
-    dados?.message ||
-    `Erro ${status} no OpenRouter.`;
-
   return normalizarTexto(
-    mensagem
+    dados?.error?.message ||
+      dados?.error
+        ?.metadata?.raw ||
+      dados?.message ||
+      `Erro ${status} no OpenRouter.`
   );
 }
 
 /* =========================================================
-   REQUISIÇÃO AO OPENROUTER
+   VARIÁVEIS DE AMBIENTE
 ========================================================= */
 
-async function chamarOpenRouter({
+function obterChaveOpenRouter() {
+  return String(
+    process.env
+      .OPENROUTER_API_KEY ||
+      ""
+  ).trim();
+}
+
+function obterModeloPrincipal() {
+  return String(
+    process.env
+      .OPENROUTER_MODEL ||
+      ""
+  ).trim();
+}
+
+/* =========================================================
+   ROTEAMENTO E FALLBACK
+========================================================= */
+
+function obterModelosDeRoteamento() {
+  const principal =
+    obterModeloPrincipal();
+
+  /*
+    O primeiro modelo é exatamente o modelo
+    configurado em OPENROUTER_MODEL.
+
+    Se ele estiver temporariamente indisponível,
+    o OpenRouter poderá usar seu roteador gratuito.
+  */
+  const modelos = [
+    principal,
+    "openrouter/free"
+  ].filter(Boolean);
+
+  /*
+    Remove modelos repetidos.
+  */
+  return [
+    ...new Set(modelos)
+  ];
+}
+
+/* =========================================================
+   CABEÇALHOS
+========================================================= */
+
+function criarCabecalhos(apiKey) {
+  const headers = {
+    "Content-Type":
+      "application/json",
+
+    Authorization:
+      `Bearer ${apiKey}`,
+
+    "X-Title":
+      process.env.APP_NAME ||
+      "Maxi IA"
+  };
+
+  /*
+    SITE_URL é opcional.
+
+    Quando não existe, tenta usar
+    automaticamente a URL da Vercel.
+  */
+  const siteUrl =
+    String(
+      process.env.SITE_URL ||
+        (
+          process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : ""
+        )
+    ).trim();
+
+  if (siteUrl) {
+    headers["HTTP-Referer"] =
+      siteUrl;
+  }
+
+  return headers;
+}
+
+/* =========================================================
+   ESPERA ENTRE TENTATIVAS
+========================================================= */
+
+function esperar(ms) {
+  return new Promise(
+    (resolve) =>
+      setTimeout(resolve, ms)
+  );
+}
+
+/*
+  Calcula quanto tempo esperar antes
+  de tentar novamente.
+
+  Primeiro usa Retry-After, caso o
+  OpenRouter tenha enviado esse cabeçalho.
+
+  Caso contrário, usa espera progressiva:
+  aproximadamente 1,2s, 2,4s e 4,8s.
+*/
+function calcularEsperaRetryAfter(
+  retryAfter,
+  tentativa
+) {
+  if (retryAfter) {
+    /*
+      Retry-After em segundos.
+    */
+    const segundos =
+      Number(retryAfter);
+
+    if (
+      Number.isFinite(segundos) &&
+      segundos >= 0
+    ) {
+      return Math.min(
+        segundos * 1000,
+        MAX_RETRY_DELAY_MS
+      );
+    }
+
+    /*
+      Retry-After em formato de data.
+    */
+    const data =
+      Date.parse(retryAfter);
+
+    if (
+      Number.isFinite(data)
+    ) {
+      return Math.min(
+        Math.max(
+          0,
+          data - Date.now()
+        ),
+        MAX_RETRY_DELAY_MS
+      );
+    }
+  }
+
+  /*
+    Espera exponencial com uma pequena
+    variação aleatória para evitar novas
+    requisições exatamente no mesmo instante.
+  */
+  const exponencial =
+    DEFAULT_RETRY_DELAY_MS *
+    2 ** tentativa;
+
+  const variacaoAleatoria =
+    Math.floor(
+      Math.random() * 350
+    );
+
+  return Math.min(
+    exponencial +
+      variacaoAleatoria,
+    MAX_RETRY_DELAY_MS
+  );
+}
+
+/* =========================================================
+   REQUISIÇÃO INDIVIDUAL
+========================================================= */
+
+async function fazerRequisicaoOpenRouter({
   apiKey,
-  model,
   messages
 }) {
   const controller =
     new AbortController();
 
   const timeout =
-    setTimeout(() => {
-      controller.abort();
-    }, REQUEST_TIMEOUT_MS);
+    setTimeout(
+      () => {
+        controller.abort();
+      },
+      REQUEST_TIMEOUT_MS
+    );
 
   try {
+    const models =
+      obterModelosDeRoteamento();
+
     const resposta =
       await fetch(
         OPENROUTER_URL,
         {
           method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            Authorization:
-              `Bearer ${apiKey}`,
-
-            /*
-              Estes cabeçalhos identificam seu projeto
-              no OpenRouter.
-
-              Você pode configurar os valores na Vercel.
-            */
-            "HTTP-Referer":
-              process.env.SITE_URL ||
-              process.env.VERCEL_URL
-                ? (
-                    process.env.SITE_URL ||
-                    `https://${process.env.VERCEL_URL}`
-                  )
-                : "https://maxi-ia.vercel.app",
-
-            "X-Title":
-              process.env.APP_NAME ||
-              "Maxi IA"
-          },
+          headers:
+            criarCabecalhos(
+              apiKey
+            ),
 
           body: JSON.stringify({
-            model,
+            /*
+              Usamos models, no plural.
+
+              O OpenRouter tenta o primeiro
+              e utiliza o próximo como fallback.
+            */
+            models,
+
             messages,
 
             temperature: 0.65,
@@ -530,11 +669,37 @@ async function chamarOpenRouter({
             max_tokens:
               MAX_OUTPUT_TOKENS,
 
-            frequency_penalty: 0.15,
+            frequency_penalty:
+              0.15,
 
-            presence_penalty: 0.05,
+            presence_penalty:
+              0.05,
 
-            stream: false
+            stream: false,
+
+            /*
+              Permite troca automática de provedor
+              quando um deles estiver indisponível.
+            */
+            provider: {
+              allow_fallbacks: true,
+
+              /*
+                Não exige que todos os provedores
+                suportem exatamente cada parâmetro.
+
+                Isso reduz erros quando um modelo
+                gratuito usa um provedor diferente.
+              */
+              require_parameters:
+                false,
+
+              /*
+                Prioriza provedores com maior
+                capacidade de processamento.
+              */
+              sort: "throughput"
+            }
           }),
 
           signal:
@@ -550,7 +715,9 @@ async function chamarOpenRouter({
     if (textoBruto) {
       try {
         dados =
-          JSON.parse(textoBruto);
+          JSON.parse(
+            textoBruto
+          );
       } catch {
         dados = {
           raw: textoBruto
@@ -570,8 +737,10 @@ async function chamarOpenRouter({
       erro.status =
         resposta.status;
 
-      erro.model =
-        model;
+      erro.retryAfter =
+        resposta.headers.get(
+          "retry-after"
+        );
 
       erro.data =
         dados;
@@ -591,7 +760,7 @@ async function chamarOpenRouter({
         );
 
       erro.status = 502;
-      erro.model = model;
+
       erro.data = dados;
 
       throw erro;
@@ -599,12 +768,18 @@ async function chamarOpenRouter({
 
     return {
       reply,
+
       model:
-        dados.model || model,
+        dados?.model ||
+        obterModeloPrincipal(),
+
       usage:
-        dados.usage || null,
+        dados?.usage ||
+        null,
+
       id:
-        dados.id || null
+        dados?.id ||
+        null
     };
   } finally {
     clearTimeout(timeout);
@@ -612,145 +787,130 @@ async function chamarOpenRouter({
 }
 
 /* =========================================================
-   MODELOS DISPONÍVEIS PARA TENTATIVA
+   RETENTATIVAS AUTOMÁTICAS
 ========================================================= */
 
-function obterListaDeModelos() {
-  const modeloConfigurado =
-    String(
-      process.env
-        .OPENROUTER_MODEL ||
-      ""
-    ).trim();
-
-  const modelos = [
-    modeloConfigurado,
-    DEFAULT_MODEL,
-    ...FALLBACK_MODELS
-  ].filter(Boolean);
-
-  /*
-    Remove modelos repetidos.
-  */
-  return [
-    ...new Set(modelos)
-  ];
-}
-
-/* =========================================================
-   TENTATIVA COM MODELOS ALTERNATIVOS
-========================================================= */
-
-async function gerarResposta({
+async function gerarRespostaComRetentativas({
   apiKey,
   messages
 }) {
-  const modelos =
-    obterListaDeModelos();
-
   let ultimoErro = null;
 
   for (
-    const model
-    of modelos
+    let tentativa = 0;
+    tentativa <
+      MAX_OPENROUTER_ATTEMPTS;
+    tentativa += 1
   ) {
     try {
-      const resultado =
-        await chamarOpenRouter({
+      return await
+        fazerRequisicaoOpenRouter({
           apiKey,
-          model,
           messages
         });
-
-      return resultado;
     } catch (erro) {
       ultimoErro = erro;
 
       console.error(
-        `[Maxi API ${MAXI_API_VERSION}] Falha no modelo ${model}:`,
-        erro?.message || erro
+        `[Maxi API ${MAXI_API_VERSION}] tentativa ${tentativa + 1}:`,
+        {
+          status:
+            erro?.status,
+
+          message:
+            erro?.message
+        }
       );
 
       /*
-        Erro 401 normalmente significa chave inválida.
-        Não adianta testar outro modelo.
-      */
-      if (erro?.status === 401) {
-        throw erro;
-      }
-
-      /*
-        Erro 403 pode indicar conta, política
-        ou modelo não permitido.
+        AbortError representa timeout.
       */
       if (
-        erro?.status === 403 &&
-        modelos.length === 1
+        erro?.name ===
+        "AbortError"
+      ) {
+        erro.status = 504;
+      }
+
+      const podeTentarNovamente =
+        RETRYABLE_STATUS.has(
+          Number(
+            erro?.status
+          )
+        ) ||
+        erro?.name ===
+          "AbortError";
+
+      const ultimaTentativa =
+        tentativa >=
+        MAX_OPENROUTER_ATTEMPTS -
+          1;
+
+      /*
+        Erros permanentes, como chave inválida,
+        não devem ser repetidos.
+      */
+      if (
+        !podeTentarNovamente ||
+        ultimaTentativa
       ) {
         throw erro;
       }
 
-      /*
-        Erro 400 pode ser causado por modelo incompatível.
-        Nesse caso, tenta o próximo.
-      */
-      if (
-        erro?.status === 400 ||
-        erro?.status === 404 ||
-        erro?.status === 408 ||
-        erro?.status === 429 ||
-        erro?.status === 500 ||
-        erro?.status === 502 ||
-        erro?.status === 503 ||
-        erro?.status === 504 ||
-        erro?.name === "AbortError"
-      ) {
-        continue;
-      }
+      const espera =
+        calcularEsperaRetryAfter(
+          erro?.retryAfter,
+          tentativa
+        );
 
-      /*
-        Para outros erros inesperados,
-        ainda tenta o próximo modelo.
-      */
+      await esperar(espera);
     }
   }
 
   throw (
     ultimoErro ||
     new Error(
-      "Nenhum modelo conseguiu gerar uma resposta."
+      "Não foi possível gerar uma resposta."
     )
   );
 }
 
 /* =========================================================
-   TRATAMENTO DOS ERROS PARA O USUÁRIO
+   TRATAMENTO FINAL DE ERROS
 ========================================================= */
 
 function tratarErroDaApi(
   erro
 ) {
+  const status =
+    Number(
+      erro?.status
+    ) || 500;
+
   if (
-    erro?.name === "AbortError"
+    erro?.name ===
+      "AbortError" ||
+    status === 408 ||
+    status === 504
   ) {
     return {
       status: 504,
+
       codigo:
         "OPENROUTER_TIMEOUT",
+
       mensagem:
-        "A resposta demorou mais do que o esperado."
+        "A resposta demorou mais do que o esperado. Tente novamente."
     };
   }
-
-  const status =
-    Number(erro?.status) ||
-    500;
 
   if (status === 400) {
     return {
       status: 400,
+
       codigo:
         "INVALID_OPENROUTER_REQUEST",
+
       mensagem:
         "O OpenRouter recusou a solicitação. Verifique o modelo configurado."
     };
@@ -759,18 +919,22 @@ function tratarErroDaApi(
   if (status === 401) {
     return {
       status: 500,
+
       codigo:
         "INVALID_API_KEY",
+
       mensagem:
-        "A chave do OpenRouter está ausente, inválida ou não foi reconhecida."
+        "A chave do OpenRouter está inválida ou não foi reconhecida."
     };
   }
 
   if (status === 402) {
     return {
       status: 503,
+
       codigo:
         "INSUFFICIENT_CREDITS",
+
       mensagem:
         "A conta do OpenRouter está sem créditos disponíveis."
     };
@@ -779,61 +943,61 @@ function tratarErroDaApi(
   if (status === 403) {
     return {
       status: 503,
+
       codigo:
         "OPENROUTER_FORBIDDEN",
+
       mensagem:
-        "O OpenRouter não autorizou o uso desse modelo ou dessa conta."
+        "O OpenRouter não autorizou o uso do modelo configurado."
     };
   }
 
   if (status === 404) {
     return {
       status: 503,
+
       codigo:
         "MODEL_NOT_FOUND",
-      mensagem:
-        "O modelo configurado não está disponível."
-    };
-  }
 
-  if (status === 408) {
-    return {
-      status: 504,
-      codigo:
-        "OPENROUTER_TIMEOUT",
       mensagem:
-        "O OpenRouter demorou demais para responder."
+        "O modelo configurado não está disponível no OpenRouter."
     };
   }
 
   if (status === 429) {
     return {
       status: 429,
+
       codigo:
         "RATE_LIMIT",
+
       mensagem:
-        "Muitas mensagens foram enviadas em pouco tempo. Tente novamente em alguns instantes."
+        "O limite temporário de mensagens foi atingido. Tente novamente em alguns instantes."
     };
   }
 
   if (
+    status === 500 ||
     status === 502 ||
-    status === 503 ||
-    status === 504
+    status === 503
   ) {
     return {
       status: 503,
+
       codigo:
         "OPENROUTER_UNAVAILABLE",
+
       mensagem:
-        "O serviço de inteligência artificial está temporariamente indisponível."
+        "A inteligência artificial está temporariamente ocupada. Tente enviar novamente."
     };
   }
 
   return {
     status: 500,
+
     codigo:
       "INTERNAL_SERVER_ERROR",
+
     mensagem:
       "Não foi possível gerar a resposta agora."
   };
@@ -850,9 +1014,11 @@ export default async function handler(
   aplicarCors(res);
 
   /*
-    Responde à verificação CORS.
+    Verificação CORS.
   */
-  if (req.method === "OPTIONS") {
+  if (
+    req.method === "OPTIONS"
+  ) {
     return res
       .status(204)
       .end();
@@ -861,7 +1027,9 @@ export default async function handler(
   /*
     A rota aceita somente POST.
   */
-  if (req.method !== "POST") {
+  if (
+    req.method !== "POST"
+  ) {
     res.setHeader(
       "Allow",
       "POST, OPTIONS"
@@ -878,21 +1046,30 @@ export default async function handler(
   const apiKey =
     obterChaveOpenRouter();
 
-  if (!apiKey) {
-    console.error(
-      `[Maxi API ${MAXI_API_VERSION}] Chave do OpenRouter não configurada.`
-    );
+  const modelo =
+    obterModeloPrincipal();
 
+  if (!apiKey) {
     return responderErro(
       res,
       500,
-      "A chave da inteligência artificial não foi configurada no servidor.",
+      "A variável OPENROUTER_API_KEY não está configurada.",
       "MISSING_API_KEY"
     );
   }
 
+  if (!modelo) {
+    return responderErro(
+      res,
+      500,
+      "A variável OPENROUTER_MODEL não está configurada.",
+      "MISSING_MODEL"
+    );
+  }
+
   /*
-    Em algumas configurações, o body pode chegar como texto.
+    Em algumas configurações da Vercel,
+    o body pode chegar como texto.
   */
   let body = req.body;
 
@@ -900,7 +1077,8 @@ export default async function handler(
     typeof body === "string"
   ) {
     try {
-      body = JSON.parse(body);
+      body =
+        JSON.parse(body);
     } catch {
       return responderErro(
         res,
@@ -928,7 +1106,9 @@ export default async function handler(
       body.messages
     );
 
-  if (!validacao.validas) {
+  if (
+    !validacao.validas
+  ) {
     return responderErro(
       res,
       400,
@@ -939,14 +1119,17 @@ export default async function handler(
 
   try {
     const resultado =
-      await gerarResposta({
-        apiKey,
-        messages:
-          validacao.mensagens
-      });
+      await
+        gerarRespostaComRetentativas({
+          apiKey,
+
+          messages:
+            validacao.mensagens
+        });
 
     /*
-      O script.js V9.6 procura primeiro pelo campo reply.
+      O script.js recebe a resposta
+      pelo campo reply.
     */
     return responderJson(
       res,
@@ -967,16 +1150,13 @@ export default async function handler(
     );
   } catch (erro) {
     console.error(
-      `[Maxi API ${MAXI_API_VERSION}] Erro final:`,
+      `[Maxi API ${MAXI_API_VERSION}] erro final:`,
       {
-        message:
-          erro?.message,
-
         status:
           erro?.status,
 
-        model:
-          erro?.model
+        message:
+          erro?.message
       }
     );
 
