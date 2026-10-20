@@ -1889,3 +1889,30 @@ button:disabled {
 @media (max-width: 480px) {
   .config-extra-actions { grid-template-columns: 1fr; }
 }
+
+/* ÍSIS V9.8.0 — ACRESCIMOS SEM ALTERAR AS REGRAS EXISTENTES */
+.isis-extra {display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center}
+.isis-btn {background:var(--surface-secondary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:10px;padding:9px 12px;font:inherit;cursor:pointer}
+.isis-btn.isis-active {outline:2px solid var(--primary)}
+.isis-field {width:100%;padding:11px;border:1px solid var(--border-color);border-radius:9px;background:var(--surface-solid);color:var(--text-primary);font:inherit;box-sizing:border-box}
+.isis-small {font-size:12px;color:var(--text-secondary)}
+.isis-new-section {padding:12px 0;border-top:1px solid var(--border-color)}
+.isis-new-section h3{margin:6px 0}
+.isis-onboarding {position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.68);display:grid;place-items:center;padding:16px}
+.isis-onboarding.hidden{display:none}
+.isis-onboarding-card {background:var(--surface-solid);color:var(--text-primary);border-radius:18px;padding:25px;width:min(420px,100%);box-shadow:0 15px 45px #0004;text-align:center}
+.isis-onboarding-card img{width:84px;height:84px;border-radius:19px}
+.isis-onboarding-card .isis-btn{margin-top:14px}
+.isis-settings-wrap{display:grid;gap:10px}
+.isis-settings-wrap label{display:flex;gap:8px;align-items:center}
+.isis-themed-example{background:linear-gradient(120deg,var(--primary),var(--surface-secondary));border-radius:7px;height:12px;display:block;width:100%}
+body[data-theme="vermelho-preto"]{--primary:#f44336;--surface-secondary:#2c2023;--surface-solid:#171517;--surface:rgba(24,21,24,.96);--text-primary:#fff0f0;--text-secondary:#e3babd;--border-color:#8c3d40}
+body[data-theme="verde-preto"]{--primary:#22c55e;--surface-secondary:#1d2c23;--surface-solid:#111c16;--surface:rgba(16,27,21,.96);--text-primary:#effff2;--text-secondary:#b5d9bf;--border-color:#346c4b}
+body[data-theme="rosa-roxo"]{--primary:#d85aab;--surface-secondary:#f5e9ff;--surface-solid:#fff8ff;--surface:rgba(255,248,255,.96);--text-primary:#44244d;--text-secondary:#734f7c;--border-color:#caa0d7}
+body[data-theme="azul-roxo"]{--primary:#5b6be6;--surface-secondary:#eeecff;--surface-solid:#fafaff;--surface:rgba(250,250,255,.96);--text-primary:#28264e;--text-secondary:#56527f;--border-color:#b3a9e2}
+body[data-theme="azul-verde"]{--primary:#149faf;--surface-secondary:#ebfaf5;--surface-solid:#fbfffd;--surface:rgba(251,255,253,.96);--text-primary:#164348;--text-secondary:#3a757b;--border-color:#91d4c8}
+body[data-theme="laranja-amarelo"]{--primary:#f18c28;--surface-secondary:#fff6de;--surface-solid:#fffefa;--surface:rgba(255,254,250,.96);--text-primary:#554026;--text-secondary:#8d6d45;--border-color:#f4cc79}
+body[data-theme="preto-dourado"]{--primary:#dbb34b;--surface-secondary:#292720;--surface-solid:#181817;--surface:rgba(24,24,23,.97);--text-primary:#f7ebcb;--text-secondary:#d4bf8e;--border-color:#766235}
+body[data-theme="arco-iris"]{--primary:#aa57df;--surface-secondary:#fff0fa;--surface-solid:#fffafd;--surface:rgba(255,250,253,.95);--text-primary:#403054;--text-secondary:#755482;--border-color:#d7a6df}
+body[data-theme="arco-iris"] .logo-icon{background:linear-gradient(130deg,#f44336,#ffcc21,#22c55e,#3b82f6,#ab52d1)}
+@media(max-width:500px){.isis-extra{gap:5px}.isis-btn{font-size:12px;padding:8px}}

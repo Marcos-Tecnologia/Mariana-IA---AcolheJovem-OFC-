@@ -87,9 +87,8 @@
 
       </div>
 
-      <div class="sidebar-section-title">
-        Conversas
-      </div>
+      <div class="sidebar-section-title">Conversas</div>
+      <div style="padding:5px 10px"><input id="isis-search" class="isis-field" type="search" placeholder="Pesquisar conversas" aria-label="Pesquisar conversas"></div>
 
       <div
         id="conversation-list"
@@ -108,7 +107,7 @@
           <span>✨</span>
 
           <span id="modo-atual">
-            💙 Ajuda + Apoio
+            💙 Acolhedora
           </span>
         </button>
 
@@ -161,13 +160,11 @@
           <h1>Olá, eu sou a Ísis</h1>
 
           <p>
-            Estou aqui para conversar, ajudar, apoiar e
-            pensar em soluções junto com você.
+            Estou aqui para tirar dúvidas, resolver problemas e facilitar seu dia a dia com inteligência e clareza.
           </p>
 
           <p>
-            Também posso responder perguntas, ajudar em
-            tarefas, programação, estudos e criar imagens.
+            Posso ajudar com estudos, programação, tarefas, ideias, imagens e, se desejar, apoio emocional.
           </p>
 
           <button
@@ -228,6 +225,7 @@
             </div>
 
             <div class="chat-header-actions">
+              <span id="isis-current-mode" class="isis-small">⚡ Instantâneo</span>
 
               <button
                 id="btn-header-estilo"
@@ -285,6 +283,13 @@
 
             </div>
 
+            <div class="isis-extra" aria-label="Modos de inteligência">
+              <button type="button" class="isis-btn" data-intelligence="instantaneo">⚡ Instantâneo</button>
+              <button type="button" class="isis-btn" data-intelligence="pensativo">🧠 Pensativo</button>
+              <button type="button" class="isis-btn" data-intelligence="aprender">📚 Aprender</button>
+              <button type="button" id="isis-regenerate" class="isis-btn">↻ Outra resposta</button>
+              <button type="button" id="isis-edit-last" class="isis-btn">✎ Reaproveitar mensagem</button>
+            </div>
             <div class="input-hint">
               Pressione Enter para enviar e Shift + Enter para quebrar linha
             </div>
@@ -422,6 +427,41 @@
         </div>
       </div>
 
+      <div class="config-section isis-new-section">
+        <h3>Seu jeito de conversar</h3><p>Diga como prefere que a Ísis responda, por exemplo: "Respostas claras, simpáticas e com exemplos".</p>
+        <textarea id="isis-custom-tone" class="isis-field" rows="3" maxlength="450" placeholder="Como você quer que a Ísis fale com você?"></textarea>
+        <div class="isis-extra"><button id="isis-save-tone" class="isis-btn" type="button">Salvar meu estilo</button></div>
+        <p class="isis-small">Preferências ofensivas ou que tentem desativar segurança são recusadas.</p>
+      </div>
+      <div class="config-section isis-new-section">
+        <h3>Funções opcionais</h3>
+        <div class="isis-settings-wrap">
+        <label><input id="isis-emotional-toggle" type="checkbox"> 💙 Ativar apoio emocional</label>
+        <label><input id="isis-private-toggle" type="checkbox"> 🔒 Modo privado (não guardar novas conversas)</label>
+        </div>
+        <p class="isis-small">Apoio emocional é opcional. A Ísis não substitui acompanhamento profissional.</p>
+      </div>
+      <div class="config-section isis-new-section">
+        <h3>Mais temas</h3>
+        <div class="theme-grid">
+          <button class="theme-btn" data-theme-choice="vermelho-preto" type="button">🔴 Vermelho e Preto</button>
+          <button class="theme-btn" data-theme-choice="verde-preto" type="button">🟢 Verde e Preto</button>
+          <button class="theme-btn" data-theme-choice="rosa-roxo" type="button">🌸 Rosa e Roxo</button>
+          <button class="theme-btn" data-theme-choice="azul-roxo" type="button">🔵 Azul e Roxo</button>
+          <button class="theme-btn" data-theme-choice="azul-verde" type="button">🌊 Azul e Verde</button>
+          <button class="theme-btn" data-theme-choice="laranja-amarelo" type="button">🟠 Laranja e Amarelo</button>
+          <button class="theme-btn" data-theme-choice="preto-dourado" type="button">✨ Preto e Dourado</button>
+          <button class="theme-btn" data-theme-choice="arco-iris" type="button">🌈 Arco-Íris</button>
+        </div>
+      </div>
+      <div class="config-section isis-new-section">
+        <h3>Planos Ísis</h3>
+        <p><b>Go:</b> assistente, modos e recursos essenciais.</p>
+        <p><b>Plus:</b> proposta de mais mensagens, imagens e recursos.</p>
+        <p><b>Pro Max:</b> proposta de capacidade e prioridade máximas.</p>
+        <button id="isis-plans" class="isis-btn" type="button">Ver situação dos planos</button>
+        <p class="isis-small">Prévia de planos: sem compras ou assinaturas nesta versão.</p>
+      </div>
       <div class="config-section">
 
         <h3>Sobre a Ísis</h3>
@@ -431,7 +471,7 @@
           oferecer ajuda, apoio, conversas úteis e criação
           de imagens.
         </p>
-        <p>Versão 9.7.0. Anteriormente chamada Maxi; seus dados locais antigos continuam compatíveis.</p>
+        <p>Versão 9.8.0. Anteriormente chamada Maxi; seus dados locais antigos continuam compatíveis.</p>
 
       </div>
 
@@ -458,11 +498,11 @@
         <div>
 
           <h2 id="estilo-title">
-            Escolha um modo
+            Escolha uma emoção
           </h2>
 
           <p>
-            A Ísis adapta a forma de responder.
+            As emoções mudam o tom; Instantâneo, Pensativo e Aprender mudam como ela resolve tarefas.
           </p>
 
         </div>
@@ -521,7 +561,7 @@
           <span class="style-info">
 
             <strong>
-              Ajuda + Apoio
+              Acolhedora
             </strong>
 
             <span>
@@ -564,6 +604,16 @@
 
   </div>
 
+  <div id="isis-onboarding" class="isis-onboarding hidden" role="dialog" aria-modal="true" aria-label="Primeira visita">
+    <div class="isis-onboarding-card">
+      <img src="assets/isis-icon.png" alt="Ícone da Ísis">
+      <h2>Bem-vindo à Ísis!</h2>
+      <p>Como você quer ser chamado?</p>
+      <input id="isis-name-input" class="isis-field" maxlength="35" placeholder="Seu nome ou apelido" autocomplete="nickname">
+      <button id="isis-save-name" type="button" class="isis-btn">Começar</button>
+      <p class="isis-small">Seu nome será salvo somente neste navegador.</p>
+    </div>
+  </div>
   <!-- =====================================================
        JAVASCRIPT PRINCIPAL
   ====================================================== -->
