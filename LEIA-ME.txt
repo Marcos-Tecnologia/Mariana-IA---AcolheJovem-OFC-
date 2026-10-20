@@ -1,0 +1,27 @@
+ÍSIS IA — V9.7.0 | MA (R)
+
+PACOTE DE ATUALIZAÇÃO (FRONT-END)
+Arquivos neste ZIP:
+- index.html: renomeação Maxi -> Ísis, novos controles em Configurações
+- style.css: CSS original preservado; SOMENTE estilos dos novos botões adicionados ao fim
+- script.js: identidade Ísis, histórico compatível, memória, comandos, resumo local, anti-repetição e segurança
+
+ATENÇÃO:
+api/chat.js NÃO está neste ZIP porque o arquivo original ainda não foi enviado.
+Para usar a atualização em uma implantação existente, MANTENHA o seu arquivo api/chat.js original e variáveis de ambiente atuais. Não apague o backend nem divulgue chaves.
+Este ZIP, sozinho, não habilita respostas da IA sem o endpoint /api/chat.
+
+NOVO NA V9.7.0:
+1. Renomeação pública para Ísis IA (o nome anterior é mantido somente em chaves históricas e classes CSS internas).
+2. Leitura do histórico e memória antigos da Maxi.
+3. Categorias da memória: projetos, objetivos, preferências e regras do projeto.
+4. Extratos locais para contextualizar conversas longas (não é resumo gerado por IA).
+5. Filtro de resposta melhorado e abertura menos repetida.
+6. Detecção de intenção (apoio, segurança, estudo, código, planejamento).
+7. Fallback de segurança quando a API falha.
+8. Comandos no chat: ver memória, limpar memória, apagar conversas, exportar conversas, apagar conversa atual, renomear conversa para [nome], resumir conversa, modo rápido/apoio/divertido e sobre Ísis.
+9. Novos botões no painel de configurações (Ver memória, Limpar memória, Exportar conversas, Apagar conversas).
+10. Estilo, cores, mensagens, dimensões e layout existentes preservados.
+
+DICA: guarde um backup de seu projeto atual antes de substituir os arquivos.
+OBS: Filtragem de risco por palavras e qualidade das respostas não substitui acompanhamento humano em emergências.

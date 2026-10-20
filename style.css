@@ -1,5 +1,5 @@
 /* =========================================================
-   MAXI IA — STYLE.CSS COMPLETO
+   ÍSIS IA — STYLE.CSS COMPLETO (visual original preservado)
    Empresa: MA (R)
 ========================================================= */
 
@@ -1849,4 +1849,43 @@ button:disabled {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* =========================================================
+   ÍSIS V9.7.0 — ACRÉSCIMO PARA NOVOS BOTÕES DE CONFIGURAÇÃO
+   Todo o CSS original do chat acima permanece intacto.
+========================================================= */
+.config-extra-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.config-action-btn {
+  min-height: 44px;
+  padding: 11px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.config-action-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+.config-action-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.config-action-btn.danger {
+  border-color: var(--border-strong);
+}
+@media (max-width: 480px) {
+  .config-extra-actions { grid-template-columns: 1fr; }
 }
