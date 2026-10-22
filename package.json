@@ -1,0 +1,12 @@
+{
+  "name": "gabarita-v1-9-1",
+  "version": "1.9.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
