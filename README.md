@@ -1,28 +1,35 @@
-# Ísis IA v9.8.0 — Protótipo funcional
+# Ísis IA v9.9.0 — pacote de desenvolvimento
 
-## O que há
-- IA de uso geral, com apoio emocional opcional.
-- Instantâneo, Pensativo e Aprender (backend escolhe modelos/configurações distintas).
-- Emoções Objetiva, Acolhedora e Divertida.
-- Onboarding por nome, estilo personalizado com filtro simples, pesquisa de conversas.
-- Oito temas novos sem substituir a base CSS.
-- Geração de imagem via OpenAI (API real, requer créditos de API), ícone.
-- Botões para alternativa de resposta, reaproveitar texto, controles locais de memória/privacidade.
-- Planos Go / Plus / Pro Max como **prévia visual**, sem autenticação, cobrança, privilégio ou limites implementados. Não há venda real.
+## Novidades incluídas
+- Identidade Ísis e preservação das chaves locais da Maxi, para manter conversas antigas.
+- Assistente de uso geral, apoio emocional opcional.
+- Três modos de inteligência: Instantâneo, Pensativo e Aprender, com configurações de resposta distintas. O modo NÃO garante poder de raciocínio diferente com o mesmo modelo.
+- Antigos estilos do chat (as "Emoções").
+- Temas da v9.8, incluindo Vermelho/Preto, Verde/Preto, Rosa/Roxo, Azul/Roxo, Azul/Verde, Laranja/Amarelo, Preto/Dourado, Arco-Íris.
+- Busca no histórico, nome inicial da pessoa, configurações de como a assistente fala, recursos de histórico, modo privado experimental, controles de regeneração.
+- Nome automático de conversas por assunto: regra local aproximada; não garante títulos perfeitos ou classificação por IA.
+- Botão ☰ Modos no cabeçalho para acesso rápido aos três modos.
+- Página de comparação dos planos Go, Plus e Pro Max: Go R$ 9,90, Plus R$ 19,90, Pro Max R$ 39,90 por mês (preços propostos, **não estão à venda**).
+- Ícone da Ísis mantido da v9.8.
 
-## Instalação
-1. Coloque a pasta no repositório Vercel (root directory correspondente).
-2. Defina `OPENAI_API_KEY` nas variáveis de ambiente **da Vercel**, nunca no JavaScript/HTML.
-3. Opcional: `ISIS_MODEL_INSTANT=gpt-4.1-mini`, `ISIS_MODEL_THINK=gpt-5-mini`, `ISIS_IMAGE_MODEL=gpt-image-1-mini`.
-4. Faça deploy. Recursos OpenAI dependem de uma conta API com créditos e acesso aos modelos.
+## API de texto
+- Backend configurável via OpenRouter, sem obrigação de usar OpenAI.
+- Em Vercel > Settings > Environment Variables: `OPENROUTER_API_KEY`, `ISIS_MODEL_GO` (identificador completo do modelo no OpenRouter, por exemplo o escolhido pelo responsável), opcionalmente `ISIS_SITE_URL`.
+- Alguns modelos do OpenRouter têm variantes gratuitas com limites, que podem ser descontinuadas. Não há garantia de gratuidade, disponibilidade ou qualidade: confira na plataforma antes de definir o modelo. **NÃO** publique uma chave de API em HTML ou GitHub.
+- Os três modos geram comportamentos diferentes no prompt e no limite de resposta. Todos usam, por enquanto, o modelo configurado em `ISIS_MODEL_GO`.
 
-## Limitações importantes
-- O modo privado evita novos salvamentos feitos no fluxo principal; **não é anonimato**: o provedor de API ainda processa mensagens, e outros dados podem continuar em armazenamento local. Não use isso para prometer sigilo absoluto.
-- Botão "Reaproveitar mensagem" coloca a mensagem no editor; não reescreve histórico.
-- Resumo da conversa é um extrato local, não síntese semântica garantida.
-- Bloqueio de agressões é heurístico e local, não mecanismo de segurança robusto.
-- Personalização do tom não desliga os filtros de segurança.
-- Ícones e imagens são protegidos pelo mecanismo da API. Não incluir chave secreta em repositório.
-- A API é pública enquanto não houver autenticação e limite por usuário; **não publique um serviço aberto com sua chave antes de configurar autenticação, limites/rate limiting e controles de custo na Vercel**.
-- Para privacidade, configure também retenção e política de dados de produção.
-- Os recursos antigos seguem preservados sempre que possível. Teste antes de substituir o site em produção.
+## Planos e Banco Max
+- Os três botões "Mudar para..." são **demonstração sem pagamento**, não ativam recursos ou assinatura. Banco Max fictício **não está integrado**.
+- Modelos Plus e Pro Max precisam de autenticação e de verificação de assinatura no backend. Nunca aceite escolha livre do plano enviada pelo navegador.
+- Uma futura integração com Banco Max precisará de transação identificada, autenticação, webhook ou confirmação servidor-a-servidor, verificação de duplicidade, validade da assinatura, cancelamento e renovação. Como Banco Max é simulado, não anuncie pagamento com dinheiro real.
+
+## Imagens
+- Geração via endpoint `/api/image` está preparada para provedor externo compatível com OpenAI images/generations. Configure `ISIS_IMAGE_API_KEY`, `ISIS_IMAGE_API_URL` (URL HTTPS do endpoint do provedor) e opcional `ISIS_IMAGE_MODEL`.
+- Sem credenciais, retorna erro claro; não cria imagens automaticamente nem cobra. Melhor qualidade depende do provedor escolhido.
+
+## Atenção / produção
+- Teste numa cópia do repositório antes de substituir o site em produção.
+- Fluxos e interface foram verificados sintaticamente, não testados em um navegador com API real neste pacote.
+- Não há contas, autorização, cobrança real, cotas seguras ou proteção de API contra abuso. Configure autenticação e rate limiting no servidor antes de abrir ao público.
+- O modo privado experimental não é anonimato: serviços terceiros podem processar as mensagens e dados antigos permanecem no navegador.
+- O filtro de ofensas é heurístico e pode falhar. Ajuste-o com testes, evitando bloquear pessoas em situação de sofrimento.

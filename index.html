@@ -1,174 +1,742 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#157a43" />
-  <meta name="application-name" content="Gabarita" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Gabarita" />
-  <meta name="description" content="Gere, cadastre e corrija gabaritos com rapidez e confiança." />
-  <title>Gabarita</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="license.js" defer></script>
-  <script src="script.js" defer></script>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="description"
+    content="Ísis IA — uma inteligência artificial criada pela MA (R) para ajudar, apoiar, conversar e criar imagens."
+  >
+
+  <meta
+    name="theme-color"
+    content="#db5f99"
+  >
+
+  <title>Ísis IA — MA (R)</title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
-<body class="license-locked">
-  <section id="licenseGate" class="license-gate" aria-label="Ativação do Gabarita">
-    <div class="license-card">
-      <div class="license-logo">✓</div>
-      <span class="license-kicker">GABARITA • V1.9.1</span>
-      <h2>Ative o Gabarita</h2>
-      <p>Use o e-mail da compra e a chave de licença. Depois da ativação, o Gabarita também funciona temporariamente sem internet.</p>
-      <label><span>E-mail</span><input id="licenseEmail" type="email" autocomplete="email" placeholder="professor@escola.com"></label>
-      <label><span>Chave de licença</span><input id="licenseKey" type="text" autocomplete="off" spellcheck="false" placeholder="GAB-XXXX-XXXX-XXXX-XXXX"></label>
-      <button id="activateLicenseBtn" class="btn primary full" type="button">Ativar Gabarita</button>
-      <p id="licenseMessage" class="license-message" aria-live="polite"></p>
-      <small>Pagamento único • 1 instalação por licença • suporte a uso offline por até 7 dias após a última validação.</small>
-    </div>
-  </section>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand-mark" aria-hidden="true">✓</div>
-      <div class="brand-copy">
-        <span class="version">GABARITA • V1.9.1</span>
-        <h1>Gabarita</h1>
-        <p>Aponte. Corrija. Próxima prova.</p>
+
+<body data-theme="rosa">
+
+  <div class="app-container">
+
+    <!-- ===================================================
+         SIDEBAR
+    ==================================================== -->
+
+    <aside class="sidebar" id="sidebar">
+
+      <div class="sidebar-header">
+
+        <div class="logo-area">
+
+          <div class="logo-icon">
+            Í
+          </div>
+
+          <div class="logo-text">
+
+            <h1>Ísis IA</h1>
+
+            <span>
+              Criada pela MA (R)
+            </span>
+
+          </div>
+
+        </div>
+
       </div>
-      <div class="save-pill" title="Os dados do Gabarita são salvos neste navegador">● Dados salvos</div>
-    </header>
 
-    <nav class="main-nav" aria-label="Seções do Gabarita">
-      <button class="nav-btn active" type="button" data-view="home">Início</button>
-      <button class="nav-btn nav-correct" type="button" data-view="correct">Corrigir</button>
-      <button class="nav-btn" type="button" data-view="register">Provas</button>
-      <button class="nav-btn" type="button" data-view="data">Resultados</button>
-    </nav>
+      <div class="sidebar-actions">
 
-    <main>
-      <section id="view-home" class="view active">
-        <div class="home-hero panel">
-          <div><span class="home-kicker">GABARITA V1.9.1</span><h2>Corrigir uma prova deve ser simples.</h2><p>Escolha a prova, aponte a câmera e veja as respostas serem corrigidas com rapidez.</p></div>
-          <div class="home-actions"><button class="btn primary" type="button" data-home-view="correct">Corrigir agora</button><button class="btn secondary" type="button" data-home-view="register">Minhas provas</button><button class="btn secondary" type="button" data-home-view="data">Ver resultados</button></div>
-        </div>
-        <div class="home-stats"><article class="panel"><span>Gabaritos</span><strong id="homeTestsCount">0</strong></article><article class="panel"><span>Correções salvas</span><strong id="homeCorrectionsCount">0</strong></article><article class="panel"><span>Pendentes de revisão</span><strong id="homePendingCount">0</strong></article></div>
-        <article class="panel"><div class="preview-head"><div><h3>Última correção</h3><p id="homeLastCorrection">Nenhuma correção realizada ainda.</p></div><button class="btn secondary compact" type="button" data-home-view="data">Ver dados</button></div></article>
-      </section>
+        <button
+          id="btn-nova-conversa"
+          class="new-chat-btn"
+          type="button"
+        >
+          <span>＋</span>
+          <span>Nova conversa</span>
+        </button>
 
-      <section id="view-generator" class="view">
-        <div class="section-head"><div><h2>Gerar folha de respostas</h2><p>Gere a folha com espaço para nome, série/turma e alternativas. Sem código visual.</p></div></div>
-        <div class="two-column">
-          <article class="panel controls-card">
-            <div class="form-grid">
-              <label class="field field-wide"><span>Modelo para uma prova cadastrada (opcional)</span><select id="genLinkedTest"><option value="">Modelo genérico</option></select><small>Vincular uma prova copia a quantidade de questões e as alternativas; não inclui código visual.</small></label>
-              <label class="field"><span>Quantidade de questões</span><input id="genQuestionCount" type="number" min="1" max="50" value="10" inputmode="numeric" /></label>
-              <label class="field"><span>Alternativas</span><select id="genAlternativeCount"><option value="2">A–B</option><option value="3">A–C</option><option value="4">A–D</option><option value="5" selected>A–E</option></select></label>
-            </div>
-            <div id="genLayoutInfo" class="info-box"></div>
-            <div class="button-row"><button id="downloadPdfBtn" class="btn primary" type="button">Gerar PDF</button><button id="downloadPngBtn" class="btn secondary" type="button">Baixar PNG</button></div>
-            <p id="genStatus" class="message" aria-live="polite"></p>
-          </article>
-          <article class="panel preview-card">
-            <div class="preview-head"><div><h3>Pré-visualização</h3><p>Nome e série/turma ficam dentro das quatro marcas.</p></div><span id="genBadge" class="badge">10 questões • A–E</span></div>
-            <div class="canvas-scroll"><canvas id="generatorCanvas"></canvas></div>
-          </article>
-        </div>
-      </section>
+      </div>
 
-      <section id="view-register" class="view">
-        <div class="section-head"><div><h2>Minhas provas</h2><p>Cadastre o gabarito oficial e gere a folha de respostas que vai dentro da prova.</p></div><div class="section-actions"><button class="btn secondary" type="button" data-home-view="generator">Gerar folha</button><button id="newTestBtn" class="btn primary" type="button">+ Nova prova</button></div></div>
-        <div id="testsEmpty" class="empty-state"><strong>Nenhuma prova cadastrada</strong><p>Cadastre a primeira prova e depois gere a folha de respostas.</p><button id="emptyNewTestBtn" class="btn primary" type="button">Cadastrar agora</button></div>
-        <div id="testsList" class="cards"></div>
+      <div class="sidebar-section-title">Conversas</div>
+      <div style="padding:5px 10px"><input id="isis-search" class="isis-field" type="search" placeholder="Pesquisar conversas" aria-label="Pesquisar conversas"></div>
 
-        <article id="editorPanel" class="panel hidden">
-          <div class="editor-head"><div><h3 id="editorTitle">Novo gabarito</h3><p>Marque a resposta correta ou anule a questão.</p></div><button id="cancelEditorBtn" class="icon-btn" type="button" aria-label="Fechar">✕</button></div>
-          <div class="form-grid editor-fields">
-            <label class="field field-wide"><span>Nome da prova</span><input id="testName" type="text" maxlength="80" placeholder="Ex.: Matemática - Unidade 1" /></label>
-            <label class="field"><span>Turma <small>(opcional)</small></span><input id="testClassName" type="text" maxlength="60" placeholder="Ex.: 8º A" /></label>
-            <label class="field"><span>Quantidade de questões</span><input id="testQuestionCount" type="number" min="1" max="50" value="10" inputmode="numeric" /></label>
-            <label class="field"><span>Alternativas</span><select id="testAlternativeCount"><option value="2">A–B</option><option value="3">A–C</option><option value="4">A–D</option><option value="5" selected>A–E</option></select></label>
-            <label class="field"><span>Nota máxima</span><input id="testMaxScore" type="number" min="0.1" max="1000" step="0.1" value="10" inputmode="decimal" /></label>
-            <label class="toggle-field"><input id="annulledAwardPoint" type="checkbox" checked /><span>Questão anulada dá ponto para todos</span></label>
+      <div
+        id="conversation-list"
+        class="conversation-list"
+        aria-label="Lista de conversas"
+      >
+      </div>
+
+      <div class="sidebar-footer">
+
+        <button
+          id="btn-estilo"
+          class="sidebar-button"
+          type="button"
+        >
+          <span>✨</span>
+
+          <span id="modo-atual">
+            💙 Acolhedora
+          </span>
+        </button>
+
+        <button
+          id="btn-config"
+          class="sidebar-button"
+          type="button"
+        >
+          <span>⚙️</span>
+          <span>Configurações</span>
+        </button>
+
+        <button
+          id="btn-excluir-conversa"
+          class="sidebar-button"
+          type="button"
+        >
+          <span>🗑️</span>
+          <span>Excluir conversa</span>
+        </button>
+
+      </div>
+
+    <div class="isis-new-section" style="padding:10px">
+  <button class="isis-btn isis-upgrade-cta" id="isis-upgrade-cta" type="button">✦ Conheça Ísis Go, Plus e Pro Max</button>
+</div>
+</aside>
+
+    <!-- ===================================================
+         ÁREA PRINCIPAL
+    ==================================================== -->
+
+    <main class="main-container">
+
+      <!-- ===============================================
+           TELA INICIAL
+      ================================================ -->
+
+      <section
+        id="inicio-container"
+        class="inicio-container"
+      >
+
+        <div class="inicio-content">
+
+          <div
+            class="inicio-avatar"
+            aria-hidden="true"
+          >
+            🌸
           </div>
-          <div class="answer-head"><strong>Respostas corretas</strong><span id="answerProgress" class="badge">0/10</span></div>
-          <div id="answerKeyGrid" class="answer-grid"></div>
-          <p id="editorMessage" class="message" aria-live="polite"></p>
-          <div class="sticky-actions"><button id="saveTestBtn" class="btn primary" type="button">Salvar gabarito</button></div>
-        </article>
-      </section>
 
-      <section id="view-correct" class="view">
-        <div class="quick-heading"><h2>Corrigir</h2><span id="batchStatus" class="batch-status">0 correções</span></div>
-        <article class="panel quick-scan">
-          <label class="field quick-test"><span>Prova</span><select id="scanTestSelect"></select></label>
-          <div id="selectedTestInfo" class="selected-test-card"></div>
-          <div class="quick-actions"><button id="takePhotoBtn" class="btn primary" type="button">📷 Abrir câmera</button><button id="chooseImageBtn" class="btn secondary" type="button">Escolher imagem</button></div>
-          <input id="imageFileInput" class="visually-hidden" type="file" accept="image/*" />
-          <div id="cameraModal" class="camera-modal hidden" role="region" aria-label="Scanner ao vivo">
-            <div class="camera-panel">
-              <div class="camera-head"><strong>Câmera automática</strong><button id="closeCameraBtn" class="icon-btn" type="button" aria-label="Parar câmera">✕</button></div>
-              <div class="camera-stage" id="cameraStage"><video id="cameraVideo" autoplay playsinline muted></video><svg id="liveOutline" class="live-outline" aria-hidden="true"><polygon id="liveOutlinePolygon" points="" /><g id="liveAnswerDots"></g></svg><div id="liveScannerBadge" class="live-badge">Procurando gabarito…</div></div>
-              <p id="cameraMessage" class="camera-hint" aria-live="polite"></p>
-              <details class="camera-fallback"><summary>Não reconheceu?</summary><button id="capturePhotoBtn" class="btn secondary full" type="button">Usar este quadro</button></details>
-            </div>
-          </div>
-          <p id="scanMessage" class="message quick-message" aria-live="polite"></p>
-          <button id="analyzeBtn" class="btn primary full hidden" type="button" disabled>Analisar imagem enviada</button>
-          <details class="advanced-options"><summary>Mais opções</summary><div class="advanced-body">
-            <label class="toggle-field"><input id="sequenceMode" type="checkbox" checked /><span>Seguir corrigindo após “Próxima”</span></label>
-            <label class="toggle-field"><input id="readOnlyMode" type="checkbox" /><span>Somente leitura</span></label>
-            <button id="selfTestBtn" class="btn ghost full" type="button">Testar leitor sem imprimir</button>
-            <div id="cameraPermissionBox" class="camera-permission neutral"><span class="camera-dot"></span><div><strong id="cameraPermissionTitle">Câmera</strong><small id="cameraPermissionText">Permissão do navegador</small></div></div>
-            <div id="qualityBox" class="quality-box neutral"><strong>Qualidade</strong><div id="qualityStatus">Aguardando imagem.</div><div id="qualityDetails" class="quality-details"></div></div>
-            <label class="field"><span>Sensibilidade: <b id="sensitivityValue">30%</b></span><input id="markSensitivity" type="range" min="18" max="55" value="30" /></label>
-            <div id="recognitionBox" class="recognition-box neutral"><strong>Leitura</strong><div id="recognitionStatus">Aguardando análise.</div><div id="recognitionDetails" class="quality-details"></div></div>
-            <button id="reprocessBtn" class="btn secondary full" type="button" disabled>Reprocessar foto</button>
-          </div></details>
-        </article>
-        <details class="preview-fold"><summary>Ver foto da última correção</summary><div id="imagePlaceholder" class="image-placeholder">Nenhuma imagem</div><div class="image-canvas-wrap"><canvas id="photoCanvas" class="hidden"></canvas></div></details>
-        <article id="resultPanel" class="panel hidden">
-          <div class="result-title"><div><h3>Resultado da correção</h3><p id="resultHelp">Pendências = questões em branco, duplas ou com leitura duvidosa.</p></div><span id="resultSavedBadge" class="badge success-badge">Salvo automaticamente</span></div>
-          <div class="student-result-head">
-              <div class="student-avatar">✓</div><div class="student-meta"><span>ALUNO</span><strong id="resultStudentName">Nome não informado</strong><small id="resultStudentSeries">Série/turma não informada</small></div>
-              <span id="ocrState" class="ocr-state">Identificação opcional</span>
-            </div>
-            <div class="identity-edit" id="identityEdit"><label>Nome do aluno <input id="studentId" type="text" maxlength="90" placeholder="Digite o nome, se quiser" autocomplete="off"></label><label>Série/turma <input id="studentSeries" type="text" maxlength="40" placeholder="Ex.: 1A ou 3B" autocomplete="off"></label><small>Opcional. Você pode preencher nome e série/turma ou ir direto para a próxima prova.</small></div>
-            <div class="result-summary">
-            <div><span>Acertos</span><strong id="resultCorrect">0</strong></div>
-            <div><span>Erros</span><strong id="resultWrong">0</strong></div>
-            <div><span>Em branco</span><strong id="resultBlank">0</strong></div>
-            <div><span>Duplas</span><strong id="resultMultiple">0</strong></div>
-            <div><span>Anuladas</span><strong id="resultAnnulled">0</strong></div>
-            <div class="review-summary"><span>Pendências</span><strong id="resultReview">0</strong></div>
-            <div><span>Aproveitamento</span><strong id="resultPercent">0%</strong></div>
-            <div class="grade-summary"><span>Nota</span><strong id="resultGrade">0</strong></div>
-          </div>
-          <div id="readOnlySummary" class="read-only-summary hidden"></div>
-          <div class="result-actions"><button id="showAllDetailsBtn" class="btn secondary" type="button">Ver detalhes das questões</button><button id="reviewOnlyBtn" class="btn secondary" type="button">Conferir pendências</button><button id="exportCurrentCsvBtn" class="btn secondary" type="button">Exportar CSV</button><button id="exportCurrentPdfBtn" class="btn secondary" type="button">Exportar PDF</button><button id="nextCorrectionBtn" class="btn primary" type="button">Próxima prova</button></div>
-          <details id="resultDetails" class="result-details"><summary>Detalhes das questões • acertos, erros e pendências</summary><div id="resultRows" class="result-rows"></div></details>
-        </article>
+          <h1>Olá, eu sou a Ísis</h1>
 
-      </section>
+          <p>
+            Estou aqui para tirar dúvidas, resolver problemas e facilitar seu dia a dia com inteligência e clareza.
+          </p>
 
-      <section id="view-data" class="view">
-        <div class="section-head"><div><h2>Resultados</h2><p>Acompanhe correções, desempenho da turma e seus dados do Gabarita.</p></div></div>
-        <article class="panel stats-dashboard"><div class="preview-head"><div><h3>Painel da prova / turma</h3><p>Médias, distribuição de resultados e questões que mais geraram erro.</p></div><div class="stats-actions"><select id="statsTestSelect"><option value="">Todas as provas</option></select><button id="exportStatsCsvBtn" class="btn secondary compact" type="button">Exportar relatório</button></div></div><div id="statsSummary" class="stats-summary"></div><div id="questionStatsList" class="question-stats"></div></article>
-        <article class="panel history-panel">
-          <div class="preview-head"><div><h3>Correções realizadas</h3><p>Pesquise por aluno, prova ou turma e encontre rapidamente o que tem pendências.</p></div><button id="exportHistoryCsvBtn" class="btn secondary compact" type="button">Exportar histórico CSV</button></div>
-          <div class="history-filters"><input id="historySearch" type="search" placeholder="Pesquisar aluno, prova ou turma" /><select id="historyTestFilter"><option value="">Todas as provas</option></select><select id="historyPeriod"><option value="all">Qualquer data</option><option value="today">Hoje</option><option value="7d">Últimos 7 dias</option></select><label class="toggle-field compact-toggle"><input id="historyOnlyReview" type="checkbox" /><span>Só com pendências</span></label></div>
-          <div id="historyEmpty" class="history-empty">Nenhuma correção salva ainda.</div>
-          <div id="historyList" class="history-list"></div>
-        </article>
-        <div class="data-grid">
-          <article class="panel data-card"><h3>Backup completo</h3><p>Inclui gabaritos, configurações e histórico de correções. O Gabarita também mantém cópias locais automáticas.</p><div class="button-stack"><button id="exportBackupBtn" class="btn primary" type="button">Exportar backup</button><button id="importBackupBtn" class="btn secondary" type="button">Importar backup</button><button id="restoreAutoBackupBtn" class="btn secondary" type="button">Restaurar backup local anterior</button><input id="backupFileInput" class="visually-hidden" type="file" accept="application/json,.json" /></div><p id="backupMessage" class="message"></p></article>
-          <article class="panel data-card"><h3>Aplicativo e offline</h3><p id="offlineStatus">Verificando disponibilidade...</p><div class="button-stack"><button id="installAppBtn" class="btn primary" type="button" disabled>Instalar Gabarita</button><button id="persistStorageBtn" class="btn secondary" type="button">Proteger armazenamento</button></div><p id="installMessage" class="message"></p></article>
-          <article class="panel data-card"><h3>Histórico</h3><p id="dataStats">0 gabaritos • 0 correções</p><div class="button-stack"><button id="dataExportHistoryBtn" class="btn secondary" type="button">Exportar histórico CSV</button><button id="clearHistoryBtn" class="btn danger" type="button">Limpar histórico</button></div></article>
+          <p>
+            Posso ajudar com estudos, programação, tarefas, ideias, imagens e, se desejar, apoio emocional.
+          </p>
+
+          <button
+            id="btn-abrir-chat"
+            class="start-chat-btn"
+            type="button"
+          >
+            <span>💬</span>
+            <span>Conversar com a Ísis</span>
+          </button>
+
         </div>
+
       </section>
+
+      <!-- ===============================================
+           CHAT
+      ================================================ -->
+
+      <section
+        id="chat-container"
+        class="chat-container hidden"
+      >
+
+        <div class="chat-layout">
+
+          <header class="chat-header">
+
+            <div class="chat-header-left">
+
+              <button
+                id="btn-menu-mobile"
+                class="icon-btn mobile-menu-btn"
+                type="button"
+                aria-label="Abrir menu"
+                title="Abrir menu"
+              >
+                ☰
+              </button>
+
+              <div
+                class="chat-avatar"
+                aria-hidden="true"
+              >
+                Í
+              </div>
+
+              <div class="chat-header-info">
+
+                <h2>Ísis</h2>
+
+                <div class="chat-status">
+                  Online e pronta para ajudar
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="chat-header-actions">
+              <span id="isis-current-mode" class="isis-small">⚡ Instantâneo</span>
+
+              <button class="isis-btn" id="isis-mode-menu-btn" type="button" aria-label="Escolher modo de inteligência">☰ Modos</button>
+              <button
+                id="btn-header-estilo"
+                class="icon-btn"
+                type="button"
+                aria-label="Escolher modo"
+                title="Escolher modo"
+              >
+                ✨
+              </button>
+
+              <button
+                id="btn-header-config"
+                class="icon-btn"
+                type="button"
+                aria-label="Abrir configurações"
+                title="Configurações"
+              >
+                ⚙️
+              </button>
+
+            </div>
+
+          </header>
+
+          <div id="isis-mode-menu" class="isis-mode-menu hidden" aria-label="Modos de inteligência">
+            <strong>Como a Ísis deve responder?</strong>
+            <button class="isis-btn" data-intelligence="instantaneo" type="button">⚡ Instantâneo — respostas rápidas</button>
+            <button class="isis-btn" data-intelligence="pensativo" type="button">🧠 Pensativo — mais análise</button>
+            <button class="isis-btn" data-intelligence="aprender" type="button">📚 Aprender — ensino passo a passo</button>
+          </div>
+          <div
+            id="chat-box"
+            class="chat-box"
+            aria-live="polite"
+            aria-label="Mensagens da conversa"
+          >
+          </div>
+
+          <div class="chat-input-area">
+
+            <div class="input-wrapper">
+
+              <textarea
+                id="user-input"
+                rows="1"
+                maxlength="5000"
+                placeholder="Digite sua mensagem..."
+                aria-label="Digite sua mensagem"
+              ></textarea>
+
+              <button
+                id="btn-enviar"
+                class="send-btn"
+                type="button"
+                aria-label="Enviar mensagem"
+                title="Enviar mensagem"
+              >
+                ➤
+              </button>
+
+            </div>
+
+            <div class="isis-extra" aria-label="Modos de inteligência">
+              <button type="button" class="isis-btn" data-intelligence="instantaneo">⚡ Instantâneo</button>
+              <button type="button" class="isis-btn" data-intelligence="pensativo">🧠 Pensativo</button>
+              <button type="button" class="isis-btn" data-intelligence="aprender">📚 Aprender</button>
+              <button type="button" id="isis-regenerate" class="isis-btn">↻ Outra resposta</button>
+              <button type="button" id="isis-edit-last" class="isis-btn">✎ Reaproveitar mensagem</button>
+            </div>
+            <div class="input-hint">
+              Pressione Enter para enviar e Shift + Enter para quebrar linha
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
     </main>
+
   </div>
+
+  <!-- =====================================================
+       FUNDO DA SIDEBAR NO CELULAR
+  ====================================================== -->
+
+  <div
+    id="sidebar-overlay"
+    class="sidebar-overlay hidden"
+  >
+  </div>
+
+  <!-- =====================================================
+       MODAL DE CONFIGURAÇÕES
+  ====================================================== -->
+
+  <div
+    id="config-modal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="config-title"
+  >
+
+    <div class="modal-content config-content">
+
+      <div class="modal-header config-header">
+
+        <div>
+
+          <h2 id="config-title">
+            Configurações
+          </h2>
+
+          <p>
+            Personalize a aparência e os dados locais da Ísis.
+          </p>
+
+        </div>
+
+        <button
+          id="btn-fechar-config"
+          class="close-btn"
+          type="button"
+          aria-label="Fechar configurações"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div class="config-section">
+
+        <h3>Tema da interface</h3>
+
+        <p>
+          Escolha a aparência que você prefere.
+        </p>
+
+        <div class="theme-grid">
+
+          <button
+            class="theme-btn"
+            data-theme-choice="rosa"
+            type="button"
+          >
+
+            <span class="theme-color rosa"></span>
+
+            <span>Rosa</span>
+
+          </button>
+
+          <button
+            class="theme-btn"
+            data-theme-choice="azul"
+            type="button"
+          >
+
+            <span class="theme-color azul"></span>
+
+            <span>Azul</span>
+
+          </button>
+
+          <button
+            class="theme-btn"
+            data-theme-choice="branco"
+            type="button"
+          >
+
+            <span class="theme-color branco"></span>
+
+            <span>Branco</span>
+
+          </button>
+
+          <button
+            class="theme-btn"
+            data-theme-choice="preto"
+            type="button"
+          >
+
+            <span class="theme-color preto"></span>
+
+            <span>Preto</span>
+
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- V9.7.0: Somente novos controles; layout antigo preservado -->
+      <div class="config-section">
+        <h3>Dados locais</h3>
+        <p>Gerencie a memória e as conversas salvas neste navegador.</p>
+        <div class="config-extra-actions">
+          <button id="btn-mostrar-memoria" class="config-action-btn" type="button">🧠 Ver memória</button>
+          <button id="btn-limpar-memoria" class="config-action-btn" type="button">🧹 Limpar memória</button>
+          <button id="btn-exportar-conversas" class="config-action-btn" type="button">📤 Exportar conversas</button>
+          <button id="btn-limpar-conversas" class="config-action-btn danger" type="button">🗑️ Apagar conversas</button>
+        </div>
+      </div>
+
+      <div class="config-section isis-new-section">
+        <h3>Seu jeito de conversar</h3><p>Diga como prefere que a Ísis responda, por exemplo: "Respostas claras, simpáticas e com exemplos".</p>
+        <textarea id="isis-custom-tone" class="isis-field" rows="3" maxlength="450" placeholder="Como você quer que a Ísis fale com você?"></textarea>
+        <div class="isis-extra"><button id="isis-save-tone" class="isis-btn" type="button">Salvar meu estilo</button></div>
+        <p class="isis-small">Preferências ofensivas ou que tentem desativar segurança são recusadas.</p>
+      </div>
+      <div class="config-section isis-new-section">
+        <h3>Funções opcionais</h3>
+        <div class="isis-settings-wrap">
+        <label><input id="isis-emotional-toggle" type="checkbox"> 💙 Ativar apoio emocional</label>
+        <label><input id="isis-private-toggle" type="checkbox"> 🔒 Modo privado (não guardar novas conversas)</label>
+        </div>
+        <p class="isis-small">Apoio emocional é opcional. A Ísis não substitui acompanhamento profissional.</p>
+      </div>
+      <div class="config-section isis-new-section">
+        <h3>Mais temas</h3>
+        <div class="theme-grid">
+          <button class="theme-btn" data-theme-choice="vermelho-preto" type="button">🔴 Vermelho e Preto</button>
+          <button class="theme-btn" data-theme-choice="verde-preto" type="button">🟢 Verde e Preto</button>
+          <button class="theme-btn" data-theme-choice="rosa-roxo" type="button">🌸 Rosa e Roxo</button>
+          <button class="theme-btn" data-theme-choice="azul-roxo" type="button">🔵 Azul e Roxo</button>
+          <button class="theme-btn" data-theme-choice="azul-verde" type="button">🌊 Azul e Verde</button>
+          <button class="theme-btn" data-theme-choice="laranja-amarelo" type="button">🟠 Laranja e Amarelo</button>
+          <button class="theme-btn" data-theme-choice="preto-dourado" type="button">✨ Preto e Dourado</button>
+          <button class="theme-btn" data-theme-choice="arco-iris" type="button">🌈 Arco-Íris</button>
+        </div>
+      </div>
+      <div class="config-section isis-new-section">
+        <h3>Planos Ísis</h3>
+        <p><b>Go:</b> assistente, modos e recursos essenciais.</p>
+        <p><b>Plus:</b> proposta de mais mensagens, imagens e recursos.</p>
+        <p><b>Pro Max:</b> proposta de capacidade e prioridade máximas.</p>
+        <button id="isis-plans" class="isis-btn" type="button">Ver planos e valores</button>
+        <p class="isis-small">Prévia de planos: sem compras ou assinaturas nesta versão.</p>
+      </div>
+      <div class="config-section">
+
+        <h3>Sobre a Ísis</h3>
+
+        <p>
+          A Ísis IA foi criada pela empresa MA (R) para
+          oferecer ajuda, apoio, conversas úteis e criação
+          de imagens.
+        </p>
+        <p>Versão 9.8.0. Anteriormente chamada Maxi; seus dados locais antigos continuam compatíveis.</p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+       MODAL DOS MODOS
+  ====================================================== -->
+
+  <div
+    id="estilo-modal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="estilo-title"
+  >
+
+    <div class="modal-content estilo-content">
+
+      <div class="modal-header estilo-header">
+
+        <div>
+
+          <h2 id="estilo-title">
+            Escolha uma emoção
+          </h2>
+
+          <p>
+            As emoções mudam o tom; Instantâneo, Pensativo e Aprender mudam como ela resolve tarefas.
+          </p>
+
+        </div>
+
+        <button
+          id="btn-fechar-estilo"
+          class="close-btn"
+          type="button"
+          aria-label="Fechar seleção de modo"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div class="style-list">
+
+        <!-- MODO RÁPIDO -->
+
+        <button
+          class="style-btn"
+          data-style-choice="rapido"
+          type="button"
+        >
+
+          <span class="style-icon">
+            ⚡
+          </span>
+
+          <span class="style-info">
+
+            <strong>
+              Rápido
+            </strong>
+
+            <span>
+              Respostas curtas, objetivas e diretas.
+            </span>
+
+          </span>
+
+        </button>
+
+        <!-- MODO AJUDA + APOIO -->
+
+        <button
+          class="style-btn"
+          data-style-choice="apoio"
+          type="button"
+        >
+
+          <span class="style-icon">
+            💙
+          </span>
+
+          <span class="style-info">
+
+            <strong>
+              Acolhedora
+            </strong>
+
+            <span>
+              Conversa com calma, acolhe e ajuda a encontrar soluções.
+            </span>
+
+          </span>
+
+        </button>
+
+        <!-- MODO DIVERTIDO -->
+
+        <button
+          class="style-btn"
+          data-style-choice="divertido"
+          type="button"
+        >
+
+          <span class="style-icon">
+            🎉
+          </span>
+
+          <span class="style-info">
+
+            <strong>
+              Divertido
+            </strong>
+
+            <span>
+              Fala com alegria, faz brincadeiras, desafios e piadas leves.
+            </span>
+
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="isis-onboarding" class="isis-onboarding hidden" role="dialog" aria-modal="true" aria-label="Primeira visita">
+    <div class="isis-onboarding-card">
+      <img src="assets/isis-icon.png" alt="Ícone da Ísis">
+      <h2>Bem-vindo à Ísis!</h2>
+      <p>Como você quer ser chamado?</p>
+      <input id="isis-name-input" class="isis-field" maxlength="35" placeholder="Seu nome ou apelido" autocomplete="nickname">
+      <button id="isis-save-name" type="button" class="isis-btn">Começar</button>
+      <p class="isis-small">Seu nome será salvo somente neste navegador.</p>
+    </div>
+  </div>
+  <!-- =====================================================
+       JAVASCRIPT PRINCIPAL
+  ====================================================== -->
+
+
+  <!-- Modal demonstrativo: nenhuma compra ou ativação ocorre nesta interface -->
+  <div id="isis-plans-overlay" class="isis-plans-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="isis-plans-title">
+    <section class="isis-plans-window">
+      <div class="isis-plans-header"><div><h2 id="isis-plans-title">Conheça os planos da Ísis</h2><p>Escolha o nível de recursos que combina com você. Valores apenas propostos.</p></div>
+      <button type="button" class="isis-btn" id="isis-close-plans" aria-label="Fechar planos">✕</button></div>
+      <div class="isis-plans-grid">
+        <article class="isis-plan-card go"><div class="isis-plan-icon">✦</div><h3>Ísis Go</h3><strong>R$ 9,90 <small>/ mês</small></strong><p>Conversas e tarefas do dia a dia.</p><ul><li>Modelo rápido e leve</li><li>Modo Instantâneo</li><li>Histórico e personalização</li><li>Imagens básicas (planejado)</li></ul><button type="button" class="isis-btn" data-plan-choice="go">Mudar para Go</button></article>
+        <article class="isis-plan-card plus"><div class="isis-plan-icon">♛</div><h3>Ísis Plus</h3><strong>R$ 19,90 <small>/ mês</small></strong><p>Mais capacidade para criar e aprender.</p><ul><li>Modelo intermediário (planejado)</li><li>Pensativo e Aprender</li><li>Limites maiores (planejado)</li><li>Mais opções de imagem</li></ul><button type="button" class="isis-btn" data-plan-choice="plus">Mudar para Plus</button></article>
+        <article class="isis-plan-card pro"><div class="isis-plan-icon">◆</div><h3>Ísis Pro Max</h3><strong>R$ 39,90 <small>/ mês</small></strong><p>Máximo de recursos planejados.</p><ul><li>Modelo mais capaz disponível (planejado)</li><li>Modos de inteligência completos</li><li>Memória avançada (planejada)</li><li>Imagens avançadas (planejado)</li></ul><button type="button" class="isis-btn" data-plan-choice="pro_max">Mudar para Pro Max</button></article>
+      </div>
+      <div class="isis-plan-compare"><h3>Comparação rápida</h3><table><thead><tr><th>Benefício</th><th>Go</th><th>Plus</th><th>Pro Max</th></tr></thead><tbody><tr><td>Chat geral</td><td>Sim</td><td>Sim</td><td>Sim</td></tr><tr><td>Modelo</td><td>Leve</td><td>Intermediário</td><td>Avançado</td></tr><tr><td>Imagens</td><td>Básicas</td><td>Mais opções</td><td>Avançadas</td></tr><tr><td>Limites previstos</td><td>Menores</td><td>Maiores</td><td>Maiores</td></tr></tbody></table></div>
+      <div class="isis-plan-note" id="isis-payment-info" role="status">Prévia de produto: os planos não estão à venda. O Banco Max fictício ainda não está conectado. Nenhuma assinatura é ativada nesta tela.</div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+
+  <!-- =====================================================
+       AJUSTES EXTRAS DA INTERFACE
+  ====================================================== -->
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebar-overlay");
+
+      const botaoMenu = document.getElementById("btn-menu-mobile");
+      const botaoEstiloHeader = document.getElementById("btn-header-estilo");
+      const botaoConfigHeader = document.getElementById("btn-header-config");
+
+      const botaoEstiloPrincipal = document.getElementById("btn-estilo");
+      const botaoConfigPrincipal = document.getElementById("btn-config");
+
+      function abrirSidebar() {
+        if (!sidebar || !overlay) {
+          return;
+        }
+
+        sidebar.classList.add("open");
+        overlay.classList.remove("hidden");
+        document.body.classList.add("sidebar-open");
+      }
+
+      function fecharSidebar() {
+        if (!sidebar || !overlay) {
+          return;
+        }
+
+        sidebar.classList.remove("open");
+        overlay.classList.add("hidden");
+        document.body.classList.remove("sidebar-open");
+      }
+
+      if (botaoMenu) {
+        botaoMenu.addEventListener("click", abrirSidebar);
+      }
+
+      if (overlay) {
+        overlay.addEventListener("click", fecharSidebar);
+      }
+
+      if (botaoEstiloHeader && botaoEstiloPrincipal) {
+        botaoEstiloHeader.addEventListener("click", function () {
+          botaoEstiloPrincipal.click();
+        });
+      }
+
+      if (botaoConfigHeader && botaoConfigPrincipal) {
+        botaoConfigHeader.addEventListener("click", function () {
+          botaoConfigPrincipal.click();
+        });
+      }
+
+      document.addEventListener("keydown", function (evento) {
+        if (evento.key === "Escape") {
+          fecharSidebar();
+
+          const configModal = document.getElementById("config-modal");
+          const estiloModal = document.getElementById("estilo-modal");
+
+          if (configModal) {
+            configModal.classList.add("hidden");
+          }
+
+          if (estiloModal) {
+            estiloModal.classList.add("hidden");
+          }
+        }
+      });
+
+      window.addEventListener("resize", function () {
+        if (window.innerWidth > 700) {
+          fecharSidebar();
+        }
+      });
+
+      const textarea = document.getElementById("user-input");
+
+      if (textarea) {
+        textarea.addEventListener("input", function () {
+          this.style.height = "auto";
+
+          this.style.height =
+            Math.min(this.scrollHeight, 145) + "px";
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>
