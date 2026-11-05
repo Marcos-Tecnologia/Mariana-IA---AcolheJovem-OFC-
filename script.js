@@ -9,7 +9,7 @@ const STYLE_KEY = "maxi_style_mode_v2";
 const APP_NAME = "Isis";
 const APP_DISPLAY_NAME = "Ísis";
 const LEGACY_APP_NAME = "Maxi";
-const APP_VERSION = "9.9.0";
+const APP_VERSION = "10.0.0";
 // Compatibilidade com componentes externos que leem a versão antiga.
 const MAXI_VERSION = APP_VERSION;
 const MAX_CONTEXT_MESSAGES = 20;
@@ -142,7 +142,7 @@ let memoryProfile = null;
 let currentStyle = "apoio";
 let sending = false;
 let currentIntelligence = localStorage.getItem("isis_intelligence_v1") || "instantaneo";
-let currentPlan = "go"; // Plano experimental: não comprova assinatura paga.
+let currentPlan = "free"; // Atualizado somente após validação de sessão no servidor.
 let privateMode = false;
 let emotionalSupport = false;
 let moderationStrikes = 0;
@@ -1204,14 +1204,14 @@ async function gerarImagemIsis(textoUsuario) {
   const createdAtImage = new Date().toISOString();
   let url = "";
   try {
-    const res = await fetch("/api/image", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,quality:currentPlan==="pro_max"?"high":"medium"})});
+    const res = await fetch("/api/image", {method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({prompt,quality:currentPlan==="pro_max"?"high":"medium"})});
     const data = await res.json();
     if (!res.ok || !data.url) throw new Error(data.error||"Imagem indisponível");
     url = data.url;
   } catch (e) {
     removerCarregando();
     console.warn("Geração de imagem pela API não disponível:", e);
-    const errText = "A geração avançada de imagens está indisponível. Verifique a API e a chave OPENAI_API_KEY no servidor.";
+    const errText = "A geração de imagens está indisponível. Verifique a configuração do provedor de imagens na Vercel.";
     conversa.messages.push({role:"assistant",content:errText,createdAt:new Date().toISOString()});
     salvarConversas(); renderConversationList(); adicionarMensagem(APP_DISPLAY_NAME,errText,"maxi");
     return;
@@ -1887,6 +1887,7 @@ function abrirPlanosIsis(){document.getElementById("isis-plans-overlay")?.classL
 function fecharPlanosIsis(){document.getElementById("isis-plans-overlay")?.classList.add("hidden");}
 function instalarNovosControles(){
   configurarOnboarding();
+  instalarContaBancoMax();
   document.querySelectorAll("[data-intelligence]").forEach(b=>b.addEventListener("click",()=>definirInteligencia(b.dataset.intelligence)));
   definirInteligencia(INTELLIGENCE_MODES[currentIntelligence]?currentIntelligence:"instantaneo");
   document.querySelectorAll(".style-btn").forEach(b=>b.setAttribute("title","Emoção: "+b.textContent.trim()));
@@ -1924,16 +1925,75 @@ function instalarNovosControles(){
   document.getElementById("isis-upgrade-cta")?.addEventListener("click",abrirPlanosIsis);
   document.getElementById("isis-close-plans")?.addEventListener("click",fecharPlanosIsis);
   document.getElementById("isis-plans-overlay")?.addEventListener("click",e=>{if(e.target.id==="isis-plans-overlay")fecharPlanosIsis();});
-  document.querySelectorAll("[data-plan-choice]").forEach(btn=>btn.addEventListener("click",()=>{
-    const titulo=({go:"Ísis Go",plus:"Ísis Plus",pro_max:"Ísis Pro Max"})[btn.dataset.planChoice];
-    document.getElementById("isis-payment-info").textContent=`${titulo}: assinatura ainda não disponível. O Banco Max é fictício; uma futura integração exigirá confirmação segura no servidor. Nenhuma cobrança foi efetuada.`;
-  }));
+  document.querySelectorAll("[data-plan-choice]").forEach(btn=>btn.addEventListener("click",()=>solicitarAssinaturaIsis(btn.dataset.planChoice)));
   document.getElementById("isis-mode-menu-btn")?.addEventListener("click",()=>{
-    const menu=document.getElementById("isis-mode-menu");menu?.classList.toggle("hidden");
+    const menu=document.getElementById("isis-mode-menu");menu?.classList.toggle("hidden");document.getElementById("isis-mode-menu-btn")?.setAttribute("aria-expanded",String(!menu?.classList.contains("hidden")));
   });
   document.querySelectorAll("#isis-mode-menu [data-intelligence]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById("isis-mode-menu")?.classList.add("hidden")));
 }
 
+
+/* ================= ÍSIS v10 • CONTA BANCO MAX ================= */
+let bankProfile=null, requestedPlan=null, paymentPending=false;
+const PLAN_VALUE={go:9.90,plus:19.90,pro_max:39.90};
+const PLAN_LABEL={go:'Ísis Go',plus:'Ísis Plus',pro_max:'Ísis Pro Max',free:'Gratuito'};
+function setBankNotice(message){const e=document.getElementById('isis-bank-status');if(e)e.textContent=message;}
+async function bankCall(action,fields={}){
+  const res=await fetch('/api/isis-account',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...fields})});
+  const data=await res.json().catch(()=>({error:'Resposta inválida do servidor.'}));
+  if(!res.ok||!data.ok)throw new Error(data.error||'Falha de conexão com Banco Max.');
+  return data;
+}
+function desenharEstadoBancoMax(profile){
+  bankProfile=profile;currentPlan=profile?.plan||'free';
+  const summary=document.getElementById('isis-account-summary');const button=document.getElementById('isis-account-open');
+  const login=document.getElementById('isis-bank-login-form');const detail=document.getElementById('isis-bank-profile');
+  if(profile?.user){
+    if(summary)summary.textContent=`${profile.user.name} · ${PLAN_LABEL[currentPlan]||currentPlan}`;
+    if(button)button.textContent='Gerenciar minha conta';
+    login?.classList.add('hidden');detail?.classList.remove('hidden');
+    const name=document.getElementById('isis-bank-greeting');if(name)name.textContent=`Conectado como ${profile.user.name}`;
+    const label=document.getElementById('isis-bank-plan-label');if(label)label.textContent=`Plano: ${PLAN_LABEL[currentPlan]||currentPlan}${profile.expiresAt?' · Até '+new Date(profile.expiresAt).toLocaleDateString('pt-BR'):''}`;
+    const select=document.getElementById('isis-bank-account-select');
+    if(select){select.replaceChildren();(profile.accounts||[]).forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=`${a.name} · saldo R$ ${Number(a.balance).toFixed(2).replace('.',',')}`;select.appendChild(o);});}
+  }else{
+    if(summary)summary.textContent='Não conectada';if(button)button.textContent='Conectar conta';
+    login?.classList.remove('hidden');detail?.classList.add('hidden');
+  }
+}
+function abrirContaBancoMax(){document.getElementById('isis-bank-overlay')?.classList.remove('hidden');setBankNotice('');}
+function fecharContaBancoMax(){document.getElementById('isis-bank-overlay')?.classList.add('hidden');requestedPlan=null;}
+async function verificarSessaoBancoMax(){try{desenharEstadoBancoMax(await bankCall('status'));}catch{desenharEstadoBancoMax(null);}}
+function instalarContaBancoMax(){
+  desenharEstadoBancoMax(null);verificarSessaoBancoMax();
+  document.getElementById('isis-account-open')?.addEventListener('click',abrirContaBancoMax);
+  document.getElementById('isis-bank-close')?.addEventListener('click',fecharContaBancoMax);
+  document.getElementById('isis-bank-overlay')?.addEventListener('click',e=>{if(e.target.id==='isis-bank-overlay')fecharContaBancoMax();});
+  document.getElementById('isis-bank-login-form')?.addEventListener('submit',async e=>{
+    e.preventDefault();const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;setBankNotice('Verificando sua conta...');
+    try{
+      const profile=await bankCall('login',{username:document.getElementById('isis-bank-username').value.trim(),password:document.getElementById('isis-bank-password').value});
+      document.getElementById('isis-bank-password').value='';desenharEstadoBancoMax(profile);setBankNotice('Conta conectada com segurança.');
+      if(requestedPlan){const p=requestedPlan;requestedPlan=null;await solicitarAssinaturaIsis(p);}
+    }catch(err){setBankNotice(err.message);}finally{btn.disabled=false;}
+  });
+  document.getElementById('isis-bank-logout')?.addEventListener('click',async()=>{try{await bankCall('logout');}catch(e){setBankNotice(e.message);return;}desenharEstadoBancoMax(null);setBankNotice('Você saiu da conta Banco Max.');});
+}
+async function solicitarAssinaturaIsis(plan){
+  if(!Object.hasOwn(PLAN_VALUE,plan)||paymentPending)return;
+  if(!bankProfile?.user){requestedPlan=plan;abrirContaBancoMax();setBankNotice('Entre com sua conta Banco Max para continuar a assinatura.');return;}
+  const select=document.getElementById('isis-bank-account-select');if(!select?.value){abrirContaBancoMax();setBankNotice('Sua conta não tem saldo fictício ou não está habilitada para pagamentos.');return;}
+  const name=PLAN_LABEL[plan],value=PLAN_VALUE[plan].toFixed(2).replace('.',',');
+  fecharPlanosIsis();abrirContaBancoMax();
+  if(!confirm(`Confirmar ${name} por R$ ${value} de saldo fictício do Banco Max?\n\nA assinatura durará 30 dias. Não é dinheiro real.`))return;
+  paymentPending=true;setBankNotice('Confirmando pagamento no Banco Max...');
+  try{
+    const orderId='ISIS-'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,16));
+    const result=await bankCall('purchase',{plan,accountId:select.value,orderId});
+    const updated=await bankCall('status');desenharEstadoBancoMax(updated);
+    setBankNotice(`Assinatura ${name} ativada até ${new Date(result.expiresAt).toLocaleDateString('pt-BR')}. Comprovante ${result.receiptId} disponível no Banco Max.`);
+  }catch(err){setBankNotice('Pagamento não confirmado: '+err.message);}finally{paymentPending=false;}
+}
 /* =========================================================
    INICIALIZAÇÃO
 ========================================================= */

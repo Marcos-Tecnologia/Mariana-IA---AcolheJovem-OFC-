@@ -1935,3 +1935,37 @@ body[data-theme="arco-iris"] .logo-icon{background:linear-gradient(130deg,#f4433
 .isis-plan-card button{font-weight:700;border-color:var(--primary)}.isis-plan-note{margin-top:16px;border:1px solid var(--border-color);padding:13px;border-radius:12px;font-size:13px;line-height:1.6}
 .isis-plan-compare{margin-top:20px;overflow:auto}.isis-plan-compare table{width:100%;border-collapse:collapse}.isis-plan-compare th,.isis-plan-compare td{padding:9px;text-align:left;border-bottom:1px solid var(--border-color)}
 @media(max-width:700px){.isis-plans-grid{grid-template-columns:1fr}.isis-plans-window{padding:14px}.isis-mode-menu{flex-direction:column;align-items:stretch}}
+
+/* ================= ÍSIS v10 • REFINAMENTO VISUAL ================= */
+:root{--isis-radius:16px;--isis-shadow:0 14px 40px rgba(18,19,44,.12)}
+.sidebar{border-right:1px solid var(--border-color);box-shadow:2px 0 25px rgba(20,20,45,.035)}
+.logo-area{gap:12px}.logo-icon{overflow:hidden}.isis-brand-img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.chat-avatar{overflow:hidden}.inicio-avatar{overflow:hidden}.inicio-avatar .isis-brand-img{width:100%;height:100%;object-fit:contain}
+.chat-header{position:relative;z-index:11}.chat-header-info h2{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.isis-mode-trigger{display:inline-flex;gap:7px;align-items:center;background:var(--surface-secondary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:24px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;max-width:210px}
+.isis-mode-trigger:hover,.isis-mode-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.isis-mode-menu{position:absolute!important;top:76px;left:18px;z-index:50;width:min(340px,calc(100vw - 36px));margin:0!important;display:grid!important;flex-direction:column;align-items:stretch!important;padding:12px!important;border-radius:16px!important;box-shadow:var(--isis-shadow);background:var(--surface-solid);}
+.isis-mode-menu.hidden{display:none!important}.isis-mode-menu strong{padding:5px 8px;font-size:13px}
+.isis-mode-menu .isis-btn{text-align:left;width:100%;padding:13px 12px!important;background:transparent;color:var(--text-primary);border:0;white-space:normal}.isis-mode-menu .isis-btn:hover,.isis-mode-menu .isis-btn.isis-active{background:var(--surface-secondary);border-radius:10px}
+.isis-response-tools{display:flex;gap:10px;justify-content:flex-start;margin:6px 4px 2px;flex-wrap:wrap}
+.isis-quiet-action{border:0;background:transparent;color:var(--text-secondary);font-size:12px;padding:5px 7px;cursor:pointer;border-radius:8px}
+.isis-quiet-action:hover{color:var(--text-primary);background:var(--surface-secondary)}
+.isis-account-tile{margin:10px 12px;padding:13px;background:var(--surface-secondary);border:1px solid var(--border-color);border-radius:var(--isis-radius);display:grid;gap:7px}
+.isis-account-heading{font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--text-primary)}
+.isis-mini-mark{font-size:9px;opacity:.6;font-weight:600;letter-spacing:1px}#isis-account-summary{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.isis-account-open{background:transparent;border:1px solid var(--border-color);padding:9px 11px;color:var(--text-primary);border-radius:11px;cursor:pointer;font-weight:600}
+.isis-account-open:hover{border-color:var(--primary)}
+.isis-bank-window{width:min(480px,100%);max-height:90vh;overflow:auto;background:var(--surface-solid);border-radius:22px;padding:26px;color:var(--text-primary);box-shadow:0 20px 70px #0005}
+.isis-bank-head{display:flex;justify-content:space-between;gap:16px;align-items:start;margin-bottom:18px}.isis-bank-head h2{margin:9px 0 8px;font-size:22px}.isis-bank-head p,.isis-bank-hint{font-size:12px;color:var(--text-secondary);line-height:1.6}
+.isis-bank-icon{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#145ddd;color:white;font-size:25px;font-weight:800}
+.isis-bank-fields{display:grid;gap:15px}.isis-bank-fields label{display:grid;gap:6px;font-size:13px;font-weight:600}.isis-bank-fields input{border:1px solid var(--border-color);background:var(--surface-secondary);border-radius:11px;padding:12px;color:var(--text-primary);width:100%}
+.isis-bank-primary{width:100%;background:var(--primary);color:#fff;border:none;border-radius:12px;padding:13px 12px;font-weight:700;cursor:pointer}
+.isis-bank-primary:disabled{opacity:.55;cursor:wait}.isis-bank-status{font-size:13px;min-height:18px;line-height:1.5}.isis-bank-hint{margin-bottom:0}
+#isis-bank-profile{display:grid;gap:10px}#isis-bank-profile.hidden{display:none}#isis-bank-profile .isis-field{width:100%;max-width:100%}
+.isis-plan-card.go{background:linear-gradient(180deg,rgba(10,204,143,.08),var(--surface-secondary) 32%)}
+.isis-plan-card.plus{background:linear-gradient(180deg,rgba(174,96,255,.12),var(--surface-secondary) 32%)}
+.isis-plan-card.pro{background:linear-gradient(180deg,rgba(236,191,55,.12),var(--surface-secondary) 32%)}
+.isis-plan-card{box-shadow:0 8px 22px rgba(0,0,0,.04);transition:transform .16s ease}.isis-plan-card:hover{transform:translateY(-2px)}
+.theme-btn{min-height:42px}.config-content{overflow-y:auto;max-height:min(88vh,900px)}
+@media(max-width:700px){.isis-mode-menu{top:70px;left:8px}.isis-response-tools{gap:4px}.isis-account-tile{margin:8px 10px}.isis-mode-trigger{font-size:11px;padding:4px 8px}}
+@media(prefers-reduced-motion:reduce){.isis-plan-card{transition:none}.isis-plan-card:hover{transform:none}}

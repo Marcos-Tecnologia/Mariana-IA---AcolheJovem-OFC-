@@ -18,7 +18,7 @@
     content="#db5f99"
   >
 
-  <title>Ísis IA — MA (R)</title>
+  <title>Ísis IA v10 — MA (R)</title>
 
   <link
     rel="preconnect"
@@ -56,9 +56,7 @@
 
         <div class="logo-area">
 
-          <div class="logo-icon">
-            Í
-          </div>
+          <div class="logo-icon"><img src="assets/isis-mark.svg" alt="Ísis" class="isis-brand-img"></div>
 
           <div class="logo-text">
 
@@ -131,7 +129,12 @@
 
       </div>
 
-    <div class="isis-new-section" style="padding:10px">
+    <div class="isis-account-tile">
+    <div class="isis-account-heading">Conta Banco Max <span class="isis-mini-mark">IEAS</span></div>
+    <div id="isis-account-summary">Não conectada</div>
+    <button id="isis-account-open" type="button" class="isis-account-open">Conectar conta</button>
+  </div>
+  <div class="isis-new-section" style="padding:10px">
   <button class="isis-btn isis-upgrade-cta" id="isis-upgrade-cta" type="button">✦ Conheça Ísis Go, Plus e Pro Max</button>
 </div>
 </aside>
@@ -157,7 +160,7 @@
             class="inicio-avatar"
             aria-hidden="true"
           >
-            🌸
+            <img src="assets/isis-mark.svg" alt="" class="isis-brand-img">
           </div>
 
           <h1>Olá, eu sou a Ísis</h1>
@@ -208,16 +211,11 @@
                 ☰
               </button>
 
-              <div
-                class="chat-avatar"
-                aria-hidden="true"
-              >
-                Í
-              </div>
+              <div class="chat-avatar" aria-hidden="true"><img src="assets/isis-mark.svg" alt="" class="isis-brand-img"></div>
 
               <div class="chat-header-info">
 
-                <h2>Ísis</h2>
+                <h2>Ísis <button type="button" id="isis-mode-menu-btn" class="isis-mode-trigger" aria-expanded="false" aria-controls="isis-mode-menu"><span id="isis-current-mode">⚡ Instantâneo</span> <span aria-hidden="true">⌄</span></button></h2>
 
                 <div class="chat-status">
                   Online e pronta para ajudar
@@ -228,9 +226,6 @@
             </div>
 
             <div class="chat-header-actions">
-              <span id="isis-current-mode" class="isis-small">⚡ Instantâneo</span>
-
-              <button class="isis-btn" id="isis-mode-menu-btn" type="button" aria-label="Escolher modo de inteligência">☰ Modos</button>
               <button
                 id="btn-header-estilo"
                 class="icon-btn"
@@ -256,7 +251,7 @@
           </header>
 
           <div id="isis-mode-menu" class="isis-mode-menu hidden" aria-label="Modos de inteligência">
-            <strong>Como a Ísis deve responder?</strong>
+            <strong>Modo de inteligência</strong>
             <button class="isis-btn" data-intelligence="instantaneo" type="button">⚡ Instantâneo — respostas rápidas</button>
             <button class="isis-btn" data-intelligence="pensativo" type="button">🧠 Pensativo — mais análise</button>
             <button class="isis-btn" data-intelligence="aprender" type="button">📚 Aprender — ensino passo a passo</button>
@@ -293,12 +288,9 @@
 
             </div>
 
-            <div class="isis-extra" aria-label="Modos de inteligência">
-              <button type="button" class="isis-btn" data-intelligence="instantaneo">⚡ Instantâneo</button>
-              <button type="button" class="isis-btn" data-intelligence="pensativo">🧠 Pensativo</button>
-              <button type="button" class="isis-btn" data-intelligence="aprender">📚 Aprender</button>
-              <button type="button" id="isis-regenerate" class="isis-btn">↻ Outra resposta</button>
-              <button type="button" id="isis-edit-last" class="isis-btn">✎ Reaproveitar mensagem</button>
+            <div class="isis-response-tools" aria-label="Ações da conversa">
+              <button type="button" id="isis-regenerate" class="isis-quiet-action" title="Criar outra resposta">↻ Regenerar</button>
+              <button type="button" id="isis-edit-last" class="isis-quiet-action" title="Reaproveitar sua última mensagem">✎ Editar última mensagem</button>
             </div>
             <div class="input-hint">
               Pressione Enter para enviar e Shift + Enter para quebrar linha
@@ -466,11 +458,9 @@
       </div>
       <div class="config-section isis-new-section">
         <h3>Planos Ísis</h3>
-        <p><b>Go:</b> assistente, modos e recursos essenciais.</p>
-        <p><b>Plus:</b> proposta de mais mensagens, imagens e recursos.</p>
-        <p><b>Pro Max:</b> proposta de capacidade e prioridade máximas.</p>
+        <p>Compare os modelos, benefícios e os valores mensais em um só lugar.</p>
         <button id="isis-plans" class="isis-btn" type="button">Ver planos e valores</button>
-        <p class="isis-small">Prévia de planos: sem compras ou assinaturas nesta versão.</p>
+        <p class="isis-small">Assinaturas mensais fictícias pelo Banco Max, após conectar sua conta.</p>
       </div>
       <div class="config-section">
 
@@ -481,7 +471,7 @@
           oferecer ajuda, apoio, conversas úteis e criação
           de imagens.
         </p>
-        <p>Versão 9.8.0. Anteriormente chamada Maxi; seus dados locais antigos continuam compatíveis.</p>
+        <p>Versão 10.0.0. Anteriormente chamada Maxi; seus dados locais antigos continuam compatíveis.</p>
 
       </div>
 
@@ -629,10 +619,10 @@
   ====================================================== -->
 
 
-  <!-- Modal demonstrativo: nenhuma compra ou ativação ocorre nesta interface -->
+  <!-- Planos: a ativação depende do servidor do Banco Max e da configuração da integração. -->
   <div id="isis-plans-overlay" class="isis-plans-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="isis-plans-title">
     <section class="isis-plans-window">
-      <div class="isis-plans-header"><div><h2 id="isis-plans-title">Conheça os planos da Ísis</h2><p>Escolha o nível de recursos que combina com você. Valores apenas propostos.</p></div>
+      <div class="isis-plans-header"><div><h2 id="isis-plans-title">Conheça os planos da Ísis</h2><p>Escolha o nível de recursos que combina com você. Pagamentos fictícios pelo Banco Max. Confira o saldo antes de confirmar.</p></div>
       <button type="button" class="isis-btn" id="isis-close-plans" aria-label="Fechar planos">✕</button></div>
       <div class="isis-plans-grid">
         <article class="isis-plan-card go"><div class="isis-plan-icon">✦</div><h3>Ísis Go</h3><strong>R$ 9,90 <small>/ mês</small></strong><p>Conversas e tarefas do dia a dia.</p><ul><li>Modelo rápido e leve</li><li>Modo Instantâneo</li><li>Histórico e personalização</li><li>Imagens básicas (planejado)</li></ul><button type="button" class="isis-btn" data-plan-choice="go">Mudar para Go</button></article>
@@ -640,7 +630,27 @@
         <article class="isis-plan-card pro"><div class="isis-plan-icon">◆</div><h3>Ísis Pro Max</h3><strong>R$ 39,90 <small>/ mês</small></strong><p>Máximo de recursos planejados.</p><ul><li>Modelo mais capaz disponível (planejado)</li><li>Modos de inteligência completos</li><li>Memória avançada (planejada)</li><li>Imagens avançadas (planejado)</li></ul><button type="button" class="isis-btn" data-plan-choice="pro_max">Mudar para Pro Max</button></article>
       </div>
       <div class="isis-plan-compare"><h3>Comparação rápida</h3><table><thead><tr><th>Benefício</th><th>Go</th><th>Plus</th><th>Pro Max</th></tr></thead><tbody><tr><td>Chat geral</td><td>Sim</td><td>Sim</td><td>Sim</td></tr><tr><td>Modelo</td><td>Leve</td><td>Intermediário</td><td>Avançado</td></tr><tr><td>Imagens</td><td>Básicas</td><td>Mais opções</td><td>Avançadas</td></tr><tr><td>Limites previstos</td><td>Menores</td><td>Maiores</td><td>Maiores</td></tr></tbody></table></div>
-      <div class="isis-plan-note" id="isis-payment-info" role="status">Prévia de produto: os planos não estão à venda. O Banco Max fictício ainda não está conectado. Nenhuma assinatura é ativada nesta tela.</div>
+      <div class="isis-plan-note" id="isis-payment-info" role="status">Entre com a mesma conta do Banco Max para escolher seu plano. Nenhum pagamento será feito sem sua confirmação.</div>
+    </section>
+  </div>
+
+
+  <div id="isis-bank-overlay" class="isis-plans-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="isis-bank-title">
+    <section class="isis-bank-window">
+      <div class="isis-bank-head"><div><span class="isis-bank-icon">B</span><h2 id="isis-bank-title">Sua conta Banco Max</h2><p>Entre com a mesma conta do Banco Max. A Ísis não salva sua senha.</p></div><button id="isis-bank-close" class="isis-btn" type="button" aria-label="Fechar">✕</button></div>
+      <form id="isis-bank-login-form" class="isis-bank-fields" autocomplete="on">
+        <label>Usuário do Banco Max<input id="isis-bank-username" autocomplete="username" maxlength="60" required></label>
+        <label>Senha do Banco Max<input id="isis-bank-password" type="password" autocomplete="current-password" required></label>
+        <button class="isis-bank-primary" type="submit">Entrar com Banco Max</button>
+      </form>
+      <div id="isis-bank-profile" class="hidden">
+        <p id="isis-bank-greeting"></p><p id="isis-bank-plan-label"></p>
+        <label for="isis-bank-account-select">Conta para pagamentos fictícios</label>
+        <select id="isis-bank-account-select" class="isis-field"></select>
+        <button id="isis-bank-logout" type="button" class="isis-quiet-action">Sair da conta</button>
+      </div>
+      <p class="isis-bank-status" id="isis-bank-status" role="status" aria-live="polite"></p>
+      <p class="isis-bank-hint">Você confirma cada assinatura antes do débito no saldo fictício. A marca IEAS pertence ao Banco Max.</p>
     </section>
   </div>
 
